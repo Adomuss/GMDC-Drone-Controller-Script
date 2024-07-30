@@ -48,7 +48,7 @@ namespace IngameScript
         int drn_p_scrn = 8;              
 
         #endregion
-        string ver = "V0.311A";
+        string ver = "V0.313A";
         int clbs = 44;
         double bclu = 30.0;
         string tx_chan;
@@ -970,7 +970,7 @@ namespace IngameScript
                         //recall sequence reset - global
                         if (!drone_recall_list[i] || cnrst || cninit)
                         {
-                            drone_recall_sequence[i] = 0;
+                            drone_recall_sequence[i] = 0;                            
                         }
                         dp_txm.Clear();
                         bores_completed = CntTrueVls(grid_bore_finished);
@@ -988,7 +988,7 @@ namespace IngameScript
                             drone_gps_grid_list_position[i] = -1;
                         }
                         //if undocked request local recall sequence flag to ON
-                        if (drone_gps_grid_list_position[i] == -1 && !drone_assigned_coordinates[i] && drone_undock_status[i] == "True" && !drone_recall_list[i])
+                        if (drone_gps_grid_list_position[i] == -1 && !drone_assigned_coordinates[i] && drone_undock_status[i] == "True" && drone_dock_status[i] == "False" &&!drone_recall_list[i] || drone_gps_grid_list_position[i] == -1 && !drone_assigned_coordinates[i] && drone_undock_status[i] == "False" && drone_dock_status[i] == "False" && !drone_recall_list[i])
                         {
                             drone_recall_list[i] = true;
                         }
@@ -1572,7 +1572,7 @@ namespace IngameScript
                         {
                             if (drone_recall_sequence[i] == 0 && drone_control_status[i] == "Idle" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocked" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Nav" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocking" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Docking" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Initiating mining")
                             {
-                                drone_recall_sequence[i] = 1;
+                                drone_recall_sequence[i] = 1;                                
                             }
 
                             if (drone_recall_sequence[i] == 0 && drone_control_status[i] == "Nav End")

@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.313A";
+        string ver = "V0.314A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -386,6 +386,7 @@ namespace IngameScript
                         rm_ctl_tag.Add(rm_ctl_all[i]);
                     }
                 }
+                rm_ctl_all.Clear();
                 at_all = new List<IMyRadioAntenna>();
                 at_tg = new List<IMyRadioAntenna>();
                 gts.GetBlocksOfType<IMyRadioAntenna>(at_all, b => b.CubeGrid == Me.CubeGrid);
@@ -396,6 +397,7 @@ namespace IngameScript
                         at_tg.Add(at_all[i]);
                     }
                 }
+                at_all.Clear();
                 lts_all = new List<IMyLightingBlock>();
                 lts_sys_tg = new List<IMyLightingBlock>();
                 gts.GetBlocksOfType<IMyLightingBlock>(lts_all, b => b.CubeGrid == Me.CubeGrid);
@@ -406,6 +408,7 @@ namespace IngameScript
                         lts_sys_tg.Add(lts_all[i]);
                     }
                 }
+                lts_all.Clear();
                 ds_all = new List<IMyTerminalBlock>();
                 ds_tg_main = new List<IMyTerminalBlock>();
                 ds_tg_lst = new List<IMyTerminalBlock>();
@@ -426,6 +429,7 @@ namespace IngameScript
                         ds_tg_lst.Add(ds_all[i]);
                     }
                 }
+                ds_all.Clear();
                 pb_all = new List<IMyProgrammableBlock>();
                 pb_tg = new List<IMyProgrammableBlock>();
                 gts.GetBlocksOfType<IMyProgrammableBlock>(pb_all, b => b.CubeGrid == Me.CubeGrid);
@@ -436,6 +440,7 @@ namespace IngameScript
                         pb_tg.Add(pb_all[i]);
                     }
                 }
+                pb_all.Clear();
                 stp_cmpl = true;
                 Echo("Setup complete!");
             }

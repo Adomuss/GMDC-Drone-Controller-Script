@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.315A";
+        string ver = "V0.316A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -669,6 +669,8 @@ namespace IngameScript
                 command_ask = "Init";
                 current_gps_idx = 0;
                 r_gps_idx = current_gps_idx;
+                grid_bore_finished.Clear();
+                grid_bore_occupied.Clear();
                 Storage = null;
             }
             if (argt.Contains("eject") || i_eject)

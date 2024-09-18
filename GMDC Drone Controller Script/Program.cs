@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.316A";
+        string ver = "V0.317A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -669,6 +669,7 @@ namespace IngameScript
                 command_ask = "Init";
                 current_gps_idx = 0;
                 r_gps_idx = current_gps_idx;
+                grid_bore_positions.Clear();
                 grid_bore_finished.Clear();
                 grid_bore_occupied.Clear();
                 Storage = null;
@@ -925,8 +926,7 @@ namespace IngameScript
                 {
                     grid_bore_finished.Clear();
                     grid_bore_occupied.Clear();
-                    GtStrD();
-                    Reset_Drone_Data();
+                    GtStrD();                    
                     pinged = false;
                     drone_name.Clear();
                     Storage = null;                    

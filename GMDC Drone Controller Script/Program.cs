@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.314A";
+        string ver = "V0.315A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -924,7 +924,10 @@ namespace IngameScript
                     grid_bore_finished.Clear();
                     grid_bore_occupied.Clear();
                     GtStrD();
-                    Storage = null;
+                    Reset_Drone_Data();
+                    pinged = false;
+                    drone_name.Clear();
+                    Storage = null;                    
                 }
                 c_gd = true;
                 t_mne_runs = (nPtsX * nPtsY);
@@ -2584,6 +2587,42 @@ namespace IngameScript
         void dtxt()
         {
             IGC.SendBroadcastMessage(tx_chan, dt_out[di], TransmissionDistance.TransmissionDistanceMax);
+        }
+
+        void Reset_Drone_Data()
+        {
+            Echo("Reset drone data..");
+            drone_name.Clear();
+            drone_damage_state.Clear();
+            drone_tunnel_complete.Clear();
+            drone_control_status.Clear();
+            drone_dock_status.Clear();
+            drone_undock_status.Clear();
+            drone_autopilot_status.Clear();
+            drone_gps_grid_list_position.Clear();
+            drone_gps_coordinates_ds.Clear();
+            drone_drill_depth_value.Clear();
+            drone_mine_distance_status.Clear();
+            drone_mine_depth_start_status.Clear();
+            drone_location_x.Clear();
+            drone_location_y.Clear();
+            drone_location_z.Clear();
+            drone_charge_storage.Clear();
+            drone_gas_storage.Clear();
+            drone_ore_storage.Clear();
+            drone_mining.Clear();
+            drone_assigned_coordinates.Clear();
+            drone_control_sequence.Clear();
+            drone_recall_sequence.Clear();
+            dt_out.Clear();
+            drone_ready.Clear();
+            drone_must_wait.Clear();
+            dcs.Clear();
+            dst.Clear();
+            txmt.Clear();
+            drone_recall_list.Clear();
+            drone_reset_func.Clear();
+            Echo("Drone data reset complete");
         }
         //program end
 

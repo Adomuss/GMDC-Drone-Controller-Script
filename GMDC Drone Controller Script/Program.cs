@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.315A";
+        string ver = "V0.316A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -161,7 +161,7 @@ namespace IngameScript
         int total_drones_mining = 0;
         int t_drn_dckg = 0;
         int t_drn_dck = 0;
-        int brs_rem;
+        int bores_remaining;
         bool flto = false;
         int fltc = 0;
         IMyRadioAntenna ant_act;
@@ -993,11 +993,11 @@ namespace IngameScript
 
                         if (mining_grid_valid)
                         {
-                            brs_rem = t_mne_runs - bores_completed;
+                            bores_remaining = t_mne_runs - bores_completed;
                         }
                         if (!mining_grid_valid)
                         {
-                            brs_rem = t_mne_runs - bores_completed;
+                            bores_remaining = t_mne_runs - bores_completed;
                         }
                         if (drone_gps_grid_list_position[i] > -1 && !drone_assigned_coordinates[i])
                         {
@@ -1041,18 +1041,22 @@ namespace IngameScript
                         {
                             drone_mining[i] = false;
                         }
-                        if (total_drones_mining >= brs_rem && !drone_mining[i] && bores_completed <= t_mne_runs || brs_rem == 0 && drone_mining[i] == false)
+                        if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= t_mne_runs || bores_remaining == 0 && drone_mining[i] == false)
                         {
                             if (!l_dns)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (l_dns && total_drones_mining >= mx_act_dn)
+                            if (l_dns && total_drones_mining > mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
+                            if (l_dns && total_drones_mining <= mx_act_dn)
+                            {
+                                drone_must_wait[i] = false;
+                            }
                         }
-                        else if (total_drones_mining < brs_rem && bores_completed < t_mne_runs || drone_mining[i] && total_drones_mining <= brs_rem)
+                        else if (total_drones_mining < bores_remaining && bores_completed < t_mne_runs || drone_mining[i] && total_drones_mining <= bores_remaining)
                         {
                             if (!l_dns)
                             {
@@ -1063,12 +1067,12 @@ namespace IngameScript
                                 drone_must_wait[i] = false;
                             }
 
-                            if (l_dns && total_drones_mining >= mx_act_dn)
+                            if (l_dns && total_drones_mining > mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
                         }
-                        if (drone_gps_grid_list_position[i] == -1 && total_drones_mining >= brs_rem)
+                        if (drone_gps_grid_list_position[i] == -1 && total_drones_mining >= bores_remaining)
                         {
                             if (!l_dns)
                             {
@@ -1144,13 +1148,13 @@ namespace IngameScript
                             dp_txm.Append('\n');
                             dp_txm.Append("Grid OK: " + mining_grid_valid);
                             dp_txm.Append('\n');
-                            dp_txm.Append("Bores: " + grid_bore_positions.Count + " Remain: " + brs_rem + "  Skip: " + skp_br);
+                            dp_txm.Append("Bores: " + grid_bore_positions.Count + " Remain: " + bores_remaining + "  Skip: " + skp_br);
                             dp_txm.Append('\n');
                         }
                         else
                         {
                             dp_txm.Append('\n');
-                            dp_txm.Append("Bores: " + t_mne_runs + " Remaining: " + brs_rem);
+                            dp_txm.Append("Bores: " + t_mne_runs + " Remaining: " + bores_remaining);
                         }
                         if (t_mne_runs > 0)
                         {
@@ -1162,7 +1166,7 @@ namespace IngameScript
                             dp_txm.Append('\n');
                             dp_txm.Append("Current mine idx: " + current_gps_idx + " of " + (t_mne_runs - 1) + " (" + bores_completed + ") ");
                         }
-                        if (current_gps_idx > t_mne_runs || !mining_grid_valid && bores_completed >= t_mne_runs || brs_rem == 0)
+                        if (current_gps_idx > t_mne_runs || !mining_grid_valid && bores_completed >= t_mne_runs || bores_remaining == 0)
                         {
                             can_run = false;
                             dp_txm.Append('\n');
@@ -1251,7 +1255,7 @@ namespace IngameScript
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                else if (total_drones_mining < brs_rem && bores_completed < t_mne_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                                else if (total_drones_mining < bores_remaining && bores_completed < t_mne_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
                                 {
                                     drone_must_wait[i] = false;
                                 }
@@ -1846,7 +1850,7 @@ namespace IngameScript
             dp_txl.Append("Mining Grid Status" + " - GMDC " + ver);
             dp_txl.Append('\n');
             dp_txl.Append('\n');
-            dp_txl.Append("Remaining bores: " + brs_rem);
+            dp_txl.Append("Remaining bores: " + bores_remaining);
             dp_txl.Append('\n');
 
             if (ds_tg_drn.Count > 0 && drone_name.Count > 0 && ds_tg_drn[0] != null)

@@ -52,7 +52,7 @@ namespace IngameScript
         int clbs = 44;
         double bclu = 30.0;
         string tx_chan;
-        bool l_dns = false;
+        bool launched_drone_status = false;
         int ft_ftr = 1;
         int hd_lm = 10;
         int skp_br = 0;
@@ -1043,46 +1043,46 @@ namespace IngameScript
                         }
                         if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= t_mne_runs || bores_remaining == 0 && drone_mining[i] == false)
                         {
-                            if (!l_dns)
+                            if (!launched_drone_status)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (l_dns && total_drones_mining > mx_act_dn)
+                            if (launched_drone_status && total_drones_mining > mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (l_dns && total_drones_mining <= mx_act_dn)
+                            if (launched_drone_status && total_drones_mining <= mx_act_dn)
                             {
                                 drone_must_wait[i] = false;
                             }
                         }
                         else if (total_drones_mining < bores_remaining && bores_completed < t_mne_runs || drone_mining[i] && total_drones_mining <= bores_remaining)
                         {
-                            if (!l_dns)
+                            if (!launched_drone_status)
                             {
                                 drone_must_wait[i] = false;
                             }
-                            if (l_dns && total_drones_mining < mx_act_dn)
+                            if (launched_drone_status && total_drones_mining < mx_act_dn)
                             {
                                 drone_must_wait[i] = false;
                             }
 
-                            if (l_dns && total_drones_mining > mx_act_dn)
+                            if (launched_drone_status && total_drones_mining > mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
                         }
                         if (drone_gps_grid_list_position[i] == -1 && total_drones_mining >= bores_remaining)
                         {
-                            if (!l_dns)
+                            if (!launched_drone_status)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (l_dns && total_drones_mining >= mx_act_dn)
+                            if (launched_drone_status && total_drones_mining >= mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (l_dns && total_drones_mining < mx_act_dn)
+                            if (launched_drone_status && total_drones_mining < mx_act_dn)
                             {
                                 drone_must_wait[i] = true;
                             }
@@ -1091,30 +1091,30 @@ namespace IngameScript
                         {
                             if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
                             {
-                                if (!l_dns)
+                                if (!launched_drone_status)
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                if (l_dns && total_drones_mining >= mx_act_dn)
+                                if (launched_drone_status && total_drones_mining >= mx_act_dn)
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                if (l_dns && total_drones_mining < mx_act_dn)
+                                if (launched_drone_status && total_drones_mining < mx_act_dn)
                                 {
                                     drone_must_wait[i] = true;
                                 }
                             }
                             else if (bores_completed < t_mne_runs && !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
                             {
-                                if (!l_dns)
+                                if (!launched_drone_status)
                                 {
                                     drone_must_wait[i] = false;
                                 }
-                                if (l_dns && total_drones_mining < mx_act_dn)
+                                if (launched_drone_status && total_drones_mining < mx_act_dn)
                                 {
                                     drone_must_wait[i] = false;
                                 }
-                                if (l_dns && total_drones_mining >= mx_act_dn)
+                                if (launched_drone_status && total_drones_mining >= mx_act_dn)
                                 {
                                     drone_must_wait[i] = true;
                                 }
@@ -1721,11 +1721,11 @@ namespace IngameScript
                         dp_txm.Append('\n');
                         dp_txm.Append("Total drones detected: " + drone_name.Count);
                         dp_txm.Append('\n');
-                        if (!l_dns)
+                        if (!launched_drone_status)
                         {
                             dp_txm.Append("Drones active: " + total_drones_mining + "  Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
                         }
-                        if (l_dns)
+                        if (launched_drone_status)
                         {
                             dp_txm.Append("Drones active: " + total_drones_mining + "  (Max: " + mx_act_dn + " (" + ft_ftr + ")" + ")" + "  Hard limit: " + hd_lm);
                             dp_txm.Append('\n');
@@ -2095,7 +2095,7 @@ namespace IngameScript
                 cst_dt10 = "";
                 ign_dpth = 0.0;
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2136,7 +2136,7 @@ namespace IngameScript
                 cst_dt10 = "";
                 ign_dpth = 0.0;
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2173,7 +2173,7 @@ namespace IngameScript
                 cst_dt10 = "";
                 ign_dpth = 0.0;
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2210,7 +2210,7 @@ namespace IngameScript
                 cst_dt10 = "";
                 ign_dpth = 0.0;
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2242,7 +2242,7 @@ namespace IngameScript
                 cst_dt10 = "";
                 ign_dpth = 0.0;
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2271,7 +2271,7 @@ namespace IngameScript
             if (gps_cmnd.Length < 12)
             {
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
                 cst_dt12 = "";
                 ft_ftr = 1;
                 cst_dt13 = "";
@@ -2283,19 +2283,19 @@ namespace IngameScript
             if (gps_cmnd.Length > 11)
             {
                 cst_dt11 = gps_cmnd[11];
-                if (bool.TryParse(cst_dt11, out l_dns))
+                if (bool.TryParse(cst_dt11, out launched_drone_status))
                 {
-                    bool.TryParse(cst_dt11, out l_dns);
+                    bool.TryParse(cst_dt11, out launched_drone_status);
                 }
                 else
                 {
-                    l_dns = false;
+                    launched_drone_status = false;
                 }
             }
             else
             {
                 cst_dt11 = "";
-                l_dns = false;
+                launched_drone_status = false;
             }
             if (gps_cmnd.Length < 13)
             {

@@ -42,7 +42,7 @@ namespace IngameScript
 
         #endregion
         //statics
-        string ver = "V0.317A";
+        string ver = "V0.318A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -922,13 +922,13 @@ namespace IngameScript
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
                 grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY);
-                if (Storage != null && Storage != "" && !c_gd)
+                if (Storage != null && Storage != "" && !c_gd || Storage != null && Storage != "" && c_gd)
                 {
+                    Reset_Drone_Data();
                     grid_bore_finished.Clear();
                     grid_bore_occupied.Clear();
                     GtStrD();                    
-                    pinged = false;
-                    drone_name.Clear();
+                    pinged = false;                    
                     Storage = null;                    
                 }
                 c_gd = true;

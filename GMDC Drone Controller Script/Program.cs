@@ -39,10 +39,10 @@ namespace IngameScript
         int srfL = 0;
         int srfD = 0;
         int drones_per_screen = 8;
-
+        int undock_delay_time = 30;
         #endregion
         //statics
-        string ver = "V0.316A";
+        string ver = "V0.319A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -279,7 +279,10 @@ namespace IngameScript
         string g1;
         string g2;
         int di = 0;
-        
+        int total_drones_undocking = 0;
+        int undock_timer = 0;
+        bool drones_undocking = false;
+
         public void Save()
         {
             sb = new StringBuilder();
@@ -1041,13 +1044,24 @@ namespace IngameScript
                         {
                             drone_mining[i] = false;
                         }
+                        //check if drones are launching here
+                        total_drones_undocking = CntIntVls(drone_control_sequence, 2);
+                        if (total_drones_undocking > 0)
+                        {
+                            drones_undocking = true;
+                        }
+                        if(!drones_undocking && undock_timer != 0)
+                        {
+                            undock_timer = 0;
+                        }
+
                         if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= t_mne_runs || bores_remaining == 0 && drone_mining[i] == false)
                         {
-                            if (!launched_drone_status)
+                            if (!launched_drone_status || drones_undocking)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (launched_drone_status && total_drones_mining > mx_act_dn)
+                            if (launched_drone_status && total_drones_mining > mx_act_dn || drones_undocking)
                             {
                                 drone_must_wait[i] = true;
                             }
@@ -1067,22 +1081,22 @@ namespace IngameScript
                                 drone_must_wait[i] = false;
                             }
 
-                            if (launched_drone_status && total_drones_mining > mx_act_dn)
+                            if (launched_drone_status && total_drones_mining > mx_act_dn || drones_undocking)
                             {
                                 drone_must_wait[i] = true;
                             }
                         }
-                        if (drone_gps_grid_list_position[i] == -1 && total_drones_mining >= bores_remaining)
+                        if (drone_gps_grid_list_position[i] == -1 && total_drones_mining >= bores_remaining || drones_undocking)
                         {
                             if (!launched_drone_status)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (launched_drone_status && total_drones_mining >= mx_act_dn)
+                            if (launched_drone_status && total_drones_mining >= mx_act_dn || drones_undocking)
                             {
                                 drone_must_wait[i] = true;
                             }
-                            if (launched_drone_status && total_drones_mining < mx_act_dn)
+                            if (launched_drone_status && total_drones_mining < mx_act_dn || drones_undocking)
                             {
                                 drone_must_wait[i] = true;
                             }
@@ -1091,15 +1105,15 @@ namespace IngameScript
                         {
                             if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
                             {
-                                if (!launched_drone_status)
+                                if (!launched_drone_status || drones_undocking)
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                if (launched_drone_status && total_drones_mining >= mx_act_dn)
+                                if (launched_drone_status && total_drones_mining >= mx_act_dn || drones_undocking)
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                if (launched_drone_status && total_drones_mining < mx_act_dn)
+                                if (launched_drone_status && total_drones_mining < mx_act_dn || drones_undocking)
                                 {
                                     drone_must_wait[i] = true;
                                 }
@@ -1114,7 +1128,7 @@ namespace IngameScript
                                 {
                                     drone_must_wait[i] = false;
                                 }
-                                if (launched_drone_status && total_drones_mining >= mx_act_dn)
+                                if (launched_drone_status && total_drones_mining >= mx_act_dn || drones_undocking)
                                 {
                                     drone_must_wait[i] = true;
                                 }
@@ -1972,8 +1986,17 @@ namespace IngameScript
             {
                 pinged = false;
             }
+            if (drones_undocking) 
+            {
+                undock_timer++; 
+            }
+            if(undock_timer > undock_delay_time)
+            {
+                drones_undocking = false;
+            }
             Echo($"{time_count} {time_delay}");
             Echo($"{pngt_count} {pinged}");
+            Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
         }
 
         void GtMsgData(string data_message)

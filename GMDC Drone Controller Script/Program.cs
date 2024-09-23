@@ -732,6 +732,7 @@ namespace IngameScript
             }
             if (ant_act != null)
             {
+                
                 if (drone_name.Count == 0 && !pinged || drone_name.Count > 0 && !pinged)
                 {
                     IGC.SendBroadcastMessage(tx_ping_channel, p_cht, TransmissionDistance.TransmissionDistanceMax);
@@ -894,6 +895,7 @@ namespace IngameScript
                 }
             }
             GtCstData();
+            
             if (nPtsY == 0 && !c_gd || nPtsX == 0 && !c_gd || grdsz == 0 && !c_gd)
             {
                 grid_bore_positions.Clear();
@@ -915,6 +917,7 @@ namespace IngameScript
             }
             if (!c_gd)
             {
+                
                 if (rdy_flg)
                 {
                     rdy_flg = false;
@@ -933,7 +936,9 @@ namespace IngameScript
                 planeNrml.Normalize();
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
+                Echo("Got here");
                 grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY);
+                Echo("Got here 2");
                 if (Storage != null && Storage != "" && !c_gd)
                 {
                     grid_bore_finished.Clear();
@@ -966,7 +971,7 @@ namespace IngameScript
             }
             if (drone_name.Count > 0 && c_gd)
             {
-
+                
                 if (time_delay)
                 {
                     time_delay = false;
@@ -2473,8 +2478,6 @@ namespace IngameScript
         {
             List<Vector3D> grdPositins = new List<Vector3D>();
             dspl = new List<Vector3D>();
-            grid_bore_finished.Clear();
-            grid_bore_occupied.Clear();
             grid_bore_finished = new List<bool>();
             grid_bore_occupied = new List<bool>();
             Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);

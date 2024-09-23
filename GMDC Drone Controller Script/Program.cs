@@ -42,7 +42,7 @@ namespace IngameScript
         int undock_delay_time = 30;
         #endregion
         //statics
-        string ver = "V0.321A";
+        string ver = "V0.322A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -872,7 +872,8 @@ namespace IngameScript
             GtRCData();
             if (gnm_prsp == 1)
             {
-                GtRCData();
+                Storage = null;
+                GtRCData();                
                 if (tgt_vld)
                 {
                     mcd_nw.Clear();

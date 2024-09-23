@@ -42,7 +42,7 @@ namespace IngameScript
         int undock_delay_time = 30;
         #endregion
         //statics
-        string ver = "V0.319A";
+        string ver = "V0.321A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -282,6 +282,7 @@ namespace IngameScript
         int total_drones_undocking = 0;
         int undock_timer = 0;
         bool drones_undocking = false;
+        bool can_loading = false;
 
         public void Save()
         {
@@ -714,6 +715,10 @@ namespace IngameScript
                 current_gps_idx = 0;
                 gps_grid_position_value = -1;
             }
+            if (can_loading)
+            {
+                can_loading = false;
+            }
 
             if (Me.CustomData != null && Me.CustomData != "")
             {
@@ -892,6 +897,8 @@ namespace IngameScript
             if (nPtsY == 0 && !c_gd || nPtsX == 0 && !c_gd || grdsz == 0 && !c_gd)
             {
                 grid_bore_positions.Clear();
+                grid_bore_occupied.Clear();
+                grid_bore_finished.Clear();
                 grid_bore_occupied = new List<bool>();
                 grid_bore_finished = new List<bool>();
                 c_gd = true;
@@ -931,7 +938,12 @@ namespace IngameScript
                 {
                     grid_bore_finished.Clear();
                     grid_bore_occupied.Clear();
+                    //added from init
+                    current_gps_idx = 0;
+                    r_gps_idx = current_gps_idx;
                     GtStrD();
+                    Echo("Grid positions restored");
+                    can_loading = true;
                     Storage = null;
                 }
                 c_gd = true;
@@ -973,7 +985,7 @@ namespace IngameScript
                     }
                     for (int i = 0; i < drone_name.Count; i++)
                     {
-                        if (can_init || can_reset || drone_reset_func[i])
+                        if (can_init || can_reset || drone_reset_func[i] || can_loading)
                         {
                             general_reset = true;
                         }
@@ -987,7 +999,7 @@ namespace IngameScript
                         else flto = false;
 
                         //recall sequence reset - global
-                        if (!drone_recall_list[i] || can_reset || can_init)
+                        if (!drone_recall_list[i] || can_reset || can_init || can_loading)
                         {
                             drone_recall_sequence[i] = 0;
                         }
@@ -1253,7 +1265,10 @@ namespace IngameScript
                                     gps_grid_position_value = 0;
                                     current_gps_idx = 0;
                                 }
+                                //suspect code here
+                                Echo($"Drone coords: {i}");
                                 drone_assigned_coordinates[i] = true;
+                                Echo($"Drone coords assigned: {i} {drone_assigned_coordinates[i]}");
                             }
                             else if (!mining_grid_valid)
                             {
@@ -1286,6 +1301,8 @@ namespace IngameScript
                                 }
                                 if (grid_bore_finished[drone_gps_grid_list_position[i]])
                                 {
+                                    //suspect coordinates here 2
+                                    Echo($"Drone position finished {i}");
                                     drone_control_sequence[i] = 0;
                                     drone_mining[i] = false;
                                     drone_assigned_coordinates[i] = false;
@@ -2456,6 +2473,8 @@ namespace IngameScript
         {
             List<Vector3D> grdPositins = new List<Vector3D>();
             dspl = new List<Vector3D>();
+            grid_bore_finished.Clear();
+            grid_bore_occupied.Clear();
             grid_bore_finished = new List<bool>();
             grid_bore_occupied = new List<bool>();
             Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
@@ -2521,19 +2540,6 @@ namespace IngameScript
             return trueCount;
         }
 
-        int CntDuplicateVls(List<string> list, string textval)
-        {
-            int trueCount = 0;
-
-            foreach (string value in list)
-            {
-                if (value.Contains(textval))
-                {
-                    trueCount++;
-                }
-            }
-            return trueCount;
-        }
         public void scrnbldr(int ivl, int ivl2, bool slu)
         {
             cl[0] = drone_name[ivl] + " Status: " + drone_damage_state[ivl] + " " + drone_control_status[ivl];

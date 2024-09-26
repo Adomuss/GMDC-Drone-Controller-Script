@@ -43,7 +43,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.323A";
+        string ver = "V0.324A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -287,31 +287,34 @@ namespace IngameScript
 
         public void Save()
         {
-            sb = new StringBuilder();
-            if (grid_bore_finished.Count > 0 && grid_bore_occupied.Count > 0)
+            if (stp_cmpl)
             {
-                for (int i = 0; i < grid_bore_finished.Count; i++)
+                sb = new StringBuilder();
+                if (grid_bore_finished.Count > 0 && grid_bore_occupied.Count > 0)
                 {
-                    if (grid_bore_finished[i])
+                    for (int i = 0; i < grid_bore_finished.Count; i++)
                     {
-                        g1 = "1";
+                        if (grid_bore_finished[i])
+                        {
+                            g1 = "1";
+                        }
+                        else
+                        {
+                            g1 = "0";
+                        }
+                        if (grid_bore_occupied[i])
+                        {
+                            g2 = "1";
+                        }
+                        else
+                        {
+                            g2 = "0";
+                        }
+                        sb.Append(g1 + ":" + g2 + ";");
                     }
-                    else
-                    {
-                        g1 = "0";
-                    }
-                    if (grid_bore_occupied[i])
-                    {
-                        g2 = "1";
-                    }
-                    else
-                    {
-                        g2 = "0";
-                    }
-                    sb.Append(g1 + ":" + g2 + ";");
+                    Storage = sb.ToString();
+                    sb.Clear();
                 }
-                Storage = sb.ToString();
-                sb.Clear();
             }
         }
 

@@ -40,9 +40,10 @@ namespace IngameScript
         int srfD = 0;
         int drones_per_screen = 8;
         int undock_delay_time = 30;
+        int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.322A";
+        string ver = "V0.323A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1068,10 +1069,16 @@ namespace IngameScript
                         {
                             drones_undocking = true;
                         }
-                        if(!drones_undocking && undock_timer != 0)
+                        if (drones_undocking && undock_timer >= undock_delay_limit)
+                        {
+                            drones_undocking = false;
+                        }
+                        if (!drones_undocking && undock_timer != 0)
                         {
                             undock_timer = 0;
                         }
+
+
 
                         if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= t_mne_runs || bores_remaining == 0 && drone_mining[i] == false)
                         {

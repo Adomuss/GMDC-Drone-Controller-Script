@@ -43,7 +43,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.324A";
+        string ver = "V0.325A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -955,6 +955,11 @@ namespace IngameScript
                     Echo("Grid positions restored");
                     can_loading = true;
                     Storage = null;
+                    //reset everything else
+                    reset_drone_data();
+                    reset_drone_list();
+                    pinged = false;
+                    pngt_count = 0;
                 }
                 c_gd = true;
                 t_mne_runs = (nPtsX * nPtsY);
@@ -2659,6 +2664,75 @@ namespace IngameScript
         void dtxt()
         {
             IGC.SendBroadcastMessage(tx_chan, dt_out[di], TransmissionDistance.TransmissionDistanceMax);
+        }
+
+        void reset_drone_data() 
+        {
+            drone_name.Clear();
+            drone_damage_state.Clear();
+            drone_tunnel_complete.Clear();
+            drone_control_status.Clear();
+            drone_dock_status.Clear();
+            drone_undock_status.Clear();
+            drone_autopilot_status.Clear();
+            drone_gps_grid_list_position.Clear();
+            drone_gps_coordinates_ds.Clear();
+            drone_drill_depth_value.Clear();
+            drone_mine_distance_status.Clear();
+            drone_mine_depth_start_status.Clear();
+            drone_location_x.Clear();
+            drone_location_y.Clear();
+            drone_location_z.Clear();
+            drone_charge_storage.Clear();
+            drone_gas_storage.Clear();
+            drone_ore_storage.Clear();
+            drone_mining.Clear();
+            drone_assigned_coordinates.Clear();
+            drone_control_sequence.Clear(); ;
+            drone_recall_sequence.Clear();
+            dt_out.Clear();
+            drone_ready.Clear();
+            drone_must_wait.Clear();
+            dcs.Clear();
+            dst.Clear();
+            txmt.Clear();
+            drone_recall_list.Clear();
+            drone_reset_func.Clear();
+            drone_assigns_count.Clear();
+        }
+        void reset_drone_list()
+        {
+            drone_name = new List<string>();
+            drone_damage_state = new List<string>();
+            drone_tunnel_complete = new List<string>();
+            drone_control_status = new List<string>();
+            drone_dock_status = new List<string>();
+            drone_undock_status = new List<string>();
+            drone_autopilot_status = new List<string>();
+            drone_gps_grid_list_position = new List<int>();
+            drone_gps_coordinates_ds = new List<Vector3D>();
+            drone_drill_depth_value = new List<string>();
+            drone_mine_distance_status = new List<string>();
+            drone_mine_depth_start_status = new List<string>();
+            drone_location_x = new List<string>();
+            drone_location_y = new List<string>();
+            drone_location_z = new List<string>();
+            drone_charge_storage = new List<string>();
+            drone_gas_storage = new List<string>();
+            drone_ore_storage = new List<string>();
+            drone_mining = new List<bool>();
+            drone_assigned_coordinates = new List<bool>();
+            drone_control_sequence = new List<int>();
+            drone_recall_sequence = new List<int>();
+            dt_out = new List<string>();
+            drone_ready = new List<bool>();
+            drone_must_wait = new List<bool>();
+            dcs = new List<double>();
+            dst = new List<bool>();
+            txmt = new List<bool>();
+            drone_recall_list = new List<bool>();
+            drone_reset_func = new List<bool>();
+            drone_assigns_count = new List<int>();
         }
         //program end
 

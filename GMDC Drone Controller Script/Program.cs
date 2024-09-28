@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using VRage;
 using VRage.Collections;
@@ -43,7 +44,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.325A";
+        string ver = "V0.326A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -113,6 +114,7 @@ namespace IngameScript
         bool can_init = false;
         bool found = false;
         bool general_reset;
+        bool core_out = false;
         bool mining_grid_valid = false;
         List<bool> drone_must_wait;
         double ign_dpth = 0.0;
@@ -140,6 +142,7 @@ namespace IngameScript
         string rm_cst_dat4 = "";
         string rm_cst_dat5 = "";
         string rm_cst_dat6 = "";
+        string rm_cst_dat6_a = "";
         string rm_cst_dat7 = "";
         string rm_cst_dat8 = "";
         string rm_cst_dat9 = "";
@@ -942,7 +945,7 @@ namespace IngameScript
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
                 Echo("Got here");
-                grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY);
+                grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
                 Echo("Got here 2");
                 if (Storage != null && Storage != "" && !c_gd)
                 {
@@ -2458,6 +2461,15 @@ namespace IngameScript
                 rm_cst_dat4 = rem_gps_cmd[4];
                 rm_cst_dat5 = rem_gps_cmd[5];
                 rm_cst_dat6 = rem_gps_cmd[6];
+                if (rem_gps_cmd[7] != null)
+                {
+                    rm_cst_dat6_a = rem_gps_cmd[7];
+                }
+                if (rem_gps_cmd[7] == null) 
+                {
+                    rm_cst_dat6_a = "False";
+                }
+
                 if (double.TryParse(rm_cst_dat6, out safe_dstvl))
                 {
                     double.TryParse(rm_cst_dat6, out safe_dstvl);
@@ -2466,8 +2478,18 @@ namespace IngameScript
                 {
                     safe_dstvl = 0.0;
                 }
+
+                if (bool.TryParse(rm_cst_dat6_a, out core_out))
+                {
+                    bool.TryParse(rm_cst_dat6_a, out core_out);
+                }
+                else
+                {
+                    core_out = false;
+                }
+
             }
-            if (rem_gps_cmd.Length < 12 && rem_gps_cmd.Length > 7)
+            if (rem_gps_cmd.Length < 13 && rem_gps_cmd.Length > 8)
             {
                 rm_cst_dat7 = "";
                 rm_cst_dat8 = "";
@@ -2478,19 +2500,19 @@ namespace IngameScript
                 astd_vld = false;
                 return;
             }
-            if (rem_gps_cmd.Length > 7)
+            if (rem_gps_cmd.Length > 8)
             {
                 a_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[9]), Double.Parse(rem_gps_cmd[10]), Double.Parse(rem_gps_cmd[11]));
                 astd_vld = true;
-                rm_cst_dat7 = rem_gps_cmd[7];
-                rm_cst_dat8 = rem_gps_cmd[8];
-                rm_cst_dat9 = rem_gps_cmd[9];
-                rm_cst_dat10 = rem_gps_cmd[10];
-                rm_cst_dat11 = rem_gps_cmd[11];
-                rm_cst_dat12 = rem_gps_cmd[12];
+                rm_cst_dat7 = rem_gps_cmd[8];
+                rm_cst_dat8 = rem_gps_cmd[9];
+                rm_cst_dat9 = rem_gps_cmd[10];
+                rm_cst_dat10 = rem_gps_cmd[11];
+                rm_cst_dat11 = rem_gps_cmd[12];
+                rm_cst_dat12 = rem_gps_cmd[13];
             }
         }
-        public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY)
+        public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             List<Vector3D> grdPositins = new List<Vector3D>();
             dspl = new List<Vector3D>();
@@ -2507,6 +2529,51 @@ namespace IngameScript
                     Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
                     Vector3D disp_cent = (centerPoint - position);
                     grdPositins.Add(position);
+                    dspl.Add(disp_cent);
+                    grid_bore_occupied.Add(false);
+                    grid_bore_finished.Add(false);
+                }
+            }
+            //coreout function
+            if (coreout)
+            {
+                int core_numpoints_x;
+                int core_numpoints_y;
+                int gridcount;
+                core_numpoints_x = numPointsX - 1;
+                core_numpoints_y = numPointsY - 1;
+                if (core_numpoints_x < 1)
+                {
+                    core_numpoints_x = 1;
+                }
+                if (core_numpoints_y < 1)
+                {
+                    core_numpoints_y = 1;
+                }
+                gridcount = core_numpoints_x * core_numpoints_y;
+                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
+                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
+
+                if (gridcount > 1)
+                {
+                    for (int i = 0; i < core_numpoints_x; i++)
+                    {
+                        for (int j = 0; j < core_numpoints_y; j++)
+                        {
+                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
+                            Vector3D disp_cent = (centerPoint - position);
+                            grdPositins.Add(position);
+                            dspl.Add(disp_cent);
+                            grid_bore_occupied.Add(false);
+                            grid_bore_finished.Add(false);
+                        }
+                    }
+                }
+                if(gridcount < 2 && gridcount > 0)
+                {
+                    Vector3D position = centerPoint;
+                    Vector3D disp_cent = (centerPoint - position);
+                    grdPositins.Add(position);                    
                     dspl.Add(disp_cent);
                     grid_bore_occupied.Add(false);
                     grid_bore_finished.Add(false);

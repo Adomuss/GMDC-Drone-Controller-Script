@@ -42,6 +42,7 @@ namespace IngameScript
         int drones_per_screen = 8;
         int undock_delay_time = 30;
         int undock_delay_limit = 120;
+        bool core_out = false;
         #endregion
         //statics
         string ver = "V0.326A";
@@ -113,8 +114,7 @@ namespace IngameScript
         bool mstfrz = false;
         bool can_init = false;
         bool found = false;
-        bool general_reset;
-        bool core_out = false;
+        bool general_reset;        
         bool mining_grid_valid = false;
         List<bool> drone_must_wait;
         double ign_dpth = 0.0;

@@ -42,7 +42,7 @@ namespace IngameScript
         int drones_per_screen = 8;
         int undock_delay_time = 30;
         int undock_delay_limit = 120;
-        bool core_out = false;
+
         #endregion
         //statics
         string ver = "V0.326A";
@@ -52,6 +52,7 @@ namespace IngameScript
         string IntfS = "Interface";
         string LstS = "List";
         string dspy = "Display";
+        bool core_out = false;
         int clbs = 44;
         double bclu = 30.0;
         string tx_chan;
@@ -136,13 +137,13 @@ namespace IngameScript
         string cst_dt12;
         string cst_dt13;
         string cst_dt14;
+        string cst_dt15;
         string rm_cst_dat1 = "";
         string rm_cst_dat2 = "";
         string rm_cst_dat3 = "";
         string rm_cst_dat4 = "";
         string rm_cst_dat5 = "";
-        string rm_cst_dat6 = "";
-        string rm_cst_dat6_a = "";
+        string rm_cst_dat6 = "";        
         string rm_cst_dat7 = "";
         string rm_cst_dat8 = "";
         string rm_cst_dat9 = "";
@@ -734,7 +735,7 @@ namespace IngameScript
             else dat_vld = false;
             if (dat_vld)
             {
-                GtCstData();
+                GetCustomData_JobCommand();
 
             }
             if (ant_act != null)
@@ -750,7 +751,7 @@ namespace IngameScript
                 {
                     MyIGCMessage new_msg = listen.AcceptMessage();
                     dat_in = new_msg.Data.ToString();
-                    GtMsgData(dat_in);
+                    GetMessageData_Drones(dat_in);
 
                 }
                 if (listen_prspt.HasPendingMessage)
@@ -876,11 +877,11 @@ namespace IngameScript
                 }
             }
 
-            GtRCData();
+            GetRemoteControlData_Prospect();
             if (gnm_prsp == 1)
             {
                 Storage = null;
-                GtRCData();                
+                GetRemoteControlData_Prospect();                
                 if (tgt_vld)
                 {
                     mcd_nw.Clear();
@@ -902,7 +903,7 @@ namespace IngameScript
                     mx_act_dn = hd_lm;
                 }
             }
-            GtCstData();
+            GetCustomData_JobCommand();
             
             if (nPtsY == 0 && !c_gd || nPtsX == 0 && !c_gd || grdsz == 0 && !c_gd)
             {
@@ -954,7 +955,7 @@ namespace IngameScript
                     //added from init
                     current_gps_idx = 0;
                     r_gps_idx = current_gps_idx;
-                    GtStrD();
+                    GetStoredData();
                     Echo("Grid positions restored");
                     can_loading = true;
                     Storage = null;
@@ -2040,7 +2041,7 @@ namespace IngameScript
             Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
         }
 
-        void GtMsgData(string data_message)
+        void GetMessageData_Drones(string data_message)
         {
             // get custom data from programmable block
             String[] msgdta = data_message.Split(':');
@@ -2113,7 +2114,7 @@ namespace IngameScript
             }
         }
 
-        void GtCstData()
+        void GetCustomData_JobCommand()
         {
             String[] gps_cmnd = Me.CustomData.Split(':');
             if (gps_cmnd.Length < 10)
@@ -2416,7 +2417,9 @@ namespace IngameScript
             if (gps_cmnd.Length < 15)
             {
                 cst_dt14 = "";
+                cst_dt15 = "";
                 skp_br = 0;
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 14)
@@ -2436,8 +2439,25 @@ namespace IngameScript
                 cst_dt14 = "";
                 skp_br = 0;
             }
+            if (gps_cmnd.Length > 15)
+            {
+                cst_dt15 = gps_cmnd[15];
+                if (bool.TryParse(cst_dt15, out core_out))
+                {
+                    bool.TryParse(cst_dt15, out core_out);
+                }
+                else
+                {
+                    core_out = false;
+                }
+            }
+            else
+            {
+                cst_dt15 = "";
+                core_out = false;
+            }
         }
-        void GtRCData()
+        void GetRemoteControlData_Prospect()
         {
             String[] rem_gps_cmd = rm_ctl_act.CustomData.Split(':');
             if (rem_gps_cmd.Length < 6)
@@ -2461,14 +2481,7 @@ namespace IngameScript
                 rm_cst_dat4 = rem_gps_cmd[4];
                 rm_cst_dat5 = rem_gps_cmd[5];
                 rm_cst_dat6 = rem_gps_cmd[6];
-                if (rem_gps_cmd[7] != null)
-                {
-                    rm_cst_dat6_a = rem_gps_cmd[7];
-                }
-                if (rem_gps_cmd[7] == null) 
-                {
-                    rm_cst_dat6_a = "False";
-                }
+
 
                 if (double.TryParse(rm_cst_dat6, out safe_dstvl))
                 {
@@ -2479,17 +2492,8 @@ namespace IngameScript
                     safe_dstvl = 0.0;
                 }
 
-                if (bool.TryParse(rm_cst_dat6_a, out core_out))
-                {
-                    bool.TryParse(rm_cst_dat6_a, out core_out);
-                }
-                else
-                {
-                    core_out = false;
-                }
-
             }
-            if (rem_gps_cmd.Length < 13 && rem_gps_cmd.Length > 8)
+            if (rem_gps_cmd.Length < 12 && rem_gps_cmd.Length > 7)
             {
                 rm_cst_dat7 = "";
                 rm_cst_dat8 = "";
@@ -2500,16 +2504,16 @@ namespace IngameScript
                 astd_vld = false;
                 return;
             }
-            if (rem_gps_cmd.Length > 8)
+            if (rem_gps_cmd.Length > 7)
             {
                 a_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[9]), Double.Parse(rem_gps_cmd[10]), Double.Parse(rem_gps_cmd[11]));
                 astd_vld = true;
-                rm_cst_dat7 = rem_gps_cmd[8];
-                rm_cst_dat8 = rem_gps_cmd[9];
-                rm_cst_dat9 = rem_gps_cmd[10];
-                rm_cst_dat10 = rem_gps_cmd[11];
-                rm_cst_dat11 = rem_gps_cmd[12];
-                rm_cst_dat12 = rem_gps_cmd[13];
+                rm_cst_dat7 = rem_gps_cmd[7];
+                rm_cst_dat8 = rem_gps_cmd[8];
+                rm_cst_dat9 = rem_gps_cmd[9];
+                rm_cst_dat10 = rem_gps_cmd[10];
+                rm_cst_dat11 = rem_gps_cmd[11];
+                rm_cst_dat12 = rem_gps_cmd[12];
             }
         }
         public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
@@ -2685,7 +2689,7 @@ namespace IngameScript
             return;
         }
 
-        void GtStrD()
+        void GetStoredData()
         {
             if (Storage != null)
             {

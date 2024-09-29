@@ -159,7 +159,7 @@ namespace IngameScript
         string yp2 = "";
         string zp2 = "";
         int t_mne_sq_cmp = 0;
-        int t_mne_runs = 1;
+        int total_mining_runs = 1;
         int total_drones_mining = 0;
         int t_drn_dckg = 0;
         int t_drn_dck = 0;
@@ -924,7 +924,7 @@ namespace IngameScript
                 grid_bore_occupied.Add(false);
                 grid_bore_finished.Add(false);
                 grid_bore_positions.Add(c_gps_crds);
-                t_mne_runs = grid_bore_positions.Count;
+                total_mining_runs = grid_bore_positions.Count;
                 current_gps_idx = 0;
                 if (rdy_flg)
                 {
@@ -974,7 +974,7 @@ namespace IngameScript
                     pngt_count = 0;
                 }
                 c_gd = true;
-                t_mne_runs = (nPtsX * nPtsY);
+                total_mining_runs = grid_bore_positions.Count;
                 if (nPtsY == 0 || nPtsY == 0 || grdsz == 0 || nPtsY == 0 && nPtsY == 0 && grdsz == 0)
                 {
                     mining_grid_valid = false;
@@ -985,7 +985,7 @@ namespace IngameScript
                 }
                 if (!mining_grid_valid)
                 {
-                    t_mne_runs = 1;
+                    total_mining_runs = 1;
                 }
                 t_mne_sq_cmp = 0;
                 bores_completed = 0;
@@ -1035,11 +1035,11 @@ namespace IngameScript
 
                         if (mining_grid_valid)
                         {
-                            bores_remaining = t_mne_runs - bores_completed;
+                            bores_remaining = total_mining_runs - bores_completed;
                         }
                         if (!mining_grid_valid)
                         {
-                            bores_remaining = t_mne_runs - bores_completed;
+                            bores_remaining = total_mining_runs - bores_completed;
                         }
                         if (drone_gps_grid_list_position[i] > -1 && !drone_assigned_coordinates[i])
                         {
@@ -1100,7 +1100,7 @@ namespace IngameScript
 
 
 
-                        if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= t_mne_runs || bores_remaining == 0 && drone_mining[i] == false)
+                        if (total_drones_mining >= bores_remaining && !drone_mining[i] && bores_completed <= total_mining_runs || bores_remaining == 0 && drone_mining[i] == false)
                         {
                             if (!launched_drone_status || drones_undocking)
                             {
@@ -1115,7 +1115,7 @@ namespace IngameScript
                                 drone_must_wait[i] = false;
                             }
                         }
-                        else if (total_drones_mining < bores_remaining && bores_completed < t_mne_runs || drone_mining[i] && total_drones_mining <= bores_remaining)
+                        else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || drone_mining[i] && total_drones_mining <= bores_remaining)
                         {
                             if (!launched_drone_status)
                             {
@@ -1163,7 +1163,7 @@ namespace IngameScript
                                     drone_must_wait[i] = true;
                                 }
                             }
-                            else if (bores_completed < t_mne_runs && !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                            else if (bores_completed < total_mining_runs && !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
                             {
                                 if (!launched_drone_status)
                                 {
@@ -1213,19 +1213,19 @@ namespace IngameScript
                         else
                         {
                             dp_txm.Append('\n');
-                            dp_txm.Append("Bores: " + t_mne_runs + " Remaining: " + bores_remaining);
+                            dp_txm.Append("Bores: " + total_mining_runs + " Remaining: " + bores_remaining);
                         }
-                        if (t_mne_runs > 0)
+                        if (total_mining_runs > 0)
                         {
                             dp_txm.Append('\n');
-                            dp_txm.Append("Current mine idx: " + r_gps_idx + " of " + (t_mne_runs - 1) + " (" + bores_completed + ") ");
+                            dp_txm.Append("Current mine idx: " + r_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
                         }
                         else
                         {
                             dp_txm.Append('\n');
-                            dp_txm.Append("Current mine idx: " + current_gps_idx + " of " + (t_mne_runs - 1) + " (" + bores_completed + ") ");
+                            dp_txm.Append("Current mine idx: " + current_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
                         }
-                        if (current_gps_idx > t_mne_runs || !mining_grid_valid && bores_completed >= t_mne_runs || bores_remaining == 0)
+                        if (current_gps_idx > total_mining_runs || !mining_grid_valid && bores_completed >= total_mining_runs || bores_remaining == 0)
                         {
                             can_run = false;
                             dp_txm.Append('\n');
@@ -1245,7 +1245,7 @@ namespace IngameScript
                         }
                         if (drone_ready[i] && drone_tunnel_complete[i] == "False" && drone_dock_status[i] == "True" && can_run && !drone_assigned_coordinates[i] && drone_control_sequence[i] == 0 && !drone_must_wait[i] && !drone_mining[i] && !run_arg)
                         {
-                            if (bores_completed < t_mne_runs && mining_grid_valid != false && !drone_assigned_coordinates[i] && drone_must_wait[i] == false)
+                            if (bores_completed < total_mining_runs && mining_grid_valid != false && !drone_assigned_coordinates[i] && drone_must_wait[i] == false)
                             {
 
                                 if (grid_bore_finished.Count > 0)
@@ -1293,7 +1293,7 @@ namespace IngameScript
                                 }
                                 if (!mining_grid_valid)
                                 {
-                                    t_mne_runs = 1;
+                                    total_mining_runs = 1;
                                     drone_gps_coordinates_ds[i] = m_gps_crds;
                                     gps_grid_position_value = 0;
                                     current_gps_idx = 0;
@@ -1305,7 +1305,7 @@ namespace IngameScript
                             }
                             else if (!mining_grid_valid)
                             {
-                                t_mne_runs = 1;
+                                total_mining_runs = 1;
                                 drone_gps_coordinates_ds[i] = m_gps_crds;
                                 drone_assigned_coordinates[i] = true;
                                 gps_grid_position_value = 0;
@@ -1317,11 +1317,11 @@ namespace IngameScript
                                 {
                                     drone_must_wait[i] = true;
                                 }
-                                else if (total_drones_mining < bores_remaining && bores_completed < t_mne_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                                else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
                                 {
                                     drone_must_wait[i] = false;
                                 }
-                                if (bores_completed != t_mne_runs && !drone_must_wait[i])
+                                if (bores_completed != total_mining_runs && !drone_must_wait[i])
                                 {
                                     drone_control_sequence[i] = 1;
                                     drone_mining[i] = true;
@@ -1582,7 +1582,7 @@ namespace IngameScript
                                 txmt[i] = false;
                             }
                         }
-                        if (drone_control_sequence[i] == 11 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && t_mne_sq_cmp <= t_mne_runs && mining_grid_valid && !run_arg)
+                        if (drone_control_sequence[i] == 11 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && t_mne_sq_cmp <= total_mining_runs && mining_grid_valid && !run_arg)
                         {
                             drone_control_sequence[i] = 0;
                             drone_assigned_coordinates[i] = false;
@@ -1596,7 +1596,7 @@ namespace IngameScript
                                 txmt[i] = false;
                             }
                         }
-                        if (drone_control_sequence[i] == 11 && drone_control_status[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && current_gps_idx < t_mne_runs && drone_assigned_coordinates[i] && t_mne_sq_cmp > t_mne_runs && !run_arg || drone_control_sequence[i] == 11 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && mining_grid_valid == false && t_mne_sq_cmp >= t_mne_runs && !run_arg)
+                        if (drone_control_sequence[i] == 11 && drone_control_status[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && current_gps_idx < total_mining_runs && drone_assigned_coordinates[i] && t_mne_sq_cmp > total_mining_runs && !run_arg || drone_control_sequence[i] == 11 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && mining_grid_valid == false && t_mne_sq_cmp >= total_mining_runs && !run_arg)
                         {
                             drone_control_sequence[i] = 12;
                             drone_assigned_coordinates[i] = false;
@@ -1882,7 +1882,7 @@ namespace IngameScript
                 stts = "Not Ready";
             }
 
-            if (total_drones_mining > 0 && bores_completed < t_mne_runs && can_tx && can_run || flto)
+            if (total_drones_mining > 0 && bores_completed < total_mining_runs && can_tx && can_run || flto)
             {
                 lss_at.BlinkIntervalSeconds = 0;
                 if (t_dn_unk > 0)
@@ -1904,7 +1904,7 @@ namespace IngameScript
                 lss_at.Enabled = true;
                 stts = "Working";
             }
-            if (bores_completed >= t_mne_runs)
+            if (bores_completed >= total_mining_runs)
             {
                 lss_at.SetValue("Color", Cred);
                 lss_at.Enabled = true;

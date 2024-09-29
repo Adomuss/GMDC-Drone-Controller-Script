@@ -288,37 +288,41 @@ namespace IngameScript
         int undock_timer = 0;
         bool drones_undocking = false;
         bool can_loading = false;
+        bool init_complete = false;
+        bool init_request = false;
+        MyIni _ini = new MyIni();
 
         public void Save()
         {
             if (stp_cmpl)
             {
-                sb = new StringBuilder();
-                if (grid_bore_finished.Count > 0 && grid_bore_occupied.Count > 0)
+                _ini.Clear();
+                _ini.Set("Positions_Count", "A", grid_bore_positions.Count);
+                if (grid_bore_positions.Count > 0)
+                {
+                    for (int i = 0; i < grid_bore_positions.Count; i++)
+                    {
+                        _ini.Set("Positions", i.ToString(), grid_bore_positions[i].ToString());
+                    }
+                }
+                _ini.Set("Finished_Count", "A", grid_bore_finished.Count);
+                if (grid_bore_finished.Count > 0)
                 {
                     for (int i = 0; i < grid_bore_finished.Count; i++)
                     {
-                        if (grid_bore_finished[i])
-                        {
-                            g1 = "1";
-                        }
-                        else
-                        {
-                            g1 = "0";
-                        }
-                        if (grid_bore_occupied[i])
-                        {
-                            g2 = "1";
-                        }
-                        else
-                        {
-                            g2 = "0";
-                        }
-                        sb.Append(g1 + ":" + g2 + ";");
+                        _ini.Set("Finished", i.ToString(), grid_bore_finished[i].ToString());
                     }
-                    Storage = sb.ToString();
-                    sb.Clear();
                 }
+                _ini.Set("Occupied_Count", "A", grid_bore_occupied.Count);
+                if (grid_bore_occupied.Count > 0)
+                {
+                    for (int i = 0; i < grid_bore_occupied.Count; i++)
+                    {
+                        _ini.Set("Occupied", i.ToString(), grid_bore_occupied[i].ToString());
+                    }
+                }                
+                Storage = _ini.ToString();
+                
             }
         }
 
@@ -685,6 +689,10 @@ namespace IngameScript
                 current_gps_idx = 0;
                 r_gps_idx = current_gps_idx;
                 Storage = null;
+                if (!init_complete && !init_request)
+                {
+                    init_request = true;
+                }
             }
             if (argt.Contains("eject") || i_eject)
             {
@@ -946,27 +954,46 @@ namespace IngameScript
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
                 Echo("Got here");
-                grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
-                Echo("Got here 2");
-                if (Storage != null && Storage != "" && !c_gd)
+                if (init_request)
                 {
-                    grid_bore_finished.Clear();
-                    grid_bore_occupied.Clear();
-                    //added from init
-                    current_gps_idx = 0;
-                    r_gps_idx = current_gps_idx;
-                    GetStoredData();
-                    Echo("Grid positions restored");
-                    can_loading = true;
-                    Storage = null;
-                    //reset everything else
-                    reset_drone_data();
-                    reset_drone_list();
-                    pinged = false;
-                    pngt_count = 0;
+                    grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);                   
+                    if (Storage != null && Storage != "" && !c_gd)
+                    {
+                        _ini.TryParse(Storage);
+                        if(grid_bore_occupied.Count > 0)
+                        {
+                            grid_bore_occupied.Clear();
+                        }
+                        if(grid_bore_finished.Count > 0)
+                        {
+                            grid_bore_finished.Clear();
+                        }
+                        if(grid_bore_positions.Count > 0)
+                        {
+                            grid_bore_positions.Clear();
+                        }
+
+                        //bleep rest
+                        grid_bore_finished = new List<bool>();
+                        grid_bore_occupied = new List<bool>();
+                        grid_bore_positions = new List<Vector3D>();
+                        //added from init
+                        current_gps_idx = 0;
+                        r_gps_idx = current_gps_idx;
+                        GetStoredData();
+                        Echo("Grid positions restored");
+                        can_loading = true;
+                        Storage = null;
+                        //reset everything else
+                        reset_drone_data();
+                        reset_drone_list();
+                        pinged = false;
+                        pngt_count = 0;
+                    }
+                    c_gd = true;
                 }
-                c_gd = true;
-                t_mne_runs = (nPtsX * nPtsY);
+                Echo("Got here 2");
+                t_mne_runs = grid_bore_positions.Count;
                 if (nPtsY == 0 || nPtsY == 0 || grdsz == 0 || nPtsY == 0 && nPtsY == 0 && grdsz == 0)
                 {
                     mining_grid_valid = false;
@@ -2709,46 +2736,45 @@ namespace IngameScript
 
         void GetStoredData()
         {
-            if (Storage != null)
+            int _intvalue_posit;
+            int _intvalue_finished;
+            int _intvalue_occupied;
+            bool _boolvalfinished;
+            bool _occuvalfinished;
+            string _initval;
+            Vector3D _vectorvalue;
+            _intvalue_posit = _ini.Get("Positions_Count", "A").ToInt32();
+            _intvalue_finished = _ini.Get("Finished_Count", "A").ToInt32();
+            _intvalue_occupied = _ini.Get("Occupied_Count", "A").ToInt32();
+            if (_ini.TryParse(Storage))
             {
-                String[] str_data = Storage.Split(';');
-                if (str_data.Length > 0)
+                for(int i=0;i < _intvalue_posit - 1;i++)
                 {
-                    for (int i = 0; i < str_data.Length - 1; i++)
+                    _initval = _ini.Get("Positions", i.ToString()).ToString();
+                    String[] intvaldata = _initval.Split(':');
+                    _vectorvalue = new Vector3D(Double.Parse(intvaldata[0]), Double.Parse(intvaldata[1]), Double.Parse(intvaldata[2]));
+                    grid_bore_positions.Add(_vectorvalue); 
+                }
+                for (int i = 0; i < _intvalue_finished - 1; i++)
+                {
+                    _initval = _ini.Get("Finished", i.ToString()).ToString();
+                    if (bool.TryParse(_initval, out _boolvalfinished))
                     {
-                        String[] str_datai = str_data[i].Split(':');
-                        if (str_datai.Length > 0)
-                        {
-                            int bn;
-                            int bc;
-                            if (int.TryParse(str_datai[0], out bn))
-                            {
-                                int.TryParse(str_datai[0], out bn);
-                                if (bn > 0)
-                                {
-                                    grid_bore_finished.Add(true);
-                                }
-                                else
-                                {
-                                    grid_bore_finished.Add(false);
-                                }
-                            }
-                            if (int.TryParse(str_datai[1], out bc))
-                            {
-                                int.TryParse(str_datai[1], out bc);
-                                if (bc > 0)
-                                {
-                                    grid_bore_occupied.Add(true);
-                                }
-                                else
-                                {
-                                    grid_bore_occupied.Add(false);
-                                }
-                            }
-                        }
+                        bool.TryParse(_initval, out _boolvalfinished);
                     }
+                    grid_bore_finished.Add(_boolvalfinished);
+                }
+                for (int i = 0; i < _intvalue_occupied - 1; i++)
+                {
+                    _initval = _ini.Get("Occupied", i.ToString()).ToString();
+                    if (bool.TryParse(_initval, out _occuvalfinished))
+                    {
+                        bool.TryParse(_initval, out _occuvalfinished);
+                    }
+                    grid_bore_finished.Add(_occuvalfinished);
                 }
             }
+            Echo("Load data attempted");
         }
         void dtxt()
         {

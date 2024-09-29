@@ -44,7 +44,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.327A";
+        string ver = "V0.328A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -321,7 +321,7 @@ namespace IngameScript
                         px = grid_bore_positions[i].X.ToString();
                         py = grid_bore_positions[i].Y.ToString();
                         pz = grid_bore_positions[i].Z.ToString();
-                        sb.Append(g1 + ":" + g2 + ":" + px + ":" + py+ ":" + pz + ":" +";");
+                        sb.Append(g1 + ":" + g2 + ":" + px + ":" + py + ":" + pz + ":" + ";");
                     }
                     Storage = sb.ToString();
                     sb.Clear();
@@ -747,7 +747,7 @@ namespace IngameScript
             }
             if (ant_act != null)
             {
-                
+
                 if (drone_name.Count == 0 && !pinged || drone_name.Count > 0 && !pinged)
                 {
                     IGC.SendBroadcastMessage(tx_ping_channel, p_cht, TransmissionDistance.TransmissionDistanceMax);
@@ -888,7 +888,7 @@ namespace IngameScript
             if (gnm_prsp == 1)
             {
                 Storage = null;
-                GtRCData();                
+                GtRCData();
                 if (tgt_vld)
                 {
                     mcd_nw.Clear();
@@ -911,7 +911,7 @@ namespace IngameScript
                 }
             }
             GtCstData();
-            
+
             if (nPtsY == 0 && !c_gd || nPtsX == 0 && !c_gd || grdsz == 0 && !c_gd)
             {
                 grid_bore_positions.Clear();
@@ -933,7 +933,7 @@ namespace IngameScript
             }
             if (!c_gd)
             {
-                
+
                 if (rdy_flg)
                 {
                     rdy_flg = false;
@@ -993,7 +993,7 @@ namespace IngameScript
             }
             if (drone_name.Count > 0 && c_gd)
             {
-                
+
                 if (time_delay)
                 {
                     time_delay = false;
@@ -1076,7 +1076,7 @@ namespace IngameScript
                                 if (grid_bore_occupied[l] && queued_count == 0)
                                 {
                                     grid_bore_occupied[l] = false;
-                                }                                
+                                }
                             }
                         }
                         if (drone_control_status[i].Contains("Docked") && drone_gps_grid_list_position[i] == -1 && drone_mining[i] && drone_control_sequence[i] == 0)
@@ -2006,7 +2006,7 @@ namespace IngameScript
                         else if (i == drone_gps_grid_list_position[j])
                         {
                             drone_namer = drone_name[j];
-                            drone_assigns_count[j]++;                           
+                            drone_assigns_count[j]++;
                         }
                         if (drone_assigns_count[j] > 1)
                         {
@@ -2036,11 +2036,11 @@ namespace IngameScript
             {
                 pinged = false;
             }
-            if (drones_undocking) 
+            if (drones_undocking)
             {
-                undock_timer++; 
+                undock_timer++;
             }
-            if(undock_timer > undock_delay_time)
+            if (undock_timer > undock_delay_time)
             {
                 drones_undocking = false;
             }
@@ -2696,7 +2696,7 @@ namespace IngameScript
             IGC.SendBroadcastMessage(tx_chan, dt_out[di], TransmissionDistance.TransmissionDistanceMax);
         }
 
-        void reset_drone_data() 
+        void reset_drone_data()
         {
             drone_name.Clear();
             drone_damage_state.Clear();

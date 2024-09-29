@@ -959,6 +959,7 @@ namespace IngameScript
                 {
                     grid_bore_finished.Clear();
                     grid_bore_occupied.Clear();
+                    grid_bore_positions.Clear();
                     //added from init
                     current_gps_idx = 0;
                     r_gps_idx = current_gps_idx;

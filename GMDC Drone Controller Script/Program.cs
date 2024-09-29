@@ -291,6 +291,8 @@ namespace IngameScript
         double bx = 0.0;
         double by = 0.0;
         double bz = 0.0;
+        int initgridcount = 0;
+        bool init_grid_complete = false;
 
         public void Save()
         {
@@ -723,7 +725,16 @@ namespace IngameScript
             {
                 run_arg = false;
             }
-            if (can_init && c_gd)
+            if (!init_grid_complete && initgridcount > 0)
+            {
+            initgridcount = 0;
+            }
+            if (init_grid_complete && initgridcount >= 1)
+            {
+                initgridcount = 0;
+                init_grid_complete = false;
+            }
+            if (can_init && c_gd && !init_grid_complete)
             {
                 c_gd = false;
                 mining_grid_valid = false;
@@ -953,13 +964,16 @@ namespace IngameScript
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
                 Echo("Got here");
-                grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY);
+                if (initgridcount < 1)
+                {
+                    grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY);                    
+                }
                 Echo("Got here 2");
                 if (Storage != null && Storage != "" && !c_gd)
                 {
-                    grid_bore_finished.Clear();
-                    grid_bore_occupied.Clear();
-                    grid_bore_positions.Clear();
+                    grid_bore_finished = new List<bool>();
+                    grid_bore_occupied = new List<bool>();
+                    grid_bore_positions = new List<Vector3D>();
                     //added from init
                     current_gps_idx = 0;
                     r_gps_idx = current_gps_idx;
@@ -973,7 +987,11 @@ namespace IngameScript
                     pinged = false;
                     pngt_count = 0;
                 }
-                c_gd = true;
+                if (grid_bore_positions.Count > 0)
+                {
+                    c_gd = true;
+                    init_grid_complete = true;
+                }
                 total_mining_runs = grid_bore_positions.Count;
                 if (nPtsY == 0 || nPtsY == 0 || grdsz == 0 || nPtsY == 0 && nPtsY == 0 && grdsz == 0)
                 {
@@ -2504,6 +2522,7 @@ namespace IngameScript
         }
         public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY)
         {
+            initgridcount++;
             List<Vector3D> grdPositins = new List<Vector3D>();
             dspl = new List<Vector3D>();
             grid_bore_finished = new List<bool>();

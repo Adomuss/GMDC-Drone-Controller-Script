@@ -2133,6 +2133,7 @@ namespace IngameScript
                 cst_dt12 = "";
                 cst_dt13 = "";
                 cst_dt14 = "";
+                cst_dt15 = "";
                 Echo("Format invalid,GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
                 Echo("Set grid, numx, numy to 1 for single point");
                 return;
@@ -2167,6 +2168,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 5)
@@ -2208,6 +2211,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 6)
@@ -2245,6 +2250,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 7)
@@ -2282,6 +2289,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 8)
@@ -2314,6 +2323,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 9)
@@ -2343,6 +2354,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 11)
@@ -2370,6 +2383,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 12)
@@ -2395,6 +2410,8 @@ namespace IngameScript
                 hd_lm = 6;
                 cst_dt14 = "";
                 skp_br = 0;
+                cst_dt15 = "";
+                core_out = false;
                 return;
             }
             if (gps_cmnd.Length > 13)
@@ -2417,8 +2434,8 @@ namespace IngameScript
             if (gps_cmnd.Length < 15)
             {
                 cst_dt14 = "";
-                cst_dt15 = "";
                 skp_br = 0;
+                cst_dt15 = "";
                 core_out = false;
                 return;
             }
@@ -2439,6 +2456,7 @@ namespace IngameScript
                 cst_dt14 = "";
                 skp_br = 0;
             }
+            //additional commands
             if (gps_cmnd.Length > 15)
             {
                 cst_dt15 = gps_cmnd[15];

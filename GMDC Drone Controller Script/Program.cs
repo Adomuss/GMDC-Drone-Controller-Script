@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using VRage;
 using VRage.Collections;
@@ -284,6 +285,12 @@ namespace IngameScript
         int undock_timer = 0;
         bool drones_undocking = false;
         bool can_loading = false;
+        string px = "";
+        string py = "";
+        string pz = "";
+        double bx = 0.0;
+        double by = 0.0;
+        double bz = 0.0;
 
         public void Save()
         {
@@ -294,6 +301,7 @@ namespace IngameScript
                 {
                     for (int i = 0; i < grid_bore_finished.Count; i++)
                     {
+
                         if (grid_bore_finished[i])
                         {
                             g1 = "1";
@@ -310,7 +318,10 @@ namespace IngameScript
                         {
                             g2 = "0";
                         }
-                        sb.Append(g1 + ":" + g2 + ";");
+                        px = grid_bore_positions[i].X.ToString();
+                        py = grid_bore_positions[i].Y.ToString();
+                        pz = grid_bore_positions[i].Z.ToString();
+                        sb.Append(g1 + ":" + g2 + ":" + px + ":" + py+ ":" + pz + ":" +";");
                     }
                     Storage = sb.ToString();
                     sb.Clear();
@@ -2655,6 +2666,24 @@ namespace IngameScript
                                 {
                                     grid_bore_occupied.Add(false);
                                 }
+                            }
+                            if (str_datai.Length > 2)
+                            {
+                                Vector3D place;
+                                if (double.TryParse(str_datai[2], out bx))
+                                {
+                                    double.TryParse(str_datai[2], out bx);
+                                }
+                                if (double.TryParse(str_datai[3], out by))
+                                {
+                                    double.TryParse(str_datai[3], out by);
+                                }
+                                if (double.TryParse(str_datai[4], out bz))
+                                {
+                                    double.TryParse(str_datai[4], out bz);
+                                }
+                                place.X = bx; place.Y = by; place.Z = bz;
+                                grid_bore_positions.Add(place);
                             }
                         }
                     }

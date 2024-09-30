@@ -2573,7 +2573,7 @@ namespace IngameScript
         }
         public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
-            runcounter++;
+            initgridcount++;
             List<Vector3D> grdPositins = new List<Vector3D>();
             grid_bore_finished = new List<bool>();
             grid_bore_occupied = new List<bool>();

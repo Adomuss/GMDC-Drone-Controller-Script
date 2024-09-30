@@ -1009,6 +1009,10 @@ namespace IngameScript
                 t_mne_sq_cmp = 0;
                 bores_completed = 0;
                 current_gps_idx = 0;
+                pb_i_act.CustomData = "";
+                can_init = false;
+                i_init = false;
+                it_ag = "";
             }
             if (drone_name.Count > 0 && c_gd)
             {
@@ -2066,8 +2070,9 @@ namespace IngameScript
             Echo($"{time_count} {time_delay}");
             Echo($"{pngt_count} {pinged}");
             Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
-            Echo($"{initgridcount} {init_grid_complete}");
-            Echo($"{debugcount}");
+            //Echo($"{initgridcount} {init_grid_complete}");
+            //debugger
+            //Echo($"{debugcount} {c_gd} {can_init} {i_init} {it_ag}");
         }
 
         void GtMsgData(string data_message)

@@ -17,6 +17,7 @@ using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ObjectBuilders.Definitions;
+using VRage.Utils;
 using VRageMath;
 
 namespace IngameScript
@@ -294,7 +295,7 @@ namespace IngameScript
         double bz = 0.0;
         int initgridcount = 0;
         bool init_grid_complete = false;
-        //int debugcount = 0;
+        int debugcount = 0;
 
         public void Save()
         {
@@ -968,11 +969,7 @@ namespace IngameScript
                 Echo("Got here");
                 if (initgridcount < 1)
                 {
-                    grid_bore_positions = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY,core_out);
-                    if (core_out)
-                    {
-                        GenGrdPosits2(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
-                    }
+                    GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
                 }
                 Echo("Got here 2");
                 if (Storage != null && Storage != "" && !c_gd)
@@ -993,6 +990,7 @@ namespace IngameScript
                     pinged = false;
                     pngt_count = 0;
                 }
+                Echo("Got here 3");
                 if (grid_bore_positions.Count > 0)
                 {
                     c_gd = true;
@@ -1018,6 +1016,7 @@ namespace IngameScript
                 can_init = false;
                 i_init = false;
                 it_ag = "";
+                Echo("Got here 4");
             }
             if (drone_name.Count > 0 && c_gd)
             {
@@ -2076,8 +2075,8 @@ namespace IngameScript
             Echo($"{pngt_count} {pinged}");
             Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
             //Echo($"{initgridcount} {init_grid_complete}");
-            //debugger
-            //Echo($"{debugcount} {c_gd} {can_init} {i_init} {it_ag}");
+            //debugger            
+            Echo($"{core_out} {debugcount}");
         }
 
         void GtMsgData(string data_message)
@@ -2570,10 +2569,11 @@ namespace IngameScript
                 rm_cst_dat12 = rem_gps_cmd[12];
             }
         }
-        public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
+        IEnumerator GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             initgridcount++;
-            List<Vector3D> grdPositins = new List<Vector3D>();
+            //List<Vector3D> grdPositins = new List<Vector3D>();
+            grid_bore_positions = new List<Vector3D>();
             grid_bore_finished = new List<bool>();
             grid_bore_occupied = new List<bool>();
             Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
@@ -2585,48 +2585,46 @@ namespace IngameScript
                 for (int j = 0; j < numPointsY; j++)
                 {
                     Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
-                    grdPositins.Add(position);
+                    grid_bore_positions.Add(position);
                     grid_bore_occupied.Add(false);
                     grid_bore_finished.Add(false);
+                    yield return null;
                 }
             }
-
-            return grdPositins;
-        }
-        void GenGrdPosits2(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
-        {
-            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
-            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
-            int core_numpoints_x;
-            int core_numpoints_y;
-            int gridcount;
-            core_numpoints_x = numPointsX - 1;
-            core_numpoints_y = numPointsY - 1;
-            Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
-            Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
-            gridcount = core_numpoints_x * core_numpoints_y;
-            if (core_numpoints_x < 1)
+            if (coreout)
             {
-                core_numpoints_x = 1;
-            }
-            if (core_numpoints_y < 1)
-            {
-                core_numpoints_y = 1;
-            }
-            if (gridcount > 1)
-            {
-                for (int i = 0; i < core_numpoints_x; i++)
+                int core_numpoints_x;
+                int core_numpoints_y;
+                int gridcount;
+                core_numpoints_x = numPointsX - 1;
+                core_numpoints_y = numPointsY - 1;
+                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
+                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
+                if (core_numpoints_x < 1)
                 {
-                    for (int j = 0; j < core_numpoints_y; j++)
+                    core_numpoints_x = 1;
+                }
+                if (core_numpoints_y < 1)
+                {
+                    core_numpoints_y = 1;
+                }
+                gridcount = core_numpoints_x * core_numpoints_y;
+                if (gridcount > 1)
+                {
+                    for (int i = 0; i < core_numpoints_x; i++)
                     {
-                        Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
-                        grid_bore_positions.Add(position);
-                        grid_bore_occupied.Add(false);
-                        grid_bore_finished.Add(false);
+                        for (int j = 0; j < core_numpoints_y; j++)
+                        {
+                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
+                            grid_bore_positions.Add(position);
+                            grid_bore_occupied.Add(false);
+                            grid_bore_finished.Add(false);
+                            yield return null;
+                        }
                     }
                 }
             }
-            return;
+           yield return true;
         }
         public void CyclNextCord()
         {

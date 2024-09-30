@@ -296,6 +296,7 @@ namespace IngameScript
         int initgridcount = 0;
         bool init_grid_complete = false;
         int debugcount = 0;
+        IEnumerator<bool> _stateMachine;
 
         public void Save()
         {
@@ -2569,7 +2570,7 @@ namespace IngameScript
                 rm_cst_dat12 = rem_gps_cmd[12];
             }
         }
-        IEnumerator GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
+        public IEnumerator <bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             initgridcount++;
             //List<Vector3D> grdPositins = new List<Vector3D>();
@@ -2588,7 +2589,7 @@ namespace IngameScript
                     grid_bore_positions.Add(position);
                     grid_bore_occupied.Add(false);
                     grid_bore_finished.Add(false);
-                    yield return null;
+                    yield return false;
                 }
             }
             if (coreout)
@@ -2619,7 +2620,7 @@ namespace IngameScript
                             grid_bore_positions.Add(position);
                             grid_bore_occupied.Add(false);
                             grid_bore_finished.Add(false);
-                            yield return null;
+                            yield return false;
                         }
                     }
                 }

@@ -970,7 +970,12 @@ namespace IngameScript
                 Echo("Got here");
                 if (initgridcount < 1)
                 {
-                    GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
+                    //GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
+                    var numbers = GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out);
+                    foreach (int i in numbers)
+                    {
+
+                    }
                 }
                 Echo("Got here 2");
                 if (Storage != null && Storage != "" && !c_gd)

@@ -46,7 +46,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.332A";
+        string ver = "V0.333A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -303,6 +303,7 @@ namespace IngameScript
         bool listgenerator_finished = false;
         bool listheader_generated = false;
         double percent_list = 0.0;
+        double percent_grid = 0.0;
         string icon = "";
         int stateshift = 0;
 
@@ -644,7 +645,7 @@ namespace IngameScript
             IMyBroadcastListener listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
             myIGCMsgs.Clear();
 
-            Echo($"GMDC {ver} Running.. {icon}");
+            Echo($"GMDC {ver} Running {icon}");
             if (argt == "setup" && stp_cmpl)
             {
                 stp_cmpl = false;
@@ -1032,7 +1033,7 @@ namespace IngameScript
                         // Handle intermediate status if needed
                         if (!currentYield)
                         {
-                            Echo("Generating grid positions...");                            
+                            Echo($"Generating grid positions... {Math.Round(percent_grid,1)}%");                            
                             gridCoroutine.MoveNext();
                             
                         }
@@ -2141,9 +2142,11 @@ namespace IngameScript
             {
                 drones_undocking = false;
             }
-            Echo($"{time_count} {time_delay}");
-            Echo($"{pngt_count} {pinged}");
-            Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
+            Echo($"Drones #: {drone_name.Count}");
+            Echo($"Cycles since last broadcast: {time_count}");
+            Echo($"Cycles since last ping: {pngt_count}");
+            Echo($"Undock cycle timer: {undock_timer}");
+            Echo($"Drones Undocking: {drones_undocking} {total_drones_undocking}");           
             state_shifter();
             //debugger            
             //Echo($"{init_grid_complete} {c_gd}");
@@ -2691,7 +2694,7 @@ namespace IngameScript
         }
         IEnumerator <bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
-            debugcount++;
+            //debugcount++;
             //initgridcount++;
             //List<Vector3D> grdPositins = new List<Vector3D>();
 
@@ -2748,6 +2751,7 @@ namespace IngameScript
                 }
             }
             gridcount = gridcount_inner + gridcount_outer;
+            percent_grid = (double)grid_bore_positions.Count / (double)gridcount;
             //Echo($"{gridcount} {grid_bore_positions.Count} {gridcount}");
             if (grid_bore_positions.Count == gridcount)
             {

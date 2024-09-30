@@ -44,7 +44,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.329A";
+        string ver = "V0.330A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";

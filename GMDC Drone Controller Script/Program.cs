@@ -2065,6 +2065,7 @@ namespace IngameScript
             Echo($"{time_count} {time_delay}");
             Echo($"{pngt_count} {pinged}");
             Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
+            Echo($"{initgridcount} {init_grid_complete}");
         }
 
         void GtMsgData(string data_message)

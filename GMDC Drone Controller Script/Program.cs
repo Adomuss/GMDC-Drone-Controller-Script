@@ -208,8 +208,7 @@ namespace IngameScript
         List<int> drone_recall_sequence;
         List<bool> drone_reset_func;
         List<string> dt_out;
-        List<Vector3D> grid_bore_positions;
-        List<Vector3D> dspl;
+        List<Vector3D> grid_bore_positions;        
         List<bool> grid_bore_occupied;
         List<bool> grid_bore_finished;
         List<string> cl;
@@ -295,7 +294,7 @@ namespace IngameScript
         double bz = 0.0;
         int initgridcount = 0;
         bool init_grid_complete = false;
-        int debugcount = 0;
+        //int debugcount = 0;
 
         public void Save()
         {

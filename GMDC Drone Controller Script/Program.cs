@@ -44,7 +44,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.328A";
+        string ver = "V0.329A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -293,6 +293,7 @@ namespace IngameScript
         double bz = 0.0;
         int initgridcount = 0;
         bool init_grid_complete = false;
+        int debugcount = 0;
 
         public void Save()
         {
@@ -2066,6 +2067,7 @@ namespace IngameScript
             Echo($"{pngt_count} {pinged}");
             Echo($"{undock_timer} {drones_undocking} {total_drones_undocking}");
             Echo($"{initgridcount} {init_grid_complete}");
+            Echo($"{debugcount}");
         }
 
         void GtMsgData(string data_message)
@@ -2524,6 +2526,7 @@ namespace IngameScript
         public List<Vector3D> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY)
         {
             initgridcount++;
+            debugcount++;
             List<Vector3D> grdPositins = new List<Vector3D>();
             dspl = new List<Vector3D>();
             grid_bore_finished = new List<bool>();

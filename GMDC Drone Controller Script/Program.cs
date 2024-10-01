@@ -46,7 +46,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.333A";
+        string ver = "V0.334A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1026,7 +1026,8 @@ namespace IngameScript
                     {
                         // The coroutine has finished executing
                         Echo("Grid generation complete.");
-                        gridCoroutine = null; // Reset the coroutine                        
+                        gridCoroutine = null; // Reset the coroutine
+                        GenGrdPosits(centerPoint, planeNrml, grdsz, nPtsX, nPtsY, core_out).Dispose();
                     }
                     else
                     {
@@ -2103,7 +2104,8 @@ namespace IngameScript
                     {
                         // The coroutine has finished executing
                         Echo("Mining list complete.");
-                        listCoroutine = null; // Reset the coroutine                        
+                        listCoroutine = null; // Reset the coroutine
+                        GenListDisplay().Dispose();
                     }
                     else
                     {

@@ -46,7 +46,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.334A";
+        string ver = "V0.335A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -557,6 +557,7 @@ namespace IngameScript
             {
                 Echo($"Interface PB with tag: '{intfc_tag}' not found.");
             }
+            Echo($"GMDC {ver} Running {icon}");
             if (pb_tg.Count > 0)
             {
                 pb_i_act = pb_tg[0];
@@ -645,7 +646,7 @@ namespace IngameScript
             IMyBroadcastListener listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
             myIGCMsgs.Clear();
 
-            Echo($"GMDC {ver} Running {icon}");
+
             if (argt == "setup" && stp_cmpl)
             {
                 stp_cmpl = false;

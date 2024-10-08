@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.336A";
+        string ver = "V0.337A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -427,7 +427,7 @@ namespace IngameScript
                 gts.GetBlocksOfType<IMyRadioAntenna>(at_all, b => b.CubeGrid == Me.CubeGrid);
                 for (int i = 0; i < at_all.Count; i++)
                 {
-                    if (at_all[i].CustomName.Contains(ant_tg))
+                    if (at_all[i].CustomName.Contains(ant_tg)|| at_all[i].CustomName.Contains(comms))
                     {
                         string checker = at_all[i].CustomData;
                         drone_custom_data_check(checker, i);
@@ -444,7 +444,7 @@ namespace IngameScript
                 gts.GetBlocksOfType<IMyRemoteControl>(rm_ctl_all, b => b.CubeGrid == Me.CubeGrid);
                 for (int i = 0; i < rm_ctl_all.Count; i++)
                 {
-                    if (rm_ctl_all[i].CustomName.Contains(ant_tg))
+                    if (rm_ctl_all[i].CustomName.Contains(ant_tg) || rm_ctl_all[i].CustomName.Contains(comms))
                     {
                         rm_ctl_all[i].CustomName = $"GMDC Remote Control {secondary_tag} {ant_tg}";
                         rm_ctl_tag.Add(rm_ctl_all[i]);
@@ -457,7 +457,7 @@ namespace IngameScript
                 gts.GetBlocksOfType<IMyLightingBlock>(lts_all, b => b.CubeGrid == Me.CubeGrid);
                 for (int i = 0; i < lts_all.Count; i++)
                 {
-                    if (lts_all[i].CustomName.Contains(lt_tag))
+                    if (lts_all[i].CustomName.Contains(lt_tag) || lts_all[i].CustomName.Contains(comms))
                     {
                         lts_all[i].CustomName = $"GMDC Indicator Light {secondary_tag} {lt_tag}";
                         lts_sys_tg.Add(lts_all[i]);
@@ -490,7 +490,7 @@ namespace IngameScript
                 gts.GetBlocksOfType<IMyProgrammableBlock>(pb_all, b => b.CubeGrid == Me.CubeGrid);
                 for (int i = 0; i < pb_all.Count; i++)
                 {
-                    if (pb_all[i].CustomName.Contains(intfc_tag))
+                    if (pb_all[i].CustomName.Contains(intfc_tag) || pb_all[i].CustomName.Contains(IntfS))
                     {
                         pb_all[i].CustomName = $"GMDI Programmable Block {secondary_tag} {intfc_tag}";
                         pb_tg.Add(pb_all[i]);

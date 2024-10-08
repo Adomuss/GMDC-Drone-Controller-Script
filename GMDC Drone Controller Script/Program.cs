@@ -37,6 +37,7 @@ namespace IngameScript
         }
         string drone_tag = "SWRM_D";
         double drone_length = 2.6;
+        string secondary = "";
         //display surface indexes
         int srfM = 0;
         int srfL = 0;
@@ -46,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.335A";
+        string ver = "V0.336A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -306,6 +307,9 @@ namespace IngameScript
         double percent_grid = 0.0;
         string icon = "";
         int stateshift = 0;
+        string temp_id_name;
+        string temp_id_name_2;
+        string secondary_tag = "";
 
 
         public void Save()
@@ -357,6 +361,7 @@ namespace IngameScript
                 dp_drn_tag = "[" + drone_tag + " " + DroneS + " " + dspy + "]";
                 dp_lst_tag = "[" + drone_tag + " " + LstS + " " + dspy + "]";
                 intfc_tag = "[" + drone_tag + " " + IntfS + "]";
+                secondary_tag = "[" + secondary + "]";
                 rx_ch = drone_tag + " " + replyC;
                 rx_ch_2 = drone_tag + " " + prospC;
                 tx_recall_channel = drone_tag + " " + command_recall;
@@ -417,15 +422,6 @@ namespace IngameScript
                     rst.Add(0);
                     fct.Add("");
                 }
-                gts.GetBlocksOfType<IMyRemoteControl>(rm_ctl_all, b => b.CubeGrid == Me.CubeGrid);
-                for (int i = 0; i < rm_ctl_all.Count; i++)
-                {
-                    if (rm_ctl_all[i].CustomName.Contains(ant_tg))
-                    {
-                        rm_ctl_tag.Add(rm_ctl_all[i]);
-                    }
-                }
-                rm_ctl_all.Clear();
                 at_all = new List<IMyRadioAntenna>();
                 at_tg = new List<IMyRadioAntenna>();
                 gts.GetBlocksOfType<IMyRadioAntenna>(at_all, b => b.CubeGrid == Me.CubeGrid);
@@ -433,10 +429,29 @@ namespace IngameScript
                 {
                     if (at_all[i].CustomName.Contains(ant_tg))
                     {
+                        string checker = at_all[i].CustomData;
+                        drone_custom_data_check(checker, i);
+                        if (drone_tag == "" || drone_tag == null)
+                        {
+                            Echo($"Invalid name for drone_tag {drone_tag}");
+                            return;
+                        }
+                        at_all[i].CustomName = $"GMDC Antenna {secondary_tag} {ant_tg}";
                         at_tg.Add(at_all[i]);
                     }
                 }
                 at_all.Clear();
+                gts.GetBlocksOfType<IMyRemoteControl>(rm_ctl_all, b => b.CubeGrid == Me.CubeGrid);
+                for (int i = 0; i < rm_ctl_all.Count; i++)
+                {
+                    if (rm_ctl_all[i].CustomName.Contains(ant_tg))
+                    {
+                        rm_ctl_all[i].CustomName = $"GMDC Remote Control {secondary_tag} {ant_tg}";
+                        rm_ctl_tag.Add(rm_ctl_all[i]);
+                    }
+                }
+                rm_ctl_all.Clear();
+
                 lts_all = new List<IMyLightingBlock>();
                 lts_sys_tg = new List<IMyLightingBlock>();
                 gts.GetBlocksOfType<IMyLightingBlock>(lts_all, b => b.CubeGrid == Me.CubeGrid);
@@ -444,6 +459,7 @@ namespace IngameScript
                 {
                     if (lts_all[i].CustomName.Contains(lt_tag))
                     {
+                        lts_all[i].CustomName = $"GMDC Indicator Light {secondary_tag} {lt_tag}";
                         lts_sys_tg.Add(lts_all[i]);
                     }
                 }
@@ -464,7 +480,7 @@ namespace IngameScript
                         ds_tg_drn.Add(ds_all[i]);
                     }
                     if (ds_all[i].CustomName.Contains(dp_lst_tag))
-                    {
+                    {                        
                         ds_tg_lst.Add(ds_all[i]);
                     }
                 }
@@ -476,6 +492,7 @@ namespace IngameScript
                 {
                     if (pb_all[i].CustomName.Contains(intfc_tag))
                     {
+                        pb_all[i].CustomName = $"GMDI Programmable Block {secondary_tag} {intfc_tag}";
                         pb_tg.Add(pb_all[i]);
                     }
                 }
@@ -558,6 +575,7 @@ namespace IngameScript
                 Echo($"Interface PB with tag: '{intfc_tag}' not found.");
             }
             Echo($"GMDC {ver} Running {icon}");
+            Echo($"Channel: {drone_tag}");
             if (pb_tg.Count > 0)
             {
                 pb_i_act = pb_tg[0];
@@ -652,7 +670,6 @@ namespace IngameScript
                 stp_cmpl = false;
                 argt = "";
                 Echo("Running Setup..");
-                state_shifter();
             }
             if (argt.Contains("run") || i_run)
             {
@@ -742,7 +759,6 @@ namespace IngameScript
             {
                 run_arg = false;
             }
-            state_shifter();
             if (!init_grid_complete && initgridcount > 0)
             {
             initgridcount = 0;
@@ -763,7 +779,7 @@ namespace IngameScript
             {
                 can_loading = false;
             }
-            state_shifter();
+
             if (Me.CustomData != null && Me.CustomData != "")
             {
                 dat_vld = true;
@@ -774,7 +790,6 @@ namespace IngameScript
                 GetCustomData_JobCommand();
 
             }
-            state_shifter();
             //manage recieved communications
             if (ant_act != null)
             {
@@ -801,7 +816,6 @@ namespace IngameScript
                     c_gd = false;
                 }
             }
-            state_shifter();
             //manage recieved drone information (auto detection)
             if (recieved_drone_id_name != null && recieved_drone_id_name != "")
             {
@@ -944,7 +958,6 @@ namespace IngameScript
                     mx_act_dn = hd_lm;
                 }
             }
-            state_shifter();
             GetCustomData_JobCommand();
             //if mining grid data empty resolve issues to avoid exception
             if (nPtsY == 0 && !c_gd || nPtsX == 0 && !c_gd || grdsz == 0 && !c_gd)
@@ -964,7 +977,6 @@ namespace IngameScript
                     rdy_flg = false;
                 }
             }
-            state_shifter();
             if (!c_gd)
             {
                 
@@ -1085,7 +1097,6 @@ namespace IngameScript
 
                 if (time_delay)
                 {
-                    state_shifter();
                     time_delay = false;
                     time_count = 0;
                     if (must_recall)
@@ -1279,7 +1290,7 @@ namespace IngameScript
 
                             }
                         }
-                        dp_txm.Append("Drone Controller Status" + " - GMDC " + ver);
+                        dp_txm.Append($"Drone Controller Status - GMDC {ver} - [{drone_tag}] {icon}");
                         dp_txm.Append('\n');
 
                         if (drone_control_sequence[i] == 12)
@@ -2089,7 +2100,6 @@ namespace IngameScript
                         }
                     }
                 }
-                state_shifter();
                 //coroutine list
                 if (listCoroutine == null && !listgenerator_finished)
                 {
@@ -3032,6 +3042,77 @@ namespace IngameScript
                 stateshift = 0; 
             }
             runicon(stateshift);
+        }
+
+        public void drone_custom_data_check(string custominfo, int index)
+        {
+            Echo("Checking for drone config information..");
+            String[] temp_id = custominfo.Split(':');
+            Echo($"{temp_id.Length}");
+
+            if (temp_id.Length > 0)
+            {
+                if (temp_id[0] != null)
+                {
+                    temp_id_name = temp_id[0];
+                    if (temp_id_name == "" || temp_id_name == null)
+                    {
+                        temp_id_name = drone_tag;
+                        Echo($"Resorting to default scout tag {drone_tag}");
+                    }
+                }
+            }
+            else
+            {
+                temp_id_name = drone_tag;
+                Echo($"Resorting to default ID#.{drone_tag}");
+            }
+            if (temp_id.Length > 1)
+            {
+                if (temp_id[1] != null)
+                {
+                    temp_id_name_2 = temp_id[1];
+                    if (temp_id_name_2 == null)
+                    {
+                        temp_id_name_2 = secondary;
+                        Echo($"Resorting to default scout tag {secondary}");
+                    }
+                }
+            }
+            else
+            {
+                temp_id_name_2 = secondary;
+                Echo($"Resorting to default ID#.{drone_tag}");
+            }
+            if (temp_id.Length == 0)
+            {               
+                temp_id_name = drone_tag;
+                temp_id_name_2 = secondary;
+                Echo($"Resorting to default config {temp_id_name} {temp_id_name_2}.");
+            }
+            drone_tag = temp_id_name;
+            secondary = temp_id_name_2;
+            if (at_all[index] != null)
+            {
+                at_all[index].CustomData = $"{drone_tag}:{secondary}:";
+            }
+            Echo($"Drone info:{drone_tag}");
+            ant_tg = "[" + drone_tag + " " + comms + "]";
+            lt_tag = "[" + drone_tag + " " + comms + "]";
+            dp_mn_tag = "[" + drone_tag + " " + MainS + " " + dspy + "]";
+            dp_drn_tag = "[" + drone_tag + " " + DroneS + " " + dspy + "]";
+            dp_lst_tag = "[" + drone_tag + " " + LstS + " " + dspy + "]";
+            intfc_tag = "[" + drone_tag + " " + IntfS + "]";
+            secondary_tag = "[" + secondary + "]";
+            if(secondary == "" || secondary == " " || secondary == null)
+            {
+                secondary_tag = "";
+            }
+            rx_ch = drone_tag + " " + replyC;
+            rx_ch_2 = drone_tag + " " + prospC;
+            tx_recall_channel = drone_tag + " " + command_recall;
+            tx_ping_channel = "[" + drone_tag + "]" + " " + p_cht;
+            Me.CustomName = $"GMDC Programmable Block {secondary_tag} {ant_tg}";
         }
         //program end
 

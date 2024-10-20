@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.337A";
+        string ver = "V0.340A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -433,7 +433,7 @@ namespace IngameScript
                         drone_custom_data_check(checker, i);
                         if (drone_tag == "" || drone_tag == null)
                         {
-                            Echo($"Invalid name for drone_tag {drone_tag}");
+                            Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data");
                             return;
                         }
                         at_all[i].CustomName = $"GMDC Antenna {secondary_tag} {ant_tg}";
@@ -576,6 +576,10 @@ namespace IngameScript
             }
             Echo($"GMDC {ver} Running {icon}");
             Echo($"Channel: {drone_tag}");
+            //Echo($"Debug: {init_grid_complete} {i_init} {can_init}");
+            //Echo($"Debug2: {c_gd} {bores_regen}");
+
+
             if (pb_tg.Count > 0)
             {
                 pb_i_act = pb_tg[0];
@@ -588,7 +592,7 @@ namespace IngameScript
             {
                 if (it_ag == "" && !n_intf)
                 {
-                    n_intf = true;
+                    n_intf = true;                    
                 }
                 else
                 {
@@ -598,7 +602,7 @@ namespace IngameScript
                 {
                     i_init = true;
                 }
-                else
+                if (!it_ag.Contains("init") && i_init)
                 {
                     i_init = false;
                 }
@@ -728,6 +732,7 @@ namespace IngameScript
                 current_gps_idx = 0;
                 r_gps_idx = current_gps_idx;
                 Storage = null;
+
             }
             if (argt.Contains("eject") || i_eject)
             {
@@ -763,7 +768,7 @@ namespace IngameScript
             {
             initgridcount = 0;
             }
-            if (init_grid_complete && initgridcount >= 1)
+            if (init_grid_complete && initgridcount >= 1 || can_init && init_grid_complete)
             {
                 initgridcount = 0;
                 init_grid_complete = false;
@@ -774,7 +779,11 @@ namespace IngameScript
                 mining_grid_valid = false;
                 current_gps_idx = 0;
                 gps_grid_position_value = -1;
+                bores_regen = false;
+                init_grid_complete = false;
             }
+
+
             if (can_loading)
             {
                 can_loading = false;
@@ -1058,7 +1067,7 @@ namespace IngameScript
                             pb_i_act.CustomData = "";
                             can_init = false;
                             i_init = false;
-                            it_ag = "";
+                            it_ag = "";                            
                         }
                     }
 
@@ -1070,7 +1079,7 @@ namespace IngameScript
                     pb_i_act.CustomData = "";
                     can_init = false;
                     i_init = false;
-                    it_ag = "";
+                    it_ag = "";                    
                 }
                 
                 total_mining_runs = grid_bore_positions.Count;

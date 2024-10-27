@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.340A";
+        string ver = "V0.341A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -3064,6 +3064,7 @@ namespace IngameScript
                 if (temp_id[0] != null)
                 {
                     temp_id_name = temp_id[0];
+                    drone_tag = temp_id_name;
                     if (temp_id_name == "" || temp_id_name == null)
                     {
                         temp_id_name = drone_tag;
@@ -3081,6 +3082,7 @@ namespace IngameScript
                 if (temp_id[1] != null)
                 {
                     temp_id_name_2 = temp_id[1];
+                    secondary = temp_id_name_2;
                     if (temp_id_name_2 == null)
                     {
                         temp_id_name_2 = secondary;
@@ -3099,8 +3101,8 @@ namespace IngameScript
                 temp_id_name_2 = secondary;
                 Echo($"Resorting to default config {temp_id_name} {temp_id_name_2}.");
             }
-            drone_tag = temp_id_name;
-            secondary = temp_id_name_2;
+            
+            
             if (at_all[index] != null)
             {
                 at_all[index].CustomData = $"{drone_tag}:{secondary}:";

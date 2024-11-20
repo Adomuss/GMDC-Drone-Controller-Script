@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.341A";
+        string ver = "V0.342A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2757,7 +2757,7 @@ namespace IngameScript
                     core_numpoints_y = 1;
                 }
                 gridcount_inner = core_numpoints_x * core_numpoints_y;
-                if (gridcount_inner > 1)
+                if (gridcount_inner >= 1)
                 {
                     for (int i = 0; i < core_numpoints_x; i++)
                     {

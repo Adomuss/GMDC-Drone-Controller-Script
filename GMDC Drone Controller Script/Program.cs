@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.342A";
+        string ver = "V0.346A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -433,7 +433,7 @@ namespace IngameScript
                         drone_custom_data_check(checker, i);
                         if (drone_tag == "" || drone_tag == null)
                         {
-                            Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data");
+                            Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
                             return;
                         }
                         at_all[i].CustomName = $"GMDC Antenna {secondary_tag} {ant_tg}";
@@ -793,11 +793,17 @@ namespace IngameScript
             {
                 dat_vld = true;
             }
-            else dat_vld = false;
+            else
+            {
+                dat_vld = false;
+
+                    mcd_nw.Clear();
+                    mcd_nw.Append("GPS" + ":" + "---" + ":" + 0 + ":" + 0 + ":" + 0 + ":" + "#FF75C9F1" + ":" + "5.0" + ":" + "10.0" + ":" + "1" + ":" + "1" + ":" + "0" + ":" + "False" + ":" + "1" + ":" + "10" + ":" + "0" + ":");
+                Me.CustomData = mcd_nw.ToString();
+            }
             if (dat_vld)
             {
                 GetCustomData_JobCommand();
-
             }
             //manage recieved communications
             if (ant_act != null)
@@ -1022,7 +1028,7 @@ namespace IngameScript
                     //added from init
                     current_gps_idx = 0;
                     r_gps_idx = current_gps_idx;
-                    GtStrD();
+                    GetStoredData();
                     Echo("Grid positions restored");
                     can_loading = true;
                     Storage = null;
@@ -2889,7 +2895,7 @@ namespace IngameScript
             return;
         }
 
-        void GtStrD()
+        void GetStoredData()
         {
             if (Storage != null)
             {

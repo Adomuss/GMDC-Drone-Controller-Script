@@ -33,8 +33,8 @@ namespace IngameScript
         #region mdk preserve
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update10;
-        }
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;            
+        }        
         string drone_tag = "SWRM_D";
         double drone_length = 2.6;
         string secondary = "";
@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.346A";
+        string ver = "V0.347A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -65,8 +65,8 @@ namespace IngameScript
         double grdsz;
         int nPtsY;
         int nPtsX;
-        int t_lim = 10;
-        int p_lim = 10;
+        int drone_processing_time_limit = 27;
+        int ping_cycle_time_limit = 54;
         bool c_gd = false;
         int mx_act_dn;
         string dat_in;
@@ -310,7 +310,7 @@ namespace IngameScript
         string temp_id_name;
         string temp_id_name_2;
         string secondary_tag = "";
-
+        double game_tick_length = 16.666;
 
         public void Save()
         {
@@ -350,8 +350,10 @@ namespace IngameScript
         }
 
 
-        public void Main(string argt, UpdateType updateSource)
+        public void Main(string argument, UpdateType updateSource)
         {
+            double _Runtime = Runtime.LastRunTimeMs;
+            int _Instruction = Runtime.CurrentInstructionCount;
             IMyGridTerminalSystem gts = GridTerminalSystem as IMyGridTerminalSystem;
             if (!stp_cmpl)
             {
@@ -588,6 +590,8 @@ namespace IngameScript
                 Echo($"Interface PB: {intfc_tag}");
                 Echo($"Display command: {it_ag}");
             }
+
+            #region interface_command_processing
             if (can_intf && pb_i_act.CustomData != null)
             {
                 if (it_ag == "" && !n_intf)
@@ -664,18 +668,20 @@ namespace IngameScript
                 i_res = false;
                 i_init = false;
             }
+            #endregion
+
             IMyBroadcastListener listen = IGC.RegisterBroadcastListener(rx_ch);
             IMyBroadcastListener listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
             myIGCMsgs.Clear();
 
-
-            if (argt == "setup" && stp_cmpl)
+            #region run_command_processing
+            if (argument == "setup" && stp_cmpl)
             {
                 stp_cmpl = false;
-                argt = "";
+                argument = "";
                 Echo("Running Setup..");
             }
-            if (argt.Contains("run") || i_run)
+            if (argument.Contains("run") || i_run)
             {
                 can_run = true;
                 can_reset = false;
@@ -685,7 +691,7 @@ namespace IngameScript
                 mstfrz = false;
                 command_ask = "Run";
             }
-            if (argt.Contains("reset") || i_res)
+            if (argument.Contains("reset") || i_res)
             {
                 can_reset = true;
                 must_eject = false;
@@ -697,7 +703,7 @@ namespace IngameScript
                 command_ask = "Reset";
                 current_gps_idx = 0;
             }
-            if (argt.Contains("stop") || i_stop)
+            if (argument.Contains("stop") || i_stop)
             {
                 can_tx = false;
                 must_eject = false;
@@ -708,7 +714,7 @@ namespace IngameScript
                 mstfrz = false;
                 command_ask = "Stop";
             }
-            if (argt.Contains("recall") || i_recall)
+            if (argument.Contains("recall") || i_recall)
             {
                 must_recall = true;
                 must_eject = false;
@@ -719,7 +725,7 @@ namespace IngameScript
                 command_ask = "Recall";
                 current_gps_idx = 0;
             }
-            if (argt.Contains("init") || i_init)
+            if (argument.Contains("init") || i_init)
             {
                 must_recall = false;
                 must_eject = false;
@@ -734,7 +740,7 @@ namespace IngameScript
                 Storage = null;
 
             }
-            if (argt.Contains("eject") || i_eject)
+            if (argument.Contains("eject") || i_eject)
             {
                 must_recall = false;
                 must_eject = true;
@@ -745,7 +751,7 @@ namespace IngameScript
                 command_ask = "Eject";
                 current_gps_idx = 0;
             }
-            if (argt.Contains("freeze") || i_frz)
+            if (argument.Contains("freeze") || i_frz)
             {
                 can_tx = true;
                 mstfrz = true;
@@ -764,6 +770,8 @@ namespace IngameScript
             {
                 run_arg = false;
             }
+            #endregion
+
             if (!init_grid_complete && initgridcount > 0)
             {
             initgridcount = 0;
@@ -1489,11 +1497,11 @@ namespace IngameScript
                             grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "7";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1502,11 +1510,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 3;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1516,11 +1524,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 13;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1529,11 +1537,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 8;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "6";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1542,11 +1550,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 4;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "4";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1555,11 +1563,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 5;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1568,11 +1576,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 1;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1582,11 +1590,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 6;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "2";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1596,11 +1604,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 7;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1609,11 +1617,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 8;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "5";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1630,11 +1638,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 1;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1646,11 +1654,11 @@ namespace IngameScript
                             gps_grid_position_value = -1;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1661,11 +1669,11 @@ namespace IngameScript
 
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1674,11 +1682,11 @@ namespace IngameScript
                             drone_control_sequence[i] = 10;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1692,11 +1700,11 @@ namespace IngameScript
                             drone_reset_func[i] = false;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "8";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1706,11 +1714,11 @@ namespace IngameScript
                             drone_assigned_coordinates[i] = false;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1721,11 +1729,11 @@ namespace IngameScript
                             gps_grid_position_value = -1;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
 
@@ -1744,11 +1752,11 @@ namespace IngameScript
                             drone_reset_func[i] = false;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "8";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1764,11 +1772,11 @@ namespace IngameScript
                             drone_reset_func[i] = false;
                             cd1 = gps_grid_position_value.ToString();
                             cm = "0";
-                            cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                             dt_out[i] = c.ToString();
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1795,7 +1803,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "0";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
                             }
                             if (drone_recall_sequence[i] == 2 && drone_control_status[i] == "Idle")
@@ -1804,7 +1812,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "1";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
@@ -1814,7 +1822,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "0";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
@@ -1824,7 +1832,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "0";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
@@ -1835,7 +1843,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "6";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
@@ -1845,7 +1853,7 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "6";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
@@ -1859,13 +1867,13 @@ namespace IngameScript
                                 drone_reset_func[i] = true;
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "0";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
 
                             }
                             if (can_tx && txmt[i])
                             {
-                                dtxt();
+                                transmit_to_drone();
                                 txmt[i] = false;
                             }
                         }
@@ -1877,11 +1885,11 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "7";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
                                 if (can_tx && txmt[i])
                                 {
-                                    dtxt();
+                                    transmit_to_drone();
                                     txmt[i] = false;
                                 }
                             }
@@ -1894,11 +1902,11 @@ namespace IngameScript
                                 gps_grid_position_value = drone_gps_grid_list_position[i];
                                 cd1 = gps_grid_position_value.ToString();
                                 cm = "0";
-                                cbld(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                                drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                                 dt_out[i] = c.ToString();
                                 if (can_tx && txmt[i])
                                 {
-                                    dtxt();
+                                    transmit_to_drone();
                                     txmt[i] = false;
                                 }
                             }
@@ -2153,12 +2161,12 @@ namespace IngameScript
                 }
             }
             time_count++;
-            if (time_count >= t_lim)
+            if (time_count >= drone_processing_time_limit)
             {
                 time_delay = true;
             }
             pngt_count++;
-            if (pngt_count >= p_lim)
+            if (pngt_count >= ping_cycle_time_limit)
             {
                 pinged = false;
             }
@@ -2170,10 +2178,11 @@ namespace IngameScript
             {
                 drones_undocking = false;
             }
+            Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0,3)}% ({Math.Round(_Runtime,3)}ms) I#: {_Instruction}");
             Echo($"Drones #: {drone_name.Count}");
-            Echo($"Cycles since last broadcast: {time_count}");
-            Echo($"Cycles since last ping: {pngt_count}");
-            Echo($"Undock cycle timer: {undock_timer}");
+            Echo($"Cycles since last broadcast: {time_count} ({Math.Round((((double)drone_processing_time_limit * game_tick_length) / (double)1000 ) * (double)10,1)}s)");
+            Echo($"Cycles since last ping: {pngt_count} ({Math.Round((((double)ping_cycle_time_limit * game_tick_length) / (double)1000)* (double)10,1)}s)");            
+            Echo($"Undock cycle timer: {undock_timer} ({Math.Round((((double)undock_timer * game_tick_length) / (double)1000) * (double)10,1)}s) ({Math.Round((((double)undock_delay_limit * game_tick_length) / (double)1000) * (double)10, 1)}s)");            
             Echo($"Drones Undocking: {drones_undocking} {total_drones_undocking}");           
             state_shifter();
             //debugger            
@@ -2182,7 +2191,7 @@ namespace IngameScript
             //Echo($"{core_out} {grid_bore_positions.Count} {debugcount}");
 
         }
-
+        #region Message_Data_Handling
         void GtMsgData(string data_message)
         {
             // get custom data from programmable block
@@ -2256,6 +2265,65 @@ namespace IngameScript
             }
         }
 
+        void GtRCData()
+        {
+            String[] rem_gps_cmd = rm_ctl_act.CustomData.Split(':');
+            if (rem_gps_cmd.Length < 6)
+            {
+                rm_cst_dat1 = "";
+                rm_cst_dat2 = "";
+                rm_cst_dat3 = "";
+                rm_cst_dat4 = "";
+                rm_cst_dat5 = "";
+                rm_cst_dat6 = "";
+                tgt_vld = true;
+                return;
+            }
+            if (rem_gps_cmd.Length > 6)
+            {
+                t_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[2]), Double.Parse(rem_gps_cmd[3]), Double.Parse(rem_gps_cmd[4]));
+                tgt_vld = true;
+                rm_cst_dat1 = rem_gps_cmd[1];
+                rm_cst_dat2 = rem_gps_cmd[2];
+                rm_cst_dat3 = rem_gps_cmd[3];
+                rm_cst_dat4 = rem_gps_cmd[4];
+                rm_cst_dat5 = rem_gps_cmd[5];
+                rm_cst_dat6 = rem_gps_cmd[6];
+                if (double.TryParse(rm_cst_dat6, out safe_dstvl))
+                {
+                    double.TryParse(rm_cst_dat6, out safe_dstvl);
+                }
+                else
+                {
+                    safe_dstvl = 0.0;
+                }
+            }
+            if (rem_gps_cmd.Length < 12 && rem_gps_cmd.Length > 7)
+            {
+                rm_cst_dat7 = "";
+                rm_cst_dat8 = "";
+                rm_cst_dat9 = "";
+                rm_cst_dat10 = "";
+                rm_cst_dat11 = "";
+                rm_cst_dat12 = "";
+                astd_vld = false;
+                return;
+            }
+            if (rem_gps_cmd.Length > 7)
+            {
+                a_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[9]), Double.Parse(rem_gps_cmd[10]), Double.Parse(rem_gps_cmd[11]));
+                astd_vld = true;
+                rm_cst_dat7 = rem_gps_cmd[7];
+                rm_cst_dat8 = rem_gps_cmd[8];
+                rm_cst_dat9 = rem_gps_cmd[9];
+                rm_cst_dat10 = rem_gps_cmd[10];
+                rm_cst_dat11 = rem_gps_cmd[11];
+                rm_cst_dat12 = rem_gps_cmd[12];
+            }
+        }
+        #endregion
+
+        #region Job_Data_Handling
         void GetCustomData_JobCommand()
         {
             String[] gps_cmnd = Me.CustomData.Split(':');
@@ -2617,62 +2685,9 @@ namespace IngameScript
                 core_out = false;
             }
         }
-        void GtRCData()
-        {
-            String[] rem_gps_cmd = rm_ctl_act.CustomData.Split(':');
-            if (rem_gps_cmd.Length < 6)
-            {
-                rm_cst_dat1 = "";
-                rm_cst_dat2 = "";
-                rm_cst_dat3 = "";
-                rm_cst_dat4 = "";
-                rm_cst_dat5 = "";
-                rm_cst_dat6 = "";
-                tgt_vld = true;
-                return;
-            }
-            if (rem_gps_cmd.Length > 6)
-            {
-                t_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[2]), Double.Parse(rem_gps_cmd[3]), Double.Parse(rem_gps_cmd[4]));
-                tgt_vld = true;
-                rm_cst_dat1 = rem_gps_cmd[1];
-                rm_cst_dat2 = rem_gps_cmd[2];
-                rm_cst_dat3 = rem_gps_cmd[3];
-                rm_cst_dat4 = rem_gps_cmd[4];
-                rm_cst_dat5 = rem_gps_cmd[5];
-                rm_cst_dat6 = rem_gps_cmd[6];
-                if (double.TryParse(rm_cst_dat6, out safe_dstvl))
-                {
-                    double.TryParse(rm_cst_dat6, out safe_dstvl);
-                }
-                else
-                {
-                    safe_dstvl = 0.0;
-                }
-            }
-            if (rem_gps_cmd.Length < 12 && rem_gps_cmd.Length > 7)
-            {
-                rm_cst_dat7 = "";
-                rm_cst_dat8 = "";
-                rm_cst_dat9 = "";
-                rm_cst_dat10 = "";
-                rm_cst_dat11 = "";
-                rm_cst_dat12 = "";
-                astd_vld = false;
-                return;
-            }
-            if (rem_gps_cmd.Length > 7)
-            {
-                a_gps_crds = new Vector3D(Double.Parse(rem_gps_cmd[9]), Double.Parse(rem_gps_cmd[10]), Double.Parse(rem_gps_cmd[11]));
-                astd_vld = true;
-                rm_cst_dat7 = rem_gps_cmd[7];
-                rm_cst_dat8 = rem_gps_cmd[8];
-                rm_cst_dat9 = rem_gps_cmd[9];
-                rm_cst_dat10 = rem_gps_cmd[10];
-                rm_cst_dat11 = rem_gps_cmd[11];
-                rm_cst_dat12 = rem_gps_cmd[12];
-            }
-        }
+        #endregion
+
+        #region display_handling
         IEnumerator<bool> GenListDisplay()
         {
             if (!listheader_generated)
@@ -2720,7 +2735,59 @@ namespace IngameScript
             }            
             yield return true;
         }
-        IEnumerator <bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
+
+        public void scrnbldr(int ivl, int ivl2, bool slu)
+        {
+            cl[0] = drone_name[ivl] + " Status: " + drone_damage_state[ivl] + " " + drone_control_status[ivl];
+            cl[1] = drone_name[ivl] + (" Docked: ") + drone_dock_status[ivl];
+            cl[2] = drone_name[ivl] + (" Undocked: ") + drone_undock_status[ivl];
+            cl[3] = drone_name[ivl] + (" Finished: ") + drone_tunnel_complete[ivl];
+            cl[4] = drone_name[ivl] + (" Mining: ") + drone_mining[ivl];
+            cl[5] = drone_name[ivl] + " Waiting: " + drone_must_wait[ivl] + " Reset: " + drone_reset_func[ivl];
+            cl[6] = "Charge: " + drone_charge_storage[ivl] + "%" + " Tank: " + drone_gas_storage[ivl] + "%" + " Cargo: " + drone_ore_storage[ivl] + "%";
+            cl[7] = "Drill depth: " + drone_drill_depth_value[ivl] + "m" + " Start: " + drone_mine_depth_start_status[ivl] + "m";
+            cl[8] = "Current depth: " + drone_mine_distance_status[ivl] + "m";
+            cl[9] = "Drone control seq: " + drone_control_sequence[ivl] + "  Recall seq: " + drone_recall_sequence[ivl] + " " + drone_recall_list[ivl];
+            cl[10] = "Location: " + " " + drone_gps_grid_list_position[ivl] + "  Asnd: " + drone_assigned_coordinates[ivl] + " Unit OK: " + dst[ivl];
+            cl[11] = "X: " + drone_location_x[ivl] + " Y: " + drone_location_y[ivl] + " Z: " + drone_location_z[ivl];
+            if (slu)
+            {
+                cl2[0] = drone_name[ivl2] + " Status: " + drone_damage_state[ivl2] + " " + drone_control_status[ivl2];
+                cl2[1] = drone_name[ivl2] + (" Docked: ") + drone_dock_status[ivl2];
+                cl2[2] = drone_name[ivl2] + (" Undocked: ") + drone_undock_status[ivl2];
+                cl2[3] = drone_name[ivl2] + (" Finished: ") + drone_tunnel_complete[ivl2];
+                cl2[4] = drone_name[ivl2] + (" Mining: ") + drone_mining[ivl2];
+                cl2[5] = drone_name[ivl2] + " Waiting: " + drone_must_wait[ivl2] + " Reset: " + drone_reset_func[ivl2];
+                cl2[6] = "Charge: " + drone_charge_storage[ivl2] + "%" + " Tank: " + drone_gas_storage[ivl2] + "%" + " Cargo: " + drone_ore_storage[ivl2] + "%";
+                cl2[7] = "Drill depth: " + drone_drill_depth_value[ivl2] + "m" + " Start: " + drone_mine_depth_start_status[ivl2] + "m";
+                cl2[8] = "Current depth: " + drone_mine_distance_status[ivl2] + "m";
+                cl2[9] = "Drone control seq: " + drone_control_sequence[ivl2] + "  Recall seq: " + drone_recall_sequence[ivl2] + " " + drone_recall_list[ivl2];
+                cl2[10] = "Loc: " + " " + drone_gps_grid_list_position[ivl2] + "  Asnd: " + drone_assigned_coordinates[ivl2] + " Unit OK: " + dst[ivl2];
+                cl2[11] = "X: " + drone_location_x[ivl2] + " Y: " + drone_location_y[ivl2] + " Z: " + drone_location_z[ivl2];
+            }
+            for (int i = 0; i < cl.Count; i++)
+            {
+                tla[i] = cl[i].Length;
+                rst[i] = clbs - tla[i];
+                jxt.Clear();
+                for (int j = 0; j < rst[i]; j++)
+                {
+                    jxt.Append(" ");
+                }
+                fct[i] = jxt.ToString();
+            }
+
+            drninf.Append('\n');
+            for (int i = 0; i < cl.Count; i++)
+            {
+                drninf.Append(cl[i] + fct[i] + cl2[i]);
+                drninf.Append('\n');
+            }
+        }
+        #endregion
+
+        #region mining_grid_generation_and_management
+        IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             //debugcount++;
             //initgridcount++;
@@ -2796,6 +2863,9 @@ namespace IngameScript
             current_gps_idx = (current_gps_idx + 1) % grid_bore_positions.Count;
             next_gps_crds = grid_bore_positions[current_gps_idx];
         }
+        #endregion
+
+        #region drone_status_verification
         int CntTrueVls(List<bool> list)
         {
             int truCnt = 0;
@@ -2835,56 +2905,11 @@ namespace IngameScript
             }
             return trueCount;
         }
+        #endregion
 
-        public void scrnbldr(int ivl, int ivl2, bool slu)
-        {
-            cl[0] = drone_name[ivl] + " Status: " + drone_damage_state[ivl] + " " + drone_control_status[ivl];
-            cl[1] = drone_name[ivl] + (" Docked: ") + drone_dock_status[ivl];
-            cl[2] = drone_name[ivl] + (" Undocked: ") + drone_undock_status[ivl];
-            cl[3] = drone_name[ivl] + (" Finished: ") + drone_tunnel_complete[ivl];
-            cl[4] = drone_name[ivl] + (" Mining: ") + drone_mining[ivl];
-            cl[5] = drone_name[ivl] + " Waiting: " + drone_must_wait[ivl] + " Reset: " + drone_reset_func[ivl];
-            cl[6] = "Charge: " + drone_charge_storage[ivl] + "%" + " Tank: " + drone_gas_storage[ivl] + "%" + " Cargo: " + drone_ore_storage[ivl] + "%";
-            cl[7] = "Drill depth: " + drone_drill_depth_value[ivl] + "m" + " Start: " + drone_mine_depth_start_status[ivl] + "m";
-            cl[8] = "Current depth: " + drone_mine_distance_status[ivl] + "m";
-            cl[9] = "Drone control seq: " + drone_control_sequence[ivl] + "  Recall seq: " + drone_recall_sequence[ivl] + " " + drone_recall_list[ivl];
-            cl[10] = "Location: " + " " + drone_gps_grid_list_position[ivl] + "  Asnd: " + drone_assigned_coordinates[ivl] + " Unit OK: " + dst[ivl];
-            cl[11] = "X: " + drone_location_x[ivl] + " Y: " + drone_location_y[ivl] + " Z: " + drone_location_z[ivl];
-            if (slu)
-            {
-                cl2[0] = drone_name[ivl2] + " Status: " + drone_damage_state[ivl2] + " " + drone_control_status[ivl2];
-                cl2[1] = drone_name[ivl2] + (" Docked: ") + drone_dock_status[ivl2];
-                cl2[2] = drone_name[ivl2] + (" Undocked: ") + drone_undock_status[ivl2];
-                cl2[3] = drone_name[ivl2] + (" Finished: ") + drone_tunnel_complete[ivl2];
-                cl2[4] = drone_name[ivl2] + (" Mining: ") + drone_mining[ivl2];
-                cl2[5] = drone_name[ivl2] + " Waiting: " + drone_must_wait[ivl2] + " Reset: " + drone_reset_func[ivl2];
-                cl2[6] = "Charge: " + drone_charge_storage[ivl2] + "%" + " Tank: " + drone_gas_storage[ivl2] + "%" + " Cargo: " + drone_ore_storage[ivl2] + "%";
-                cl2[7] = "Drill depth: " + drone_drill_depth_value[ivl2] + "m" + " Start: " + drone_mine_depth_start_status[ivl2] + "m";
-                cl2[8] = "Current depth: " + drone_mine_distance_status[ivl2] + "m";
-                cl2[9] = "Drone control seq: " + drone_control_sequence[ivl2] + "  Recall seq: " + drone_recall_sequence[ivl2] + " " + drone_recall_list[ivl2];
-                cl2[10] = "Loc: " + " " + drone_gps_grid_list_position[ivl2] + "  Asnd: " + drone_assigned_coordinates[ivl2] + " Unit OK: " + dst[ivl2];
-                cl2[11] = "X: " + drone_location_x[ivl2] + " Y: " + drone_location_y[ivl2] + " Z: " + drone_location_z[ivl2];
-            }
-            for (int i = 0; i < cl.Count; i++)
-            {
-                tla[i] = cl[i].Length;
-                rst[i] = clbs - tla[i];
-                jxt.Clear();
-                for (int j = 0; j < rst[i]; j++)
-                {
-                    jxt.Append(" ");
-                }
-                fct[i] = jxt.ToString();
-            }
 
-            drninf.Append('\n');
-            for (int i = 0; i < cl.Count; i++)
-            {
-                drninf.Append(cl[i] + fct[i] + cl2[i]);
-                drninf.Append('\n');
-            }
-        }
-        public void cbld(string cdata_1, string xpos, string ypos, string zpos, string cdata_5, string cmdo, string data_6, string idepth, string xpos2, string ypos2, string zpos2)
+        #region drone_command_output
+        public void drone_command_builder(string cdata_1, string xpos, string ypos, string zpos, string cdata_5, string cmdo, string data_6, string idepth, string xpos2, string ypos2, string zpos2)
         {
             c.Clear();
             c.Append("GPS" + ":" + cdata_1 + ":" + xpos + ":" + ypos + ":" + zpos + ":" + cdata_5 + ":" + cmdo + ":" + data_6 + ":" + idepth + ":");
@@ -2894,7 +2919,13 @@ namespace IngameScript
             }
             return;
         }
+        void transmit_to_drone()
+        {
+            IGC.SendBroadcastMessage(tx_chan, dt_out[di], TransmissionDistance.TransmissionDistanceMax);
+        }
+        #endregion
 
+        #region recover_saved_data
         void GetStoredData()
         {
             if (Storage != null)
@@ -2956,10 +2987,9 @@ namespace IngameScript
                 }
             }
         }
-        void dtxt()
-        {
-            IGC.SendBroadcastMessage(tx_chan, dt_out[di], TransmissionDistance.TransmissionDistanceMax);
-        }
+
+        #endregion
+
 
         void reset_drone_data()
         {
@@ -3029,7 +3059,8 @@ namespace IngameScript
             drone_reset_func = new List<bool>();
             drone_assigns_count = new List<int>();
         }
-        
+
+        #region pretty_status_working_icon
         void runicon(int state)
         {
             if (state == 0)
@@ -3058,7 +3089,9 @@ namespace IngameScript
             }
             runicon(stateshift);
         }
+        #endregion
 
+        #region drone_system_setup_verification_handling
         public void drone_custom_data_check(string custominfo, int index)
         {
             Echo("Checking for drone config information..");
@@ -3131,6 +3164,7 @@ namespace IngameScript
             tx_ping_channel = "[" + drone_tag + "]" + " " + p_cht;
             Me.CustomName = $"GMDC Programmable Block {secondary_tag} {ant_tg}";
         }
+        #endregion
         //program end
 
     }

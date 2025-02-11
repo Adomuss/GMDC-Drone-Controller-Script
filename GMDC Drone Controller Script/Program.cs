@@ -66,7 +66,7 @@ namespace IngameScript
         int nPtsY;
         int nPtsX;
         int drone_processing_time_limit = 27;
-        int ping_cycle_time_limit = 54;
+        int ping_cycle_time_limit = 27;
         bool c_gd = false;
         int mx_act_dn;
         string dat_in;

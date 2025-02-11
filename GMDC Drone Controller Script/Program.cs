@@ -47,7 +47,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         #endregion
         //statics
-        string ver = "V0.347A";
+        string ver = "V0.348A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2180,7 +2180,7 @@ namespace IngameScript
             }
             Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0,3)}% ({Math.Round(_Runtime,3)}ms) I#: {_Instruction}");
             Echo($"Drones #: {drone_name.Count}");
-            Echo($"Cycles since last broadcast: {time_count} ({Math.Round((((double)drone_processing_time_limit * game_tick_length) / (double)1000 ) * (double)10,1)}s)");
+            Echo($"Cycles since last broadcast: {time_count} ({Math.Round((((double)drone_processing_time_limit * game_tick_length) / (double)1000 ) * (double)10,1)}s) {time_delay}");
             Echo($"Cycles since last ping: {pngt_count} ({Math.Round((((double)ping_cycle_time_limit * game_tick_length) / (double)1000)* (double)10,1)}s)");            
             Echo($"Undock cycle timer: {undock_timer} ({Math.Round((((double)undock_timer * game_tick_length) / (double)1000) * (double)10,1)}s) ({Math.Round((((double)undock_delay_limit * game_tick_length) / (double)1000) * (double)10, 1)}s)");            
             Echo($"Drones Undocking: {drones_undocking} {total_drones_undocking}");           

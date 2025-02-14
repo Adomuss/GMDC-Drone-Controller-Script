@@ -58,7 +58,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.350A";
+        string ver = "V0.351A";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -697,7 +697,7 @@ namespace IngameScript
             #endregion
             #region update_rc_job_data_from_prospector
             //pull stored RC data from prospector
-            //GtRCData();
+            GtRCData();
             //if new message update data
             if (Prospect_Message)
             {

@@ -2716,7 +2716,7 @@ namespace IngameScript
             int sprite_total = 0;
             int drone_total = 0;
 
-            var Viewport_scale = 0.4f;
+            var Viewport_scale = 0.35f;
             var Viewport_size_y = _viewport.Height * Viewport_scale;
             var Viewport_size_x = _viewport.Width * Viewport_scale;
             var view_spacer_x = Viewport_size_x / numPointsX;

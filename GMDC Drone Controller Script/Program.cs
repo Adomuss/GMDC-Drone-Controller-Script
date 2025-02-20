@@ -60,7 +60,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.356";
+        string ver = "V0.357";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2936,8 +2936,12 @@ namespace IngameScript
                 Alignment = TextAlignment.CENTER
                 };
                 frame.Add(sprite);
-           
-                for (int i = 0; i < sprites.Count; i++)
+            if (spritecount == 250)
+            {
+                var banger = new MySprite();
+                frame.Add(banger);
+            }
+            for (int i = 0; i < sprites.Count; i++)
                 {
                     frame.Add(sprites[i]);
                 }

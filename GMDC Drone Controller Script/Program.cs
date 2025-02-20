@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.361";
+        string ver = "V0.366";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -512,11 +512,6 @@ namespace IngameScript
                 setup_complete = false;
                 argument = "";
                 Echo("Running Setup..");
-            }
-            if (argument == "" || argument == null)
-            {
-                command_ask = "";                
-                Echo("System Idle.");
             }
             if (argument.Contains("run") || i_run)
             {
@@ -2792,7 +2787,7 @@ namespace IngameScript
                     Position = text_position,
                     RotationOrScale = 1.0f,
                     Size = sizer,
-                    Color = Color.LightSteelBlue.Alpha(1.0f),
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
                     Alignment = TextAlignment.CENTER,
                     FontId = "White"
                 };
@@ -2805,7 +2800,7 @@ namespace IngameScript
                     Position = text_position,
                     RotationOrScale = 0.7f,
                     Size = sizer,
-                    Color = Color.LightSteelBlue.Alpha(1.0f),
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
                     Alignment = TextAlignment.CENTER,
                     FontId = "White"
                 };
@@ -2823,9 +2818,11 @@ namespace IngameScript
                     var CentX = (float)xPlanar;
                     var CentY = (float)yPlanar;
                     string Image;
-                    var bore_colour = new Color();                                        
+                    var bore_colour = new Color();
+                    var alpha_bytes = 1.0f;
                     Image = grid_bore_finished[i] ? "CircleHollow" : "Circle";
-                    bore_colour = grid_bore_occupied[i] ? Color.LightSkyBlue : Color.White;
+                    alpha_bytes = grid_bore_occupied[i] ? 1.0f : 0.5f;
+                    bore_colour = grid_bore_occupied[i] ? Color.LightSkyBlue : Color.DeepSkyBlue;
 
                     var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
                     //background sprite
@@ -2836,12 +2833,12 @@ namespace IngameScript
                         Position = position,
                         //RotationOrScale = size_scale,
                         Size = sizer,
-                        Color = bore_colour.Alpha(1.0f),
+                        Color = bore_colour.Alpha(alpha_bytes),
                         Alignment = TextAlignment.CENTER
                     };
                     //Echo($"{position}");
                     sprites.Add(sprite);                    
-                    percent_list_vis = ((double)i / (double)grid_bore_positions.Count) * 100;
+                    percent_list_vis = (((double)i+(double)1) / ((double)grid_bore_positions.Count)) * 100;
                     spritecount++;
                     yield return false;                    
                 }
@@ -2944,25 +2941,26 @@ namespace IngameScript
                                 Alignment = TextAlignment.CENTER
                             };
                             sprites.Add(sprite_layer);
+                            spritecount++;
                         }
 
                         var position_text = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
                         //background sprite
-                        bore_colour_drone = Color.GhostWhite;
+                        bore_colour_drone = Color.WhiteSmoke;
                         var sprite_name = new MySprite()
                         {
                             Type = SpriteType.TEXT,
-                            Data = $"{drone_name[i]} {drone_charge_storage[i]}%",
+                            Data = $"{drone_name[i]}- ({drone_charge_storage[i]}%)",
                             Position = position,
-                            RotationOrScale = 0.25f,
+                            RotationOrScale = 0.3f,
                             Size = sizer * 0.5f,
                             Color = bore_colour_drone.Alpha(alpha_val),
                             Alignment = TextAlignment.CENTER,
                             FontId = "White"
                         };
                         sprites.Add(sprite_name);
-                        percent_list_drones = ((double)i / (double)drone_name.Count) * 100;
-                        spritecount++;
+                        percent_list_drones = ((double)drone_total / (double)drone_name.Count) * 100;
+                        spritecount++;                        
                         yield return false;
                     }
                 }

@@ -60,7 +60,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.353A";
+        string ver = "V0.3534";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1997,8 +1997,7 @@ namespace IngameScript
                     {                        
                         frame_generator_finished = false;                                                 
                         var frame = sV.DrawFrame();
-                        DrawSprites(ref frame);
-                        frame.Dispose();
+                        DrawSprites(ref frame);                        
                         frame.Dispose();                        
                         sprites.Clear();
                     }
@@ -2713,7 +2712,7 @@ namespace IngameScript
 
         IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
-            sprites.Clear();
+            //sprites.Clear();
             int sprite_total = 0;
             int drone_total = 0;
 

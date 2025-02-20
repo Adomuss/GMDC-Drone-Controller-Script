@@ -60,7 +60,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.3534";
+        string ver = "V0.354";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";

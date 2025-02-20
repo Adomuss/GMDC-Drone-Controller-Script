@@ -60,7 +60,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.354";
+        string ver = "V0.355";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2716,7 +2716,7 @@ namespace IngameScript
             int sprite_total = 0;
             int drone_total = 0;
 
-            var Viewport_scale = 0.35f;
+            var Viewport_scale = 0.4f;
             var Viewport_size_y = _viewport.Height * Viewport_scale;
             var Viewport_size_x = _viewport.Width * Viewport_scale;
             var view_spacer_x = Viewport_size_x / numPointsX;
@@ -2727,6 +2727,11 @@ namespace IngameScript
             var scale_factor_x = (float)(Viewport_size_x / width_real) * 1.5f;
             var scale_factor_y = (float)(Viewport_size_y / height_real) * 1.5f;
             //build sprite frame
+            if (pinged)
+            {
+                var spriteRefr = new MySprite();
+                sprites.Add(spriteRefr);
+            }
             if (grid_bore_positions.Count > 0)
             {
                 //m_gps_crds,planeNrml, grdsz, nPtsX, nPtsY, core_out

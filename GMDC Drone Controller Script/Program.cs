@@ -49,7 +49,7 @@ namespace IngameScript
         int srfD = 0;
         int srfV = 0;
         int drones_per_screen = 8;
-        int undock_delay_time = 30;
+        int undock_delay_time = 45;
         int undock_delay_limit = 120;
         
         //Drone Comms
@@ -60,7 +60,7 @@ namespace IngameScript
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.355";
+        string ver = "V0.356";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -340,8 +340,8 @@ namespace IngameScript
         int recieved_drone_name_index = -1;
         bool Drone_Message = false;
         bool Visport_OK = false;       
-        List<MySprite> sprites;       
-
+        List<MySprite> sprites;
+        int spritecount = 0;
         #endregion
         public void Save()
         {
@@ -1994,12 +1994,34 @@ namespace IngameScript
 
                     }
                     if (display_tag_vis.Count > 0 && display_tag_vis[0] != null && grid_bore_finished.Count >0 && frame_generator_finished)
-                    {                        
-                        frame_generator_finished = false;                                                 
-                        var frame = sV.DrawFrame();
-                        DrawSprites(ref frame);                        
-                        frame.Dispose();                        
-                        sprites.Clear();
+                    {
+                        frame_generator_finished = false;
+                        if (spritecount == 500)
+                        {
+                            
+                            sV.DrawFrame();
+                            var spritepinged = new MySprite();
+                            sV.DrawFrame().Add(spritepinged);
+                            if (sprites.Count == 0)
+                            {
+                                sV.DrawFrame().Dispose();
+                            }                            
+                        }                                                 
+                        else
+                        {
+                            spritecount++;
+                            Echo($"Frame reset - spritecount {spritecount}");
+                            var frame = sV.DrawFrame();
+                            DrawSprites(ref frame);
+                            frame.Dispose();
+                            sprites.Clear();
+                            
+                        }
+                        if(spritecount > 501)
+                        {
+                            spritecount = 0;
+                        }
+                        
                     }
                 }
             }
@@ -2727,11 +2749,7 @@ namespace IngameScript
             var scale_factor_x = (float)(Viewport_size_x / width_real) * 1.5f;
             var scale_factor_y = (float)(Viewport_size_y / height_real) * 1.5f;
             //build sprite frame
-            if (pinged)
-            {
-                var spriteRefr = new MySprite();
-                sprites.Add(spriteRefr);
-            }
+
             if (grid_bore_positions.Count > 0)
             {
                 //m_gps_crds,planeNrml, grdsz, nPtsX, nPtsY, core_out
@@ -2904,23 +2922,25 @@ namespace IngameScript
             }
         }
 
-        public void DrawSprites (ref MySpriteDrawFrame frame)
-        {            
+        public void DrawSprites(ref MySpriteDrawFrame frame)
+        {
+
             // Create background sprite
-            var sprite = new MySprite()
-            {
+                var sprite = new MySprite()
+                {
                 Type = SpriteType.TEXTURE,
                 Data = "Grid",
                 Position = _viewport.Center,
                 Size = _viewport.Size,
                 Color = sV.ScriptForegroundColor.Alpha(0.1f),
                 Alignment = TextAlignment.CENTER
-            };
-            frame.Add(sprite);
-            for (int i = 0; i < sprites.Count; i++)
-            {
-                frame.Add(sprites[i]);
-            }
+                };
+                frame.Add(sprite);
+           
+                for (int i = 0; i < sprites.Count; i++)
+                {
+                    frame.Add(sprites[i]);
+                }
         }
         public void CyclNextCord()
         {

@@ -53,14 +53,14 @@ namespace IngameScript
         int undock_delay_limit = 120;
         
         //Drone Comms
-        int drone_comms_processing_delay = 1;
+        int drone_comms_processing_delay = 0;
         int drone_ping_time_delay = 18;
         #endregion
 
         #region static_variables
         //statics
         int game_factor = 10;
-        string ver = "V0.357";
+        string ver = "V0.358";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -181,6 +181,8 @@ namespace IngameScript
         int total_drones_mining = 0;
         int t_drn_dckg = 0;
         int t_drn_dck = 0;
+        int t_drn_udckg = 0;
+        int t_drn_udck = 0;
         int bores_remaining;
         bool flto = false;
         int fltc = 0;
@@ -903,6 +905,8 @@ namespace IngameScript
                     total_drones_mining = CntTrueVls(drone_mining);
                     t_drn_dckg = CntStsVls(drone_control_status, "Docking");
                     t_drn_dck = CntStsVls(drone_control_status, "Docked");
+                    t_drn_udckg = CntStsVls(drone_control_status, "Undocking");
+                    t_drn_udck = CntStsVls(drone_control_status, "Undocked");
                     t_dn_dmg = CntStsVls(drone_damage_state, "DMG");
                     t_dn_unk = CntStsVls(drone_damage_state, "UNK");
                     t_dn_ok = CntStsVls(drone_damage_state, "OK");
@@ -1712,13 +1716,19 @@ namespace IngameScript
                     dp_txm.Append('\n');
                     if (!launched_drone_status)
                     {
-                        dp_txm.Append("Drones active: " + total_drones_mining + "  Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append("Drones active: " + total_drones_mining + $" Damaged: {t_dn_dmg}" + "  Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append('\n');
+                        dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append('\n');
+                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck);
                     }
                     if (launched_drone_status)
                     {
-                        dp_txm.Append("Drones active: " + total_drones_mining + "  (Max: " + max_active_drone_count + " (" + flight_factor + ")" + ")" + "  Hard limit: " + hard_active_drone_limit);
+                        dp_txm.Append("Drones active: " + total_drones_mining + $" DMG: {t_dn_dmg}" + "  (Max: " + max_active_drone_count + " (" + flight_factor + ")" + ")" + "  Hard limit: " + hard_active_drone_limit);
                         dp_txm.Append('\n');
                         dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append('\n');
+                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck);
                     }
                     dp_txm.Append('\n');
                     dp_txm.Append('\n');
@@ -2017,7 +2027,7 @@ namespace IngameScript
                             sprites.Clear();
                             
                         }
-                        if(spritecount > 501)
+                        if(spritecount > 500)
                         {
                             spritecount = 0;
                         }
@@ -2045,7 +2055,7 @@ namespace IngameScript
             {
                 drones_undocking = false;
             }
-            Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0,3)}% ({Math.Round(_Runtime,3)}ms) I#: {_Instruction}");
+            Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0,3)}% ({Math.Round(_Runtime,3)}ms) S#:{spritecount}");
             Echo($"Drones #: {drone_name.Count}");
             Echo($"Drone comms buffer: {drone_messages_list.Count} OK: {Drone_Message}");            
             Echo($"Cycles since last broadcast: {time_count} ({Math.Round((((double)drone_comms_processing_delay * game_tick_length) / (double)1000 ) * (double)game_factor, 1)}s) {time_delay}");
@@ -2771,7 +2781,7 @@ namespace IngameScript
                 spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"Total Bores: {total_mining_runs} - Remaining:{bores_remaining}",
+                    Data = $"Total Bores: {total_mining_runs} - Remaining:{bores_remaining} - Drones: {total_drones_mining}",
                     Position = text_position,
                     RotationOrScale = 0.7f,
                     Size = sizer,
@@ -2846,21 +2856,39 @@ namespace IngameScript
                         var CentY = (float)yPlanar;
                         string Image_drone ="";
                         var bore_colour_drone = new Color();
+                        var alpha_val = 1.0f;
 
+                        if (drone_control_status[i].Contains("Docked") || drone_control_status[i].Contains("Undocked") || drone_control_status[i].Contains("Docking") || drone_control_status[i].Contains("Undocking"))
+                        {
+                            alpha_val = 0.25f;
+                        }
+                        else
+                        {
+                            alpha_val = 1.0f;
+                        }
                         if (!drone_mining[i])
                         {
                             Image_drone = "Circle";
-                            bore_colour_drone = Color.Gray;
+                            bore_colour_drone = Color.Gray;                            
                         }
                         if (drone_mining[i])
                         {
                             Image_drone = "Circle";
-                            bore_colour_drone = Color.Navy;
+                            
+                            if (drone_control_status[i].Contains("Mine") || drone_control_status[i].Contains("Mine"))
+                            {
+                                bore_colour_drone = Color.Purple;
+                            }
+                            else
+                            {
+                                bore_colour_drone = Color.Navy;
+                            }
+                            alpha_val = 1.0f;
                         }
                         if (drone_damage_state[i] == "DMG")
                         {
                             Image_drone = "Circle";
-                            bore_colour_drone = Color.Red;
+                            bore_colour_drone = Color.Red;                            
                         }
                         
                         var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
@@ -2872,7 +2900,7 @@ namespace IngameScript
                             Position = position,
                             //RotationOrScale = size_scale,
                             Size = sizer*0.8f,
-                            Color = bore_colour_drone.Alpha(1.0f),
+                            Color = bore_colour_drone.Alpha(alpha_val),
                             Alignment = TextAlignment.CENTER
                         };
                         sprites.Add(sprite);
@@ -2886,12 +2914,12 @@ namespace IngameScript
                             Position = position,
                             RotationOrScale = 0.25f,
                             Size = sizer * 0.5f,
-                            Color = bore_colour_drone.Alpha(1.0f),
+                            Color = bore_colour_drone.Alpha(alpha_val),
                             Alignment = TextAlignment.CENTER,
-                            FontId = "DEBUG"
+                            FontId = "White"
                         };
                         sprites.Add(sprite_name);
-                        percent_list_drones = ((double)i / (double)drone_name.Count) * 100;
+                        percent_list_drones = ((double)i / (double)drone_name.Count-1) * 100;
                         yield return false;
                     }
                 }
@@ -2924,9 +2952,15 @@ namespace IngameScript
 
         public void DrawSprites(ref MySpriteDrawFrame frame)
         {
-
+            if (spritecount == 250)
+            {
+                var banger = new MySprite();
+                frame.Add(banger);
+                frame.Add(banger);
+                Echo("Frame shift");
+            }
             // Create background sprite
-                var sprite = new MySprite()
+            var sprite = new MySprite()
                 {
                 Type = SpriteType.TEXTURE,
                 Data = "Grid",
@@ -2936,11 +2970,7 @@ namespace IngameScript
                 Alignment = TextAlignment.CENTER
                 };
                 frame.Add(sprite);
-            if (spritecount == 250)
-            {
-                var banger = new MySprite();
-                frame.Add(banger);
-            }
+ 
             for (int i = 0; i < sprites.Count; i++)
                 {
                     frame.Add(sprites[i]);
@@ -3488,7 +3518,7 @@ namespace IngameScript
                 sM = ((IMyTextSurfaceProvider)display_tag_main[0]).GetSurface(srfM);
                 if (sM.ContentType != ContentType.TEXT_AND_IMAGE)
                 {
-                    sM.ContentType = ContentType.TEXT_AND_IMAGE;
+                    sM.ContentType = ContentType.TEXT_AND_IMAGE;                    
                 }
             }
             if (sM == null)

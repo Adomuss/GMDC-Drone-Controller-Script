@@ -49,7 +49,7 @@ namespace IngameScript
         int srfD = 0;
         int srfV = 0;
         int drones_per_screen = 8;
-        int undock_delay_time = 45;
+        int undock_delay_time = 60;
         int undock_delay_limit = 120;
         
         //Drone Comms
@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.360";
+        string ver = "V0.361";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -187,6 +187,11 @@ namespace IngameScript
         int t_drn_dck = 0;
         int t_drn_udckg = 0;
         int t_drn_udck = 0;
+        int t_drn_rechg = 0;
+        int t_drn_unload = 0;
+        int t_drn_idle = 0;
+        int t_drn_exit = 0;
+        int t_drn_mine = 0;
         int bores_remaining;
         bool flto = false;
         int fltc = 0;
@@ -303,7 +308,7 @@ namespace IngameScript
         IMyTextSurface sV;       
         RectangleF _viewport;
         StringBuilder sb;
-        int t_dn_dmg = 0;
+        int t_drn_dmg = 0;
         int t_dn_unk = 0;
         int t_dn_ok = 0;
         string g1;
@@ -507,6 +512,11 @@ namespace IngameScript
                 setup_complete = false;
                 argument = "";
                 Echo("Running Setup..");
+            }
+            if (argument == "" || argument == null)
+            {
+                command_ask = "";                
+                Echo("System Idle.");
             }
             if (argument.Contains("run") || i_run)
             {
@@ -912,9 +922,14 @@ namespace IngameScript
                     t_drn_dck = CntStsVls(drone_control_status, "Docked");
                     t_drn_udckg = CntStsVls(drone_control_status, "Undocking");
                     t_drn_udck = CntStsVls(drone_control_status, "Undocked");
-                    t_dn_dmg = CntStsVls(drone_damage_state, "DMG");
+                    t_drn_dmg = CntStsVls(drone_damage_state, "DMG");
                     t_dn_unk = CntStsVls(drone_damage_state, "UNK");
                     t_dn_ok = CntStsVls(drone_damage_state, "OK");
+                    t_drn_exit = CntStsVls(drone_damage_state, "Exit");
+                    t_drn_idle = CntStsVls(drone_damage_state, "Idle");
+                    t_drn_rechg = CntStsVls(drone_damage_state, "Recharg");
+                    t_drn_unload = CntStsVls(drone_damage_state, "Unload");
+                    t_drn_mine = CntStsVls(drone_damage_state, "Mine");
 
                     total_drones_undocking = CntIntVls(drone_control_sequence, 2);
                     //check if drones are launching here
@@ -1721,19 +1736,19 @@ namespace IngameScript
                     dp_txm.Append('\n');
                     if (!launched_drone_status)
                     {
-                        dp_txm.Append("Drones active: " + total_drones_mining + $" Damaged: {t_dn_dmg}");
+                        dp_txm.Append("Drones active: " + total_drones_mining + $" Idle: {t_drn_idle} Fault: {t_drn_dmg} ");
                         dp_txm.Append('\n');
-                        dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck + $" - Recharge: {t_drn_rechg} Unload: {t_drn_unload}");
                         dp_txm.Append('\n');
-                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck);
+                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck + $" - Mining: {t_drn_mine}  Exit: {t_drn_exit}");
                     }
                     if (launched_drone_status)
                     {
-                        dp_txm.Append("Drones active: " + total_drones_mining + $" DMG: {t_dn_dmg}" + "  (Max: " + max_active_drone_count + " (" + flight_factor + ")" + ")" + "  Hard limit: " + hard_active_drone_limit);
+                        dp_txm.Append("Drones active: " + total_drones_mining + $" Idle: {t_drn_idle} Fault: {t_drn_dmg}" + "  (Max: " + max_active_drone_count + " (" + flight_factor + ")" + ")" + "  Hard limit: " + hard_active_drone_limit);
                         dp_txm.Append('\n');
-                        dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck);
+                        dp_txm.Append("Docking: " + t_drn_dckg + "  Docked: " + t_drn_dck + $" - Recharge: {t_drn_rechg} Unload: {t_drn_unload}");
                         dp_txm.Append('\n');
-                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck);
+                        dp_txm.Append("Undocking: " + t_drn_udckg + "  Undocked: " + t_drn_udck + $" - Mining: {t_drn_mine}  Exit: {t_drn_exit}");
                     }
                     dp_txm.Append('\n');
                     dp_txm.Append('\n');
@@ -1833,7 +1848,7 @@ namespace IngameScript
                     lss_at.BlinkIntervalSeconds = 0.7f;
                 }
                 lss_at.SetValue("Color", Cyellow);
-                if (t_dn_dmg > 0)
+                if (t_drn_dmg > 0)
                 {
                     lss_at.BlinkIntervalSeconds = 0.7f;
                     lss_at.SetValue("Color", Coren);
@@ -2885,6 +2900,10 @@ namespace IngameScript
                             {
                                 bore_colour_drone = Color.Purple;
                             }
+                            else if (drone_control_status[i].Contains("Exit"))
+                            {
+                                bore_colour_drone = Color.Orange;
+                            }
                             else
                             {
                                 bore_colour_drone = Color.Navy;
@@ -2910,13 +2929,30 @@ namespace IngameScript
                             Alignment = TextAlignment.CENTER
                         };
                         sprites.Add(sprite);
+                        if (drone_control_status[i].Contains("Recharg") || drone_control_status[i].Contains("Unload"))
+                        {
+                            Image_drone = "IconEnergy";
+                            bore_colour_drone = Color.Yellow;
+                            var sprite_layer = new MySprite()
+                            {
+                                Type = SpriteType.TEXTURE,
+                                Data = Image_drone,
+                                Position = position,
+                                //RotationOrScale = size_scale,
+                                Size = sizer * 0.8f,
+                                Color = bore_colour_drone.Alpha(alpha_val),
+                                Alignment = TextAlignment.CENTER
+                            };
+                            sprites.Add(sprite_layer);
+                        }
+
                         var position_text = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
                         //background sprite
                         bore_colour_drone = Color.GhostWhite;
                         var sprite_name = new MySprite()
                         {
                             Type = SpriteType.TEXT,
-                            Data = $"{drone_name[i]}",
+                            Data = $"{drone_name[i]} {drone_charge_storage[i]}%",
                             Position = position,
                             RotationOrScale = 0.25f,
                             Size = sizer * 0.5f,

@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.367";
+        string ver = "V0.368";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -924,7 +924,7 @@ namespace IngameScript
                     t_drn_idle = CntStsVls(drone_control_status, "Idle");
                     t_drn_rechg = CntStsVls(drone_control_status, "Recharg");
                     t_drn_unload = CntStsVls(drone_control_status, "Unload");
-                    t_drn_mine = CntStsVls(drone_control_status, "Mine");
+                    t_drn_mine = CntStsVls(drone_control_status, "Min");
 
                     total_drones_undocking = CntIntVls(drone_control_sequence, 2);
                     //check if drones are launching here

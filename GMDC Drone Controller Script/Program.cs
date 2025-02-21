@@ -53,7 +53,7 @@ namespace IngameScript
         int undock_delay_limit = 120;
         
         //Drone Comms
-        int drone_comms_processing_delay = 0;
+        int drone_comms_processing_delay = 1;
         int drone_ping_time_delay = 18;
 
         #endregion
@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.366";
+        string ver = "V0.367";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -920,11 +920,11 @@ namespace IngameScript
                     t_drn_dmg = CntStsVls(drone_damage_state, "DMG");
                     t_dn_unk = CntStsVls(drone_damage_state, "UNK");
                     t_dn_ok = CntStsVls(drone_damage_state, "OK");
-                    t_drn_exit = CntStsVls(drone_damage_state, "Exit");
-                    t_drn_idle = CntStsVls(drone_damage_state, "Idle");
-                    t_drn_rechg = CntStsVls(drone_damage_state, "Recharg");
-                    t_drn_unload = CntStsVls(drone_damage_state, "Unload");
-                    t_drn_mine = CntStsVls(drone_damage_state, "Mine");
+                    t_drn_exit = CntStsVls(drone_control_status, "Exit");
+                    t_drn_idle = CntStsVls(drone_control_status, "Idle");
+                    t_drn_rechg = CntStsVls(drone_control_status, "Recharg");
+                    t_drn_unload = CntStsVls(drone_control_status, "Unload");
+                    t_drn_mine = CntStsVls(drone_control_status, "Mine");
 
                     total_drones_undocking = CntIntVls(drone_control_sequence, 2);
                     //check if drones are launching here
@@ -3009,7 +3009,7 @@ namespace IngameScript
                 Data = "Grid",
                 Position = _viewport.Center,
                 Size = _viewport.Size,
-                Color = sV.ScriptForegroundColor.Alpha(0.1f),
+                Color = sV.ScriptForegroundColor.Alpha(0.0f),
                 Alignment = TextAlignment.CENTER
                 };
                 frame.Add(sprite);

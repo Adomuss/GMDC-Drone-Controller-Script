@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.368";
+        string ver = "V0.369";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2893,7 +2893,7 @@ namespace IngameScript
                         {
                             Image_drone = "Circle";
                             
-                            if (drone_control_status[i].Contains("Mine") || drone_control_status[i].Contains("Mine"))
+                            if (drone_control_status[i].Contains("Min"))
                             {
                                 bore_colour_drone = Color.Purple;
                             }

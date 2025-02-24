@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.370";
+        string ver = "V0.371";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -3640,7 +3640,10 @@ namespace IngameScript
         void update_display()  // Extracted from drone_processing
         {
             dp_txm.Clear().EnsureCapacity(512); // ~400-600 chars typical
-            dp_txm.AppendLine($"Total drones detected: {drone_name.Count}")
+            dp_txm.AppendLine($"GMDC {ver} Running {icon}")
+                  .AppendLine($"-------------------------")
+                  .AppendLine($" ")
+                   .AppendLine($"Total drones detected: {drone_name.Count}")
                   .AppendLine(launched_drone_status
                       ? $"Drones active: {total_drones_mining} Idle: {t_drn_idle} Fault: {t_drn_dmg} (Max: {max_active_drone_count} ({flight_factor})) Hard limit: {hard_active_drone_limit}"
                       : $"Drones active: {total_drones_mining} Idle: {t_drn_idle} Fault: {t_drn_dmg}")

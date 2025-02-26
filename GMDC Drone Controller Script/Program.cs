@@ -248,8 +248,8 @@ namespace IngameScript
         List<string> fct;
         List<bool> dst;
         List<bool> txmt;
-        int cbval = 0;
-        bool clbt = false;
+        //int cbval = 0;
+        //bool clbt = false;
         int bores_completed;
         int gps_grid_position_value = -1;
         string drone_namer = "";
@@ -288,7 +288,7 @@ namespace IngameScript
         bool i_stop = false;
         bool n_intf = false;
         string it_ag;
-        decimal dps_r_d = 0.0m;
+        //decimal dps_r_d = 0.0m;
         List<IMyRemoteControl> rm_ctl_all;
         List<IMyRemoteControl> rm_ctl_tag;
         List<IMyRadioAntenna> at_all;

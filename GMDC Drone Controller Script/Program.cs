@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.374";
+        string ver = "V0.380";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -253,7 +253,7 @@ namespace IngameScript
         int bores_completed;
         int gps_grid_position_value = -1;
         string drone_namer = "";
-        StringBuilder drninf;
+        StringBuilder droneInformation;
         StringBuilder dp_txm;
         StringBuilder dp_txl;
         StringBuilder jxt;
@@ -272,7 +272,7 @@ namespace IngameScript
         string command_operate = "operate";
         bool must_eject = false;
         bool run_arg = false;
-        bool rnw_hdr = true;
+        bool renew_header = true;
         Color Cgreen = new Color(0, 255, 0);
         Color Cyellow = new Color(255, 255, 0);
         Color Cred = new Color(255, 0, 0);
@@ -1063,52 +1063,9 @@ namespace IngameScript
 
                             }
                         }
-                        dp_txm.Append($"Drone Controller Status - GMDC {ver} - [{drone_tag}] {icon}");
-                        dp_txm.Append('\n');
-                        if (drone_control_sequence[i] == 12)
-                        {
-                            gps_grid_position_value = -1;
-                            drone_mining[i] = false;
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Mining seq. complete"); ;
-                        }
 
-                        if (grid_bore_positions.Count > 0)
-                        {
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Grid pos: " + grid_bore_positions.Count);
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Grid dist: " + cst_dt7 + "m #X: " + cst_dt8 + " #Y: " + cst_dt9);
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Grid OK: " + mining_grid_valid);
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Bores: " + grid_bore_positions.Count + " Remain: " + bores_remaining + "  Skip: " + skp_br);
-                            dp_txm.Append('\n');
-                        }
-                        else
-                        {
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Bores: " + total_mining_runs + " Remaining: " + bores_remaining);
-                        }
-                        if (total_mining_runs > 0)
-                        {
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Current mine idx: " + r_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
-                        }
-                        else
-                        {
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Current mine idx: " + current_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
-                        }
-                        if (current_gps_idx > total_mining_runs || !mining_grid_valid && bores_completed >= total_mining_runs || bores_remaining == 0)
-                        {
-                            can_run = false;
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Mine seq. complete");
-                            dp_txm.Append('\n');
-                            drone_control_sequence[i] = 12;
-                            current_gps_idx = 0;
-                        }
+                        updateDisplay(i);
+
                         gps_grid_position_value = drone_gps_grid_list_position[i];
                         if (drone_control_status[i] == "Docked Idle")
                         {
@@ -1762,86 +1719,7 @@ namespace IngameScript
                 stts = "Sequence Finished";
             }
 
-
-            //display processing
-            if (display_tag_drone.Count > 0 && drone_name.Count > 0 && display_tag_drone[0] != null)
-            {
-
-                for (int i = 0; i < drone_name.Count; i++)
-                {
-                    if (rnw_hdr)
-                    {
-                        drninf.Clear();
-                        drninf.Append("Mining Drone Status" + " - GMDC " + ver);
-                        drninf.Append('\n');
-                        rnw_hdr = false;
-                    }
-
-
-                    if (drone_name.Count > 0)
-                    {
-                        dps_r_d = Convert.ToDecimal(drone_name.Count) / Convert.ToDecimal(drones_per_screen);
-                        double dps_r = Math.Round(Convert.ToDouble(dps_r_d), 2);
-                        double sdr_c = Math.Round(Convert.ToDouble(display_tag_drone.Count * drones_per_screen), 2);
-                        if ((display_tag_drone.Count * drones_per_screen) < drone_name.Count)
-                        {
-                            Echo($"Insufficient number of drone displays with tag '{dp_drn_tag}' present");
-                            return;
-                        }
-                        if (i % 2 == 0 && i + 1 >= drone_name.Count - 1)
-                        {
-                            clbt = false;
-                            cbval = 0;
-                        }
-                        if (i % 2 == 0 && i + 1 > drone_name.Count - 1)
-                        {
-                            clbt = false;
-                            cbval = 0;
-                        }
-                        if (i % 2 == 0 && i + 1 <= drone_name.Count - 1)
-                        {
-                            clbt = true;
-                            cbval = i + 1;
-                        }
-
-                        if (cbval > drone_name.Count - 1)
-                        {
-                            cbval = drone_name.Count - 1;
-                        }
-                        if (i % 2 == 0)
-                        {
-                            scrnbldr(i, cbval, clbt);
-                        }
-
-                        if (i == ((drones_per_screen * 1) - 1) && i <= drone_name.Count - 1 && drone_name.Count > 0 && display_tag_drone.Count > 0 && !rnw_hdr || drone_name.Count <= drones_per_screen && i == drone_name.Count - 1)
-                        {
-                            if (dps_r_d > 0 && display_tag_drone[0] != null)
-                            {
-                                sD = ((IMyTextSurfaceProvider)display_tag_drone[0]).GetSurface(srfD);
-                                sD.WriteText(drninf.ToString());
-                            }
-                            rnw_hdr = true;
-                        }
-                        if (i > ((drones_per_screen * 1) - 1) && i == ((drones_per_screen * 2) - 1) && i <= drone_name.Count - 1 && drone_name.Count > (drones_per_screen * 1) && display_tag_drone.Count > 1 && !rnw_hdr || drone_name.Count <= (drones_per_screen * 2) && i == drone_name.Count - 1)
-                        {
-                            if (dps_r_d > 1 && display_tag_drone[1] != null)
-                            {
-                                sD = ((IMyTextSurfaceProvider)display_tag_drone[1]).GetSurface(srfD);
-                                sD.WriteText(drninf.ToString());
-                            }
-                            rnw_hdr = true;
-                        }
-                        if (i > ((drones_per_screen * 2) - 1) && i == ((drones_per_screen * 3) - 1) && i <= drone_name.Count - 1 && drone_name.Count > (drones_per_screen * 2) && display_tag_drone.Count > 1 && !rnw_hdr || drone_name.Count <= (drones_per_screen * 3) && i == drone_name.Count - 1)
-                        {
-                            if (dps_r_d > 2 && display_tag_drone[2] != null)
-                            {
-                                sD = ((IMyTextSurfaceProvider)display_tag_drone[2]).GetSurface(srfD);
-                                sD.WriteText(drninf.ToString());
-                            }
-                            rnw_hdr = true;
-                        }
-                    }
-                }
+            drone_render_call();
 
 
 
@@ -1947,7 +1825,7 @@ namespace IngameScript
 
                     }
                 }
-            }
+            
 
 
             time_count++;
@@ -1987,6 +1865,41 @@ namespace IngameScript
 
         #region Message_Data_Handling
 
+
+        private void drone_render_call()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            if (display_tag_drone.Count == 0 || drone_name.Count == 0 || display_tag_drone[0] == null) return;
+
+            if (renew_header)
+            {
+                droneInformation.Clear().Append($"Mining Drone Status - GMDC {ver}\n");
+                renew_header = false;
+            }
+
+            int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
+            if (dronesPerDisplay < drone_name.Count)
+            {
+                Echo($"Insufficient displays '{dp_drn_tag}': {dronesPerDisplay} < {drone_name.Count}");
+                return;
+            }
+
+            for (int i = 0; i < drone_name.Count; i += 2)
+            {
+                bool hasPair = i + 1 < drone_name.Count;
+                scrnbldr(i, hasPair ? i + 1 : i, hasPair);
+
+                int displayIndex = i / drones_per_screen;
+                if (displayIndex < display_tag_drone.Count && display_tag_drone[displayIndex] != null &&
+                    (i % drones_per_screen == drones_per_screen - 2 || i >= drone_name.Count - 2))
+                {
+                    sD = ((IMyTextSurfaceProvider)display_tag_drone[displayIndex]).GetSurface(srfD);
+                    sD.WriteText(droneInformation);
+                    renew_header = true;
+                }
+            }
+            Echo($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
         private struct DroneStats
         {
             public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining;
@@ -2060,6 +1973,56 @@ namespace IngameScript
                         grid_bore_occupied[l] = false;
             }
             Echo($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
+
+        public void updateDisplay(int i)
+        {
+            dp_txm.Append($"Drone Controller Status - GMDC {ver} - [{drone_tag}] {icon}");
+            dp_txm.Append('\n');
+            if (drone_control_sequence[i] == 12)
+            {
+                gps_grid_position_value = -1;
+                drone_mining[i] = false;
+                dp_txm.Append('\n');
+                dp_txm.Append("Mining seq. complete"); ;
+            }
+
+            if (grid_bore_positions.Count > 0)
+            {
+                dp_txm.Append('\n');
+                dp_txm.Append("Grid pos: " + grid_bore_positions.Count);
+                dp_txm.Append('\n');
+                dp_txm.Append("Grid dist: " + cst_dt7 + "m #X: " + cst_dt8 + " #Y: " + cst_dt9);
+                dp_txm.Append('\n');
+                dp_txm.Append("Grid OK: " + mining_grid_valid);
+                dp_txm.Append('\n');
+                dp_txm.Append("Bores: " + grid_bore_positions.Count + " Remain: " + bores_remaining + "  Skip: " + skp_br);
+                dp_txm.Append('\n');
+            }
+            else
+            {
+                dp_txm.Append('\n');
+                dp_txm.Append("Bores: " + total_mining_runs + " Remaining: " + bores_remaining);
+            }
+            if (total_mining_runs > 0)
+            {
+                dp_txm.Append('\n');
+                dp_txm.Append("Current mine idx: " + r_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
+            }
+            else
+            {
+                dp_txm.Append('\n');
+                dp_txm.Append("Current mine idx: " + current_gps_idx + " of " + (total_mining_runs - 1) + " (" + bores_completed + ") ");
+            }
+            if (current_gps_idx > total_mining_runs || !mining_grid_valid && bores_completed >= total_mining_runs || bores_remaining == 0)
+            {
+                can_run = false;
+                dp_txm.Append('\n');
+                dp_txm.Append("Mine seq. complete");
+                dp_txm.Append('\n');
+                drone_control_sequence[i] = 12;
+                current_gps_idx = 0;
+            }
         }
         void Get_Drone_Message_Data(string data_message)
         {
@@ -2518,6 +2481,7 @@ namespace IngameScript
 
         public void scrnbldr(int ivl, int ivl2, bool slu)
         {
+            // Pre-build strings into cl/cl2 for padding
             cl[0] = $"{drone_name[ivl]} Status: {drone_damage_state[ivl]} {drone_control_status[ivl]}";
             cl[1] = $"{drone_name[ivl]} Docked: {drone_dock_status[ivl]}";
             cl[2] = $"{drone_name[ivl]} Undocked: {drone_undock_status[ivl]}";
@@ -2547,12 +2511,13 @@ namespace IngameScript
                 cl2[11] = $"X: {drone_location_x[ivl2]} Y: {drone_location_y[ivl2]} Z: {drone_location_z[ivl2]}";
             }
 
-            drninf.EnsureCapacity(drone_name.Count * 100); // ~100 chars/drone
-            drninf.AppendLine();
-            for (int i = 0; i < cl.Count; i++)
+            droneInformation.AppendLine();
+            for (int i = 0; i < 12; i++)
             {
                 int padding = Math.Max(clbs - cl[i].Length, 0);
-                drninf.Append(cl[i]).Append(' ', padding).AppendLine(cl2[i]);
+                droneInformation.Append(cl[i]).Append(' ', padding);
+                if (slu) droneInformation.AppendLine(cl2[i]);
+                else droneInformation.AppendLine();
             }
         }
         #endregion
@@ -3282,7 +3247,7 @@ namespace IngameScript
             mcd_nw = new StringBuilder();
             dp_txm = new StringBuilder();
             dp_txl = new StringBuilder();
-            drninf = new StringBuilder();
+            droneInformation = new StringBuilder();
             drone_reset_func = new List<bool>();
             c = new StringBuilder();
             jxt = new StringBuilder();

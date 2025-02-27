@@ -405,8 +405,23 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
+            Echo("Running Modular Main - v1");
+            int startInstructions = Runtime.CurrentInstructionCount;
+            UpdateRuntimeMetrics(updateSource);
+            InitializeSystem();
+            ProcessInputs(argument);
+            ManageCommunications();
+            UpdateMiningGrid();
+            HandleDroneOperations();
+            RenderDisplays();
+            UpdateStatus();
+            Echo($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
+
+        private void UpdateRuntimeMetrics(UpdateType updateSource)
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             double _Runtime = Runtime.LastRunTimeMs;
-            // Update running average
             totalRuntimeMs += _Runtime;
             runCount++;
             if (runCount == 10)
@@ -415,39 +430,57 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
+            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
-            int _Instruction = Runtime.CurrentInstructionCount;
-
+        private void InitializeSystem()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            if (!setup_complete)
+            {
+                setup_system();
+                setup_complete = true;
+                Echo("Setup complete!");
+            }
             CheckSystemStatus();
-
-
             Echo($"GMDC {ver} Running {icon}");
             Echo($"Channel: {drone_tag}");
+            Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
-            //Echo($"Debug: {init_grid_complete} {i_init} {can_init}");
-            //Echo($"Debug2: {c_gd} {bores_regen}");
-
+        private void ProcessInputs(string argument)
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             ProcessInterface();
+            HandleCommands(argument);
+            Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
+        private void ManageCommunications()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             listen = IGC.RegisterBroadcastListener(rx_ch);
             listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
+            ProcessMessages();
+            Echo($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
-            HandleCommands(argument);
-
+        private void UpdateMiningGrid()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             InitializeMiningGrid();
             ValidateCustomData();
             PingDrones();
-            ProcessMessages();
-            #region update_rc_job_data_from_prospector
-            //pull stored RC data from prospector
             GetRemoteControlData();
-            //if new message update data
+            Echo($"Pre-Prospect: valid={target_valid}, coords={target_gps_coords}");
             if (Prospect_Message)
             {
                 Storage = null;
                 GetRemoteControlData();
+                Echo($"Post-Prospect: valid={target_valid}, coords={target_gps_coords}");
                 if (target_valid)
                 {
+                    Echo($"Formatting CustomData with: {target_gps_coords.X}, {target_gps_coords.Y}, {target_gps_coords.Z}");
                     miningCoordinatesNew.Clear().AppendFormat("GPS:PDT:{0:0.##}:{1:0.##}:{2:0.##}:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:",
                         target_gps_coords.X, target_gps_coords.Y, target_gps_coords.Z);
                     Me.CustomData = miningCoordinatesNew.ToString();
@@ -455,49 +488,44 @@ namespace IngameScript
                 Prospect_Message = false;
                 created_grid = false;
             }
-            #endregion
-
-
-
-            //pull job command
             GetCustomData_JobCommand();
-
             ProcessJobGrid();
             UpdateActiveDroneLimits();
-            #region drone_processing
-            if (drone_name.Count > 0 && created_grid)
+            Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
+
+        private void HandleDroneOperations()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            if (drone_name.Count > 0 && created_grid && time_delay)
             {
-
-                if (time_delay)
-                {
-                    UpdateDroneCounts();
-                    DroneUndockCheck();
-
-                    timeCountReset();
-                    ProcessRecallCommand();
-                    //Echo($"Comms Index: {recieved_drone_name_index} {Confirmed_Drone_Message}"); //Debug
-                    ProcessDroneState();
-                    #region screen_information_general_status
-                    update_display();
-                    #endregion
-                }
-
+                UpdateDroneCounts();
+                DroneUndockCheck();
+                timeCountReset();
+                ProcessRecallCommand();
+                ProcessDroneState();
+                update_display();
             }
-            #endregion
-
             drone_reset_status_counter();
             indication_and_status_management();
+            Echo($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
+        private void RenderDisplays()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             drone_render_call();
-
             list_render_call();
-
             sprite_render_call();
+            Echo($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
 
+        private void UpdateStatus()
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
             time_counter_reset();
-
-            Local_Status_Update(_Runtime);
-
+            Local_Status_Update(Runtime.LastRunTimeMs);
+            Echo($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void Local_Status_Update(double _Runtime)

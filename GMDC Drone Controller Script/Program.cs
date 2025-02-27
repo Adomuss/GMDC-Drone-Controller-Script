@@ -240,6 +240,7 @@ namespace IngameScript
         List<string> drone_ore_storage;
         List<string> drone_cargo_full;
         List<string> drone_recharge_request;
+        List<string> drone_auto_pilot_enabled;
         List<int> drone_assigns_count;
         List<double> dcs;
         List<bool> drone_assigned_coordinates;
@@ -411,22 +412,8 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            int startInstructions = Runtime.CurrentInstructionCount;
-            UpdateRuntimeMetrics(updateSource);
-            InitializeSystem();
-            ProcessInputs(argument);
-            ManageCommunications();
-            UpdateMiningGrid();
-            HandleDroneOperations();
-            RenderDisplays();
-            UpdateStatus();
-            Echo($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
-
-        private void UpdateRuntimeMetrics(UpdateType updateSource)
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
             double _Runtime = Runtime.LastRunTimeMs;
+            // Update running average
             totalRuntimeMs += _Runtime;
             runCount++;
             if (runCount == 10)
@@ -435,47 +422,38 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void InitializeSystem()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
+            int _Instruction = Runtime.CurrentInstructionCount;
+
             CheckSystemStatus();
+
+
             Echo($"GMDC {ver} Running {icon}");
             Echo($"Channel: {drone_tag}");
-            Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void ProcessInputs(string argument)
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
+            //Echo($"Debug: {init_grid_complete} {i_init} {can_init}");
+            //Echo($"Debug2: {c_gd} {bores_regen}");
+
             ProcessInterface();
-            HandleCommands(argument);
-            Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void ManageCommunications()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
             listen = IGC.RegisterBroadcastListener(rx_ch);
             listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
-            ProcessMessages(); // Includes Get_Drone_Message_Data()
-            Echo($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void UpdateMiningGrid()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
+            HandleCommands(argument);
+
             InitializeMiningGrid();
             ValidateCustomData();
-            PingDrones(); // Moved here for grid context
+            PingDrones();
+            ProcessMessages();
+            #region update_rc_job_data_from_prospector
+            //pull stored RC data from prospector
             GetRemoteControlData();
+            //if new message update data
             if (Prospect_Message)
             {
                 Storage = null;
                 GetRemoteControlData();
-                if (target_valid) // Changed from tgt_vld to match your variable
+                if (target_valid)
                 {
                     miningCoordinatesNew.Clear().AppendFormat("GPS:PDT:{0:0.##}:{1:0.##}:{2:0.##}:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:",
                         target_gps_coords.X, target_gps_coords.Y, target_gps_coords.Z);
@@ -484,44 +462,49 @@ namespace IngameScript
                 Prospect_Message = false;
                 created_grid = false;
             }
+            #endregion
+
+
+
+            //pull job command
             GetCustomData_JobCommand();
+
             ProcessJobGrid();
             UpdateActiveDroneLimits();
-            Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
-
-        private void HandleDroneOperations()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
-            if (drone_name.Count > 0 && created_grid && time_delay)
+            #region drone_processing
+            if (drone_name.Count > 0 && created_grid)
             {
-                UpdateDroneCounts();
-                DroneUndockCheck();
-                timeCountReset();
-                ProcessRecallCommand();
-                ProcessDroneState();
-                update_display();
+
+                if (time_delay)
+                {
+                    UpdateDroneCounts();
+                    DroneUndockCheck();
+
+                    timeCountReset();
+                    ProcessRecallCommand();
+                    //Echo($"Comms Index: {recieved_drone_name_index} {Confirmed_Drone_Message}"); //Debug
+                    ProcessDroneState();
+                    #region screen_information_general_status
+                    update_display();
+                    #endregion
+                }
+
             }
+            #endregion
+
             drone_reset_status_counter();
             indication_and_status_management();
-            Echo($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void RenderDisplays()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
             drone_render_call();
-            list_render_call();
-            sprite_render_call();
-            Echo($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
-        }
 
-        private void UpdateStatus()
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
+            list_render_call();
+
+            sprite_render_call();
+
             time_counter_reset();
-            Local_Status_Update(Runtime.LastRunTimeMs);
-            Echo($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
+
+            Local_Status_Update(_Runtime);
+
         }
 
         private void Local_Status_Update(double _Runtime)
@@ -2160,7 +2143,7 @@ namespace IngameScript
                     recieved_drone_dock = msgdta[4];
                     recieved_drone_undock = msgdta[5];
                     recived_drone_autopilot = msgdta[6];
-                    rc_auto_pilot_enabled = msgdta[7]; // Added missing field
+                    rc_auto_pilot_enabled = msgdta[7];
                     rc_locx = msgdta[8];
                     rc_locy = msgdta[9];
                     rc_locz = msgdta[10];
@@ -2180,7 +2163,7 @@ namespace IngameScript
                     }
                     if (msgdta.Length > 18)
                     {
-                        rc_dn_rchg_req = msgdta[19]; 
+                        rc_dn_rchg_req = msgdta[19];
                     }
                 }
                 else
@@ -2205,7 +2188,7 @@ namespace IngameScript
                     rc_dn_gps_lst = "";
                     rc_dn_cargo_full = "";
                     rc_dn_rchg_req = "";
-                    
+
                 }
                 if (rc_dn_gps_lst == "")
                 {
@@ -2232,7 +2215,7 @@ namespace IngameScript
         void GetRemoteControlData()
         {
             String[] remoteGpsCommand = remote_control_actual.CustomData.Split(':');
-            
+
             if (remoteGpsCommand.Length < 6)
             {
                 rm_cst_dat1 = "";
@@ -2254,7 +2237,7 @@ namespace IngameScript
                 rm_cst_dat4 = remoteGpsCommand[4];
                 rm_cst_dat5 = remoteGpsCommand[5];
                 rm_cst_dat6 = remoteGpsCommand[6];
-                if(!double.TryParse(rm_cst_dat2, out target_gps_coords.X))
+                if (!double.TryParse(rm_cst_dat2, out target_gps_coords.X))
                 {
                     target_gps_coords.X = 0.0;
                     rm_cst_dat2 = "";
@@ -2288,7 +2271,7 @@ namespace IngameScript
                 return;
             }
             if (remoteGpsCommand.Length > 7)
-            {                
+            {
                 align_target_valid = true;
                 rm_cst_dat7 = remoteGpsCommand[7];
                 rm_cst_dat8 = remoteGpsCommand[8];
@@ -2355,7 +2338,7 @@ namespace IngameScript
             }
 
             if (gps_cmnd.Length > 4)
-            {              
+            {
                 cst_dt1 = gps_cmnd[1];
                 cst_dt2 = gps_cmnd[2];
                 cst_dt3 = gps_cmnd[3];
@@ -2423,7 +2406,7 @@ namespace IngameScript
                     ignoreDepth = 0.0;
                     cst_dt10 = "";
                 }
-            }            
+            }
             if (gps_cmnd.Length > 10)
             {
                 cst_dt11 = gps_cmnd[11];
@@ -2470,7 +2453,7 @@ namespace IngameScript
                 }
             }
 
-            if (align_target_valid && gps_cmnd.Length <16) //align set from RC data
+           /* if (align_target_valid && gps_cmnd.Length < 16) //align set from RC data
             {
                 bool xval = true;
                 bool yval = true;
@@ -2499,7 +2482,7 @@ namespace IngameScript
                     cst_dt20 = "";
                     zval = false;
                 }
-                if(xval && yval && zval)
+                if (xval && yval && zval)
                 {
                     align_target_valid = true;
                 }
@@ -2514,9 +2497,9 @@ namespace IngameScript
                     customDataString.AppendFormat(baseFormat, cst_dt1, cst_dt2, cst_dt3, cst_dt4, cst_dt5, cst_dt6, cst_dt7, cst_dt8, cst_dt9, cst_dt10, cst_dt11, cst_dt12, cst_dt13, cst_dt14, cst_dt15, cst_dt16, cst_dt17, cst_dt18, cst_dt19, cst_dt20, cst_dt21);
                     Me.CustomData = customDataString.ToString();
                     customDataString.Clear();
-                }
+                } 
             }
-            if(gps_cmnd.Length > 15)
+            if (gps_cmnd.Length > 15)
             {
                 bool xval = true;
                 bool yval = true;
@@ -2561,10 +2544,10 @@ namespace IngameScript
                         customDataString.Clear();
                     }
                 }
-            }
+            }*/
 
         }
-       
+
         public void scrnbldr(int ivl, int ivl2, bool slu)
         {
             // Pre-build strings into cl/cl2 for padding
@@ -2605,7 +2588,7 @@ namespace IngameScript
                 if (slu) droneInformation.AppendLine(cl2[i]);
                 else droneInformation.AppendLine();
             }
-        }       
+        }
 
         IEnumerator<bool> GenListDisplay()
         {
@@ -3185,7 +3168,7 @@ namespace IngameScript
             }
             runicon(stateshift);
         }
-       
+
         public void drone_custom_data_check(string custominfo, int index)
         {
             Echo("Checking for drone config information..");
@@ -3308,6 +3291,9 @@ namespace IngameScript
             sprites = new List<MySprite>();
             rm_ctl_all = new List<IMyRemoteControl>();
             rm_ctl_tag = new List<IMyRemoteControl>();
+            drone_cargo_full = new List<string>();
+            drone_recharge_request = new List<string>();
+            drone_auto_pilot_enabled = new List<string>();
             bores_regen = false;
             cl = new List<string>();
             cl2 = new List<string>();
@@ -3614,6 +3600,7 @@ namespace IngameScript
                     drone_assigns_count.Add(0);
                     drone_cargo_full.Add(rc_dn_cargo_full);
                     drone_recharge_request.Add(rc_dn_rchg_req);
+                    drone_auto_pilot_enabled.Add(rc_auto_pilot_enabled);
                 }
                 //drones do exist so check current drone list to see if it exists
                 if (drone_name.Count > 0)
@@ -3646,8 +3633,9 @@ namespace IngameScript
                             drone_ore_storage[i] = rc_dn_str;
                             dcs[i] = rc_d_cn;
                             droneTransmissionStatus[i] = true;
-                            drone_cargo_full[i]= rc_dn_cargo_full;
+                            drone_cargo_full[i] = rc_dn_cargo_full;
                             drone_recharge_request[i] = rc_dn_rchg_req;
+                            drone_auto_pilot_enabled[i]= rc_auto_pilot_enabled;
                             if (dcs[i] <= bclm)
                             {
                                 dst[i] = false;
@@ -3696,6 +3684,7 @@ namespace IngameScript
                             drone_assigns_count.Add(0);
                             drone_cargo_full.Add(rc_dn_cargo_full);
                             drone_recharge_request.Add(rc_dn_rchg_req);
+                            drone_auto_pilot_enabled.Add(rc_auto_pilot_enabled);
                             Confirmed_Drone_Message = true;
                             recieved_drone_name_index = i + 1;
                         }

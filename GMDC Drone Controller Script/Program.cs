@@ -171,17 +171,17 @@ namespace IngameScript
         string rm_cst_dat10 = "";
         string rm_cst_dat11 = "";
         string rm_cst_dat12 = "";
-        string cd1 = "";
-        string xp = "";
-        string yp = "";
-        string zp = "";
-        string cd5 = "";
+        string currentDroneBoreIndex = "";
+        string currentMiningDroneBoreLocationX = "";
+        string currentMiningDroneBoreLocationY = "";
+        string currentMiningDroneBoreLocationZ = "";
+        string currentMiningDroneCustomData_5 = "";
         string cm = "";
-        string cd6 = "";
-        string igd = "";
-        string xp2 = "";
-        string yp2 = "";
-        string zp2 = "";
+        string currentMiningDroneBoreLength = "";
+        string currentMiningDroneIgnoreDistance = "";
+        string currentMiningDroneAlignLocationX = "";
+        string currentMiningDroneAlignLocationY = "";
+        string currentMiningDroneAlignLocationZ = "";
         int t_mne_sq_cmp = 0;
         int total_mining_runs = 1;
         int total_drones_mining = 0;
@@ -204,11 +204,11 @@ namespace IngameScript
         IMyLightingBlock light_status_indicator_actual;
         IMyRemoteControl remote_control_actual;
         IMyProgrammableBlock pb_i_act;
-        Vector3D m_gps_crds;
+        Vector3D mainGPSCoordinates;
         Vector3D c_gps_crds;
         Vector3D next_gps_crds;
         Vector3D target_gps_coords;
-        Vector3D align_gps_coords;
+        Vector3D alignGPSCoordinates;
         Vector3D planeNrml;
         StringBuilder miningCoordinatesNew;
         StringBuilder c;
@@ -576,7 +576,7 @@ namespace IngameScript
 
                 if (visCoroutine == null && !frame_generator_finished)
                 {
-                    visCoroutine = BuildSprites(m_gps_crds, planeNrml, gridSize, nPtsX, nPtsY, core_out);
+                    visCoroutine = BuildSprites(mainGPSCoordinates, planeNrml, gridSize, nPtsX, nPtsY, core_out);
                 }
                 if (visCoroutine != null && !frame_generator_finished)
                 {
@@ -589,7 +589,7 @@ namespace IngameScript
                         // The coroutine has finished executing
                         Echo("Job rendering complete.");
                         visCoroutine = null; // Reset the coroutine
-                        BuildSprites(m_gps_crds, planeNrml, gridSize, nPtsX, nPtsY, core_out).Dispose();
+                        BuildSprites(mainGPSCoordinates, planeNrml, gridSize, nPtsX, nPtsY, core_out).Dispose();
                     }
                     else
                     {
@@ -971,7 +971,7 @@ namespace IngameScript
                         if (!mining_grid_valid)
                         {
                             total_mining_runs = 1;
-                            drone_gps_coordinates_ds[i] = m_gps_crds;
+                            drone_gps_coordinates_ds[i] = mainGPSCoordinates;
                             gps_grid_position_value = 0;
                             current_gps_idx = 0;
                         }
@@ -983,7 +983,7 @@ namespace IngameScript
                     else if (!mining_grid_valid)
                     {
                         total_mining_runs = 1;
-                        drone_gps_coordinates_ds[i] = m_gps_crds;
+                        drone_gps_coordinates_ds[i] = mainGPSCoordinates;
                         drone_assigned_coordinates[i] = true;
                         gps_grid_position_value = 0;
                         current_gps_idx = 0;
@@ -1021,34 +1021,34 @@ namespace IngameScript
                     }
                 }
                 tx_chan = drone_name[i];
-                cd1 = gps_grid_position_value.ToString();
+                currentDroneBoreIndex = gps_grid_position_value.ToString();
                 cm = "0";
-                xp = Math.Round(drone_gps_coordinates_ds[i].X, 2).ToString();
-                yp = Math.Round(drone_gps_coordinates_ds[i].Y, 2).ToString();
-                zp = Math.Round(drone_gps_coordinates_ds[i].Z, 2).ToString();
-                cd5 = cst_dt5;
-                cd6 = (drillLength + safe_dstvl).ToString();
-                igd = (ignoreDepth + safe_dstvl + drone_length).ToString();
+                currentMiningDroneBoreLocationX = Math.Round(drone_gps_coordinates_ds[i].X, 2).ToString();
+                currentMiningDroneBoreLocationY = Math.Round(drone_gps_coordinates_ds[i].Y, 2).ToString();
+                currentMiningDroneBoreLocationZ = Math.Round(drone_gps_coordinates_ds[i].Z, 2).ToString();
+                currentMiningDroneCustomData_5 = cst_dt5;
+                currentMiningDroneBoreLength = (drillLength + safe_dstvl).ToString();
+                currentMiningDroneIgnoreDistance = (ignoreDepth + safe_dstvl + drone_length).ToString();
                 if (align_target_valid)
                 {
-                    xp2 = Math.Round(((drone_gps_coordinates_ds[i].X - m_gps_crds.X) + align_gps_coords.X), 2).ToString();
-                    yp2 = Math.Round(((drone_gps_coordinates_ds[i].Y - m_gps_crds.Y) + align_gps_coords.Y), 2).ToString();
-                    zp2 = Math.Round(((drone_gps_coordinates_ds[i].Z - m_gps_crds.Z) + align_gps_coords.Z), 2).ToString();
+                    currentMiningDroneAlignLocationX = Math.Round(((drone_gps_coordinates_ds[i].X - mainGPSCoordinates.X) + alignGPSCoordinates.X), 2).ToString();
+                    currentMiningDroneAlignLocationY = Math.Round(((drone_gps_coordinates_ds[i].Y - mainGPSCoordinates.Y) + alignGPSCoordinates.Y), 2).ToString();
+                    currentMiningDroneAlignLocationZ = Math.Round(((drone_gps_coordinates_ds[i].Z - mainGPSCoordinates.Z) + alignGPSCoordinates.Z), 2).ToString();
                 }
                 else
                 {
-                    xp2 = "";
-                    yp2 = "";
-                    zp2 = "";
+                    currentMiningDroneAlignLocationX = "";
+                    currentMiningDroneAlignLocationY = "";
+                    currentMiningDroneAlignLocationZ = "";
                 }
                 if (drone_control_sequence[i] == 1 && drone_assigned_coordinates[i] && !drone_must_wait[i] && !run_arg || drone_control_sequence[i] == 2 && drone_control_status[i] == "Docked Idle" && drone_dock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 2;
                     drone_mining[i] = true;
                     grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "7";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1059,9 +1059,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocked" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg || drone_control_sequence[i] == 2 && drone_control_status[i] == "Docking" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 3;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1073,9 +1073,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
                 {
                     drone_control_sequence[i] = 13;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1086,9 +1086,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 13 && drone_control_status[i] == "Idle" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg || drone_control_sequence[i] == 5 && drone_control_status[i] == "Docking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
                 {
                     drone_control_sequence[i] = 8;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "6";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1099,9 +1099,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 3 && drone_control_status[i] == "Idle" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 4;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "4";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1112,9 +1112,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 4 && drone_control_status[i] == "Nav End" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 5;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1125,9 +1125,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 4 && drone_control_status[i] == "Docked Idle" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 1;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1139,9 +1139,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 5 && drone_control_status[i] == "Idle" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 6;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "2";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1153,9 +1153,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 6 && drone_control_status[i] == "Nav End" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 7;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1166,9 +1166,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 7 && drone_control_status[i] == "Idle" && drone_undock_status[i] == "True" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 8;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "5";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1187,9 +1187,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 8 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 1;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1203,9 +1203,9 @@ namespace IngameScript
                     drone_assigned_coordinates[i] = false;
                     drone_mining[i] = false;
                     gps_grid_position_value = -1;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1218,9 +1218,9 @@ namespace IngameScript
                     drone_control_sequence[i] = 9;
                     grid_bore_finished[drone_gps_grid_list_position[i]] = true;
 
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1231,9 +1231,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 9 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && can_run && drone_assigned_coordinates[i] && !run_arg || drone_control_sequence[i] == 9 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && drone_assigned_coordinates[i] && drone_assigned_coordinates[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 10;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1249,9 +1249,9 @@ namespace IngameScript
                     t_mne_sq_cmp++;
                     gps_grid_position_value = -1;
                     drone_reset_func[i] = false;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "8";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1263,9 +1263,9 @@ namespace IngameScript
                 {
                     drone_control_sequence[i] = 0;
                     drone_assigned_coordinates[i] = false;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1278,9 +1278,9 @@ namespace IngameScript
                     drone_control_sequence[i] = 12;
                     drone_assigned_coordinates[i] = false;
                     gps_grid_position_value = -1;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1301,9 +1301,9 @@ namespace IngameScript
                     current_gps_idx = 0;
                     gps_grid_position_value = -1;
                     drone_reset_func[i] = false;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "8";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1321,9 +1321,9 @@ namespace IngameScript
                     current_gps_idx = 0;
                     gps_grid_position_value = -1;
                     drone_reset_func[i] = false;
-                    cd1 = gps_grid_position_value.ToString();
+                    currentDroneBoreIndex = gps_grid_position_value.ToString();
                     cm = "0";
-                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
                     {
@@ -1352,18 +1352,18 @@ namespace IngameScript
                         drone_recall_sequence[i] = 2;
                         drone_control_sequence[i] = 0;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "0";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
                     }
                     if (drone_recall_sequence[i] == 2 && drone_control_status[i] == "Idle")
                     {
                         drone_recall_sequence[i] = 3;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "1";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1371,9 +1371,9 @@ namespace IngameScript
                     {
                         drone_recall_sequence[i] = 4;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "0";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1381,9 +1381,9 @@ namespace IngameScript
                     {
                         drone_recall_sequence[i] = 4;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "0";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1392,9 +1392,9 @@ namespace IngameScript
                     {
                         drone_recall_sequence[i] = 5;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "6";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1402,9 +1402,9 @@ namespace IngameScript
                     {
                         drone_recall_sequence[i] = 5;
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "6";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1416,9 +1416,9 @@ namespace IngameScript
                         drone_mining[i] = false;
                         gps_grid_position_value = -1;
                         drone_reset_func[i] = true;
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "0";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
 
                     }
@@ -1434,9 +1434,9 @@ namespace IngameScript
                     if (drone_control_status[i] == "Docked Idle")
                     {
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "7";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
                         if (canTransmit && droneTransmissionStatus[i])
                         {
@@ -1451,9 +1451,9 @@ namespace IngameScript
                     if (drone_control_status[i] == "Undocked" || drone_control_status[i] == "Idle")
                     {
                         gps_grid_position_value = drone_gps_grid_list_position[i];
-                        cd1 = gps_grid_position_value.ToString();
+                        currentDroneBoreIndex = gps_grid_position_value.ToString();
                         cm = "0";
-                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, cm, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
                         droneTranmissionOutput[i] = c.ToString();
                         if (canTransmit && droneTransmissionStatus[i])
                         {
@@ -1527,7 +1527,7 @@ namespace IngameScript
                 grid_bore_occupied = new List<bool>();
                 grid_bore_finished = new List<bool>();
                 created_grid = true;
-                c_gps_crds = m_gps_crds;
+                c_gps_crds = mainGPSCoordinates;
                 grid_bore_occupied.Add(false);
                 grid_bore_finished.Add(false);
                 grid_bore_positions.Add(c_gps_crds);
@@ -1557,7 +1557,7 @@ namespace IngameScript
                 Vector3D gravity = remote_control_actual.GetNaturalGravity();
                 if (align_target_valid)
                 {
-                    planeNrml = ((m_gps_crds - align_gps_coords));
+                    planeNrml = ((mainGPSCoordinates - alignGPSCoordinates));
                 }
                 if (!align_target_valid)
                 {
@@ -1567,7 +1567,7 @@ namespace IngameScript
                 planeNrml.Normalize();
                 Vector3D perpendicularVector = Vector3D.CalculatePerpendicularVector(planeNrml);
                 perpendicularVector.Normalize();
-                Vector3D centerPoint = m_gps_crds;
+                Vector3D centerPoint = mainGPSCoordinates;
                 //load from storage if present (test required)
                 if (Storage != null && Storage != "" && !created_grid && bores_regen && !init_grid_complete)
                 {
@@ -2302,19 +2302,19 @@ namespace IngameScript
                 rm_cst_dat10 = remoteGpsCommand[10];
                 rm_cst_dat11 = remoteGpsCommand[11];
                 rm_cst_dat12 = remoteGpsCommand[12];
-                if (!double.TryParse(rm_cst_dat9, out align_gps_coords.X))
+                if (!double.TryParse(rm_cst_dat9, out alignGPSCoordinates.X))
                 {
-                    align_gps_coords.X = 0.0;
+                    alignGPSCoordinates.X = 0.0;
                     rm_cst_dat9 = "";
                 }
-                if (!double.TryParse(rm_cst_dat10, out align_gps_coords.Y))
+                if (!double.TryParse(rm_cst_dat10, out alignGPSCoordinates.Y))
                 {
-                    align_gps_coords.Y = 0.0;
+                    alignGPSCoordinates.Y = 0.0;
                     rm_cst_dat10 = "";
                 }
-                if (!double.TryParse(rm_cst_dat11, out align_gps_coords.Z))
+                if (!double.TryParse(rm_cst_dat11, out alignGPSCoordinates.Z))
                 {
-                    align_gps_coords.Z = 0.0;
+                    alignGPSCoordinates.Z = 0.0;
                     rm_cst_dat11 = "";
                 }
             }
@@ -2354,19 +2354,19 @@ namespace IngameScript
                 cst_dt3 = gps_cmnd[3];
                 cst_dt4 = gps_cmnd[4];
                 cst_dt5 = gps_cmnd[5];
-                if (!double.TryParse(cst_dt2, out m_gps_crds.X))
+                if (!double.TryParse(cst_dt2, out mainGPSCoordinates.X))
                 {
-                    m_gps_crds.X = 0.0;
+                    mainGPSCoordinates.X = 0.0;
                     cst_dt2 = "";
                 }
-                if (!double.TryParse(cst_dt3, out m_gps_crds.Y))
+                if (!double.TryParse(cst_dt3, out mainGPSCoordinates.Y))
                 {
-                    m_gps_crds.Y = 0.0;
+                    mainGPSCoordinates.Y = 0.0;
                     cst_dt3 = "";
                 }
-                if (!double.TryParse(cst_dt4, out m_gps_crds.Z))
+                if (!double.TryParse(cst_dt4, out mainGPSCoordinates.Z))
                 {
-                    m_gps_crds.Z = 0.0;
+                    mainGPSCoordinates.Z = 0.0;
                     cst_dt4 = "";
                 }
             }
@@ -2982,6 +2982,23 @@ namespace IngameScript
         {
             const string baseFormat = "GPS:{0}:{1}:{2}:{3}:{4}:{5}:{6}:{7}:";
             const string astFormat = "GPS:PAD:{0}:{1}:{2}:#FF75C9F1:";
+            /* Custom data message structure
+                * 0 = GPS Text
+                * 1 = GPS Index
+                * 2 = Main Target X
+                * 3 = Main Target Y
+                * 4 = Main Target Z
+                * 5 = Colour output?
+                * 6 = Command Request
+                * 7 = Command Distance
+                * 8 = Ignore Distance
+                * 9 = GPS Data 8
+                * 10 = GPS Data 9
+                * 11 = Alignment Target X
+                * 12 = Alignment Target Y
+                * 13 = Alignment Target Z
+                * 
+                */
 
             c.Clear().EnsureCapacity(align_target_valid ? 120 : 80); // ~80 chars base, ~40 more if asteroid
             c.AppendFormat(baseFormat, cdata_1, xpos, ypos, zpos, cdata_5, cmdo, data_6, idepth);
@@ -3671,8 +3688,8 @@ namespace IngameScript
                   .AppendLine($"Status: {stts}")
                   .AppendLine()
                   .AppendLine("Target:")
-                  .AppendLine(m_gps_crds.ToString());
-            if (align_target_valid) dp_txm.AppendLine("Secondary/Asteroid:").AppendLine(align_gps_coords.ToString());
+                  .AppendLine(mainGPSCoordinates.ToString());
+            if (align_target_valid) dp_txm.AppendLine("Secondary/Asteroid:").AppendLine(alignGPSCoordinates.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(dp_txm);
         }

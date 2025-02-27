@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.382";
+        string ver = "V0.384";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -144,7 +144,6 @@ namespace IngameScript
         bool target_valid = false;
         bool align_target_valid = false;
         string commandAsk;
-        string cst_dt0;
         string cst_dt1;
         string cst_dt2;
         string cst_dt3;
@@ -160,12 +159,6 @@ namespace IngameScript
         string cst_dt13;
         string cst_dt14;
         string cst_dt15;
-        string cst_dt16 = "";
-        string cst_dt17 = "";
-        string cst_dt18 = "";
-        string cst_dt19 = "";
-        string cst_dt20 = "";
-        string cst_dt21 = "";
         string rm_cst_dat1 = "";
         string rm_cst_dat2 = "";
         string rm_cst_dat3 = "";
@@ -2157,14 +2150,14 @@ namespace IngameScript
                     {
                         rc_dn_gps_lst = msgdta[17];
                     }
+                    if (msgdta.Length > 17)
+                    {
+                        rc_dn_cargo_full = msgdta[18];
+                    }
                     if (msgdta.Length > 18)
                     {
-                        rc_dn_cargo_full = msgdta[19];
+                        rc_dn_rchg_req = msgdta[19];
                     }
-                    if (msgdta.Length > 19)
-                    {
-                        rc_dn_rchg_req = msgdta[20];
-                    } 
                 }
                 else
                 {
@@ -2210,15 +2203,13 @@ namespace IngameScript
                     rc_d_cn = 0.0;
                 }
             }
-            Echo($"Custom data length: {data_message.Length}");
         }
 
         void GetRemoteControlData()
         {
             String[] remoteGpsCommand = remote_control_actual.CustomData.Split(':');
 
-
-            if (remoteGpsCommand.Length < 5)
+            if (remoteGpsCommand.Length < 6)
             {
                 rm_cst_dat1 = "";
                 rm_cst_dat2 = "";
@@ -2226,10 +2217,10 @@ namespace IngameScript
                 rm_cst_dat4 = "";
                 rm_cst_dat5 = "";
                 rm_cst_dat6 = "";
-                target_valid = false;
+                target_valid = true;
                 return;
             }
-            if (remoteGpsCommand.Length > 4)
+            if (remoteGpsCommand.Length > 6)
             {
                 //target_gps_coords = new Vector3D(Double.Parse(remoteGpsCommand[2]), Double.Parse(remoteGpsCommand[3]), Double.Parse(remoteGpsCommand[4]));
                 target_valid = true;
@@ -2261,7 +2252,7 @@ namespace IngameScript
                 }
 
             }
-            if (remoteGpsCommand.Length < 13 && remoteGpsCommand.Length > 7)
+            if (remoteGpsCommand.Length < 12 && remoteGpsCommand.Length > 7)
             {
                 rm_cst_dat7 = "";
                 rm_cst_dat8 = "";
@@ -2272,8 +2263,7 @@ namespace IngameScript
                 align_target_valid = false;
                 return;
             }
-
-            if (remoteGpsCommand.Length > 6)
+            if (remoteGpsCommand.Length > 7)
             {
                 align_target_valid = true;
                 rm_cst_dat7 = remoteGpsCommand[7];
@@ -2282,7 +2272,6 @@ namespace IngameScript
                 rm_cst_dat10 = remoteGpsCommand[10];
                 rm_cst_dat11 = remoteGpsCommand[11];
                 rm_cst_dat12 = remoteGpsCommand[12];
-
                 if (!double.TryParse(rm_cst_dat9, out align_gps_coords.X))
                 {
                     align_gps_coords.X = 0.0;
@@ -2306,7 +2295,6 @@ namespace IngameScript
             String[] gps_cmnd = Me.CustomData.Split(':');
             if (gps_cmnd.Length < 10)
             {
-                cst_dt0 = "";
                 cst_dt1 = "";
                 cst_dt2 = "";
                 cst_dt3 = "";
@@ -2322,29 +2310,15 @@ namespace IngameScript
                 cst_dt13 = "";
                 cst_dt14 = "";
                 cst_dt15 = "";
-                cst_dt16 = "";
-                cst_dt17 = "";
-                cst_dt18 = "";
-                cst_dt19 = "";
-                cst_dt20 = "";
-                cst_dt21 = "";
+
                 Echo("Format invalid,GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
                 Echo("Set grid, numx, numy to 1 for single point");
                 return;
             }
-            if (gps_cmnd.Length > 15 && gps_cmnd.Length < 21)
-            {
-                cst_dt16 = "";
-                cst_dt17 = "";
-                cst_dt18 = "";
-                cst_dt19 = "";
-                cst_dt20 = "";
-                cst_dt21 = "";
-            }
+
 
             if (gps_cmnd.Length > 4)
             {
-                cst_dt0 = gps_cmnd[0];
                 cst_dt1 = gps_cmnd[1];
                 cst_dt2 = gps_cmnd[2];
                 cst_dt3 = gps_cmnd[3];
@@ -2381,7 +2355,7 @@ namespace IngameScript
                 cst_dt7 = gps_cmnd[7];
                 if (!Double.TryParse(cst_dt7, out gridSize))
                 {
-                    gridSize = 10.0;
+                    gridSize = 0.0;
                     cst_dt7 = "";
                 }
             }
@@ -2459,92 +2433,6 @@ namespace IngameScript
                 }
             }
 
-            if (align_target_valid && gps_cmnd.Length < 20) //align set from RC data
-            {
-                bool xval = true;
-                bool yval = true;
-                bool zval = true;
-                cst_dt16 = rm_cst_dat7;
-                cst_dt17 = rm_cst_dat8;
-                cst_dt18 = rm_cst_dat9;
-                cst_dt19 = rm_cst_dat10;
-                cst_dt20 = rm_cst_dat11;
-                cst_dt21 = rm_cst_dat12;
-                if (!double.TryParse(cst_dt19, out align_gps_coords.X))
-                {
-                    align_gps_coords.X = 0.0;
-                    cst_dt18 = "";
-                    xval = false;
-                }
-                if (!double.TryParse(cst_dt19, out align_gps_coords.Y))
-                {
-                    align_gps_coords.Y = 0.0;
-                    cst_dt19 = "";
-                    yval = false;
-                }
-                if (!double.TryParse(cst_dt20, out align_gps_coords.Z))
-                {
-                    align_gps_coords.Z = 0.0;
-                    cst_dt20 = "";
-                    zval = false;
-                }
-                if (xval && yval && zval)
-                {
-                    align_target_valid = true;
-                    const string baseFormat = "{0}:{1}:{2}:{3}:{4}:{5}:{6}:{7}:{8}:{9}:{10}:{11}:{12}:{13}:{14}:{15}:{16}:{17}:{18}:{19}:{20}:{21}:";
-                    customDataString.Clear();
-                    customDataString.AppendFormat(baseFormat, cst_dt0, cst_dt1, cst_dt2, cst_dt3, cst_dt4, cst_dt5, cst_dt6, cst_dt7, cst_dt8, cst_dt9, cst_dt10, cst_dt11, cst_dt12, cst_dt13, cst_dt14, cst_dt15, cst_dt16, cst_dt17, cst_dt18, cst_dt19, cst_dt20, cst_dt21);
-                    Me.CustomData = customDataString.ToString();
-                    customDataString.Clear();
-                }
-            }
-            if (gps_cmnd.Length > 15)
-            {
-                bool xval = true;
-                bool yval = true;
-                bool zval = true;
-                if (!double.TryParse(cst_dt18, out align_gps_coords.X))
-                {
-                    align_gps_coords.X = 0.0;
-                    cst_dt18 = "";
-                    xval = false;
-                }
-                if (!double.TryParse(cst_dt19, out align_gps_coords.Y))
-                {
-                    align_gps_coords.Y = 0.0;
-                    cst_dt19 = "";
-                    yval = false;
-                }
-                if (!double.TryParse(cst_dt20, out align_gps_coords.Z))
-                {
-                    align_gps_coords.Z = 0.0;
-                    cst_dt20 = "";
-                    zval = false;
-                }
-                if (xval && yval && zval)
-                {
-                    align_target_valid = true;
-                }
-                else
-                {
-                    align_target_valid = false;
-                    cst_dt16 = "";
-                    cst_dt17 = "";
-                    cst_dt18 = "";
-                    cst_dt19 = "";
-                    cst_dt20 = "";
-                    cst_dt21 = "";
-                    if (!align_target_valid) //if align target is invalvalid - rewrite to custom data
-                    {
-                        const string baseFormat = "{0}:{1}:{2}:{3}:{4}:{5}:{6}:{7}:{8}:{9}:{10}:{11}:{12}:{13}:{14}:{15}:";
-                        customDataString.Clear();
-                        customDataString.AppendFormat(baseFormat, cst_dt0, cst_dt1, cst_dt2, cst_dt3, cst_dt4, cst_dt5, cst_dt6, cst_dt7, cst_dt8, cst_dt9, cst_dt10, cst_dt11, cst_dt12, cst_dt13, cst_dt14, cst_dt15);
-                        Me.CustomData = customDataString.ToString();
-                        customDataString.Clear();
-                    }
-                }
-            }
-            
         }
 
         public void scrnbldr(int ivl, int ivl2, bool slu)
@@ -3714,12 +3602,9 @@ namespace IngameScript
                   .AppendLine($"Command: {commandAsk} Reset: {general_reset}")
                   .AppendLine($"Status: {stts}")
                   .AppendLine()
-            .AppendLine($"Align target: 7 {rm_cst_dat7} 8 {rm_cst_dat8} 9 {rm_cst_dat9} 10 {rm_cst_dat10} 11 {rm_cst_dat11} 12 {rm_cst_dat12}")
                   .AppendLine("Target:")
                   .AppendLine(m_gps_crds.ToString());
-
             if (align_target_valid) dp_txm.AppendLine("Secondary/Asteroid:").AppendLine(align_gps_coords.ToString());
-
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(dp_txm);
         }

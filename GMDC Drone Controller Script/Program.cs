@@ -2025,7 +2025,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB;
         }
 
         private void UpdateDroneCounts()
@@ -2050,6 +2050,8 @@ namespace IngameScript
                 stats.Recharge += status.Contains("Recharg") ? 1 : 0;
                 stats.Unload += status.Contains("Unload") ? 1 : 0;
                 stats.Mining += status.Contains("Min") ? 1 : 0;
+                stats.RTBA += status.Contains("RTB: Request") ? 1 : 0;
+                stats.RTBB += status.Contains("RTB: Ready") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
                 stats.Ok += damage == "OK" ? 1 : 0;
@@ -2770,6 +2772,14 @@ namespace IngameScript
                             {
                                 bore_colour_drone = Color.Orange;
                             }
+                            else if (drone_control_status[i].Contains("RTB: Ready"))
+                            {
+                                bore_colour_drone = Color.Green;
+                            }
+                            else if (drone_control_status[i].Contains("Undock"))
+                            {
+                                bore_colour_drone = Color.Yellow;
+                            }
                             else
                             {
                                 bore_colour_drone = Color.Navy;
@@ -2795,7 +2805,36 @@ namespace IngameScript
                             Alignment = TextAlignment.CENTER
                         };
                         sprites.Add(sprite);
-                        if (drone_control_status[i].Contains("Recharg") || drone_control_status[i].Contains("Unload"))
+                        if (drone_cargo_full[i].Contains("True") || drone_recharge_request[i].Contains("True"))
+                        {
+                            if (drone_recharge_request[i].Contains("True") && drone_cargo_full[i].Contains("True"))
+                            {
+                                bore_colour_drone = Color.White;
+                            }
+                            else if (drone_recharge_request[i].Contains("True"))
+                            {
+                                bore_colour_drone = Color.YellowGreen;
+                            }
+                            else if (drone_cargo_full[i].Contains("True"))
+                            {
+                                bore_colour_drone = Color.RosyBrown;
+                            }
+                            Image_drone = "CircleHollow";                            
+                            var sprite_layer_h = new MySprite()
+                            {
+                                Type = SpriteType.TEXTURE,
+                                Data = Image_drone,
+                                Position = position,
+                                //RotationOrScale = size_scale,
+                                Size = sizer * 0.8f,
+                                Color = bore_colour_drone.Alpha(alpha_val),
+                                Alignment = TextAlignment.CENTER
+                            };
+                            sprites.Add(sprite_layer_h);
+                            spritecount++;
+                        }
+
+                        if (drone_control_status[i].Contains("Recharg") || drone_control_status[i].Contains("Unload") || drone_recharge_request[i].Contains("True"))
                         {
                             Image_drone = "IconEnergy";
                             bore_colour_drone = Color.Yellow;
@@ -3366,18 +3405,19 @@ namespace IngameScript
         public void presence_check()
         {
             #region presence_check
-            if (rm_ctl_tag.Count <= 0 || rm_ctl_tag[0] == null)
-            {
-                Echo($"remote control with tag: '{ant_tg}' not found.");
-                return;
-            }
-            remote_control_actual = rm_ctl_tag[0];
             if (at_tg.Count <= 0 || at_tg[0] == null)
             {
                 Echo($"Antenna with tag: '{ant_tg}' not found.");
                 return;
             }
             ant_act = at_tg[0];
+            if (rm_ctl_tag.Count <= 0 || rm_ctl_tag[0] == null)
+            {
+                Echo($"remote control with tag: '{ant_tg}' not found.");
+                return;
+            }
+            remote_control_actual = rm_ctl_tag[0];
+
 
             if (lts_sys_tg.Count <= 0 || lts_sys_tg[0] == null)
             {

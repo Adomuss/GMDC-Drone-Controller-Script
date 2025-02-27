@@ -104,11 +104,11 @@ namespace IngameScript
         string rc_dn_rchg_req;
         string rc_auto_pilot_enabled;
         int recieved_drone_list_position;
-        double rc_d_cn = 0.0;
+        double recieved_drone_charge_number = 0.0;
         string rc_locx;
         string rc_locy;
         string rc_locz;
-        string rc_dn_chg;
+        string recieved_drone_charge_string;
         string rc_dn_gas;
         string rc_dn_str;
         int current_gps_idx = 0;
@@ -235,7 +235,7 @@ namespace IngameScript
         List<string> drone_recharge_request;
         List<string> drone_auto_pilot_enabled;
         List<int> drone_assigns_count;
-        List<double> dcs;
+        List<double> droneChargeStorageNumber;
         List<bool> drone_assigned_coordinates;
         List<bool> drone_recall_list;
         List<Vector3D> drone_gps_coordinates_ds;
@@ -1056,7 +1056,7 @@ namespace IngameScript
                     }
                 }
 
-                if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
+                if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && droneChargeStorageNumber[i] <= bclu)
                 {
                     drone_control_sequence[i] = 13;
                     currentDroneBoreIndex = gps_grid_position_value.ToString();
@@ -1069,7 +1069,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-                if (drone_control_sequence[i] == 13 && drone_control_status[i] == "Idle" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg || drone_control_sequence[i] == 5 && drone_control_status[i] == "Docking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
+                if (drone_control_sequence[i] == 13 && drone_control_status[i] == "Idle" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg || drone_control_sequence[i] == 5 && drone_control_status[i] == "Docking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && droneChargeStorageNumber[i] <= bclu)
                 {
                     drone_control_sequence[i] = 8;
                     currentDroneBoreIndex = gps_grid_position_value.ToString();
@@ -2175,7 +2175,7 @@ namespace IngameScript
             }
             else
             {
-                drone = new DroneData(messageData[0], "OK", false, "Idle", false, false, false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false);  
+                drone = new DroneData(messageData[0], "OK", false, "Idle", false, false, false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false,false,0,-1,false,true,false,0,false,0,false,true,"",false);  
             }
             //drone.droneName = messageData[0]; - not needed as it gets picked up from message
             //populate drone data from message data
@@ -3102,7 +3102,7 @@ namespace IngameScript
             droneTranmissionOutput.Clear();
             drone_ready.Clear();
             drone_must_wait.Clear();
-            dcs.Clear();
+            droneChargeStorageNumber.Clear();
             droneStatusOK.Clear();
             droneTransmissionStatus.Clear();
             drone_recall_list.Clear();
@@ -3136,7 +3136,7 @@ namespace IngameScript
             droneTranmissionOutput = new List<string>();
             drone_ready = new List<bool>();
             drone_must_wait = new List<bool>();
-            dcs = new List<double>();
+            droneChargeStorageNumber = new List<double>();
             droneStatusOK = new List<bool>();
             droneTransmissionStatus = new List<bool>();
             drone_recall_list = new List<bool>();
@@ -3306,7 +3306,7 @@ namespace IngameScript
             tla = new List<int>();
             rst = new List<int>();
             fct = new List<string>();
-            dcs = new List<double>();
+            droneChargeStorageNumber = new List<double>();
             droneStatusOK = new List<bool>();
             droneTransmissionStatus = new List<bool>();
             miningCoordinatesNew = new StringBuilder();
@@ -3612,6 +3612,22 @@ namespace IngameScript
             public bool cargoFull;
             public bool rechargeRequest;
             public bool autoDock;
+            //data driven values from state machine
+            public bool droneAssignedCoordinates;
+            public int droneAssignsCount;
+            public int droneAssignedGridIndex;
+            public bool droneReady;
+            public bool droneMustWait;
+            public bool droneResetFunction;
+            public int droneControlSequence;
+            public bool droneRecallList;
+            public int droneRecallSequence;
+            public bool droneMining;           
+            public bool droneStatusOK;
+            public string droneTransmissionOutput;
+            public bool droneTransmissionStatus;
+
+
 
             public DroneData(
                 string droneName, string droneDamage, bool droneTunnelFinished, 
@@ -3620,7 +3636,12 @@ namespace IngameScript
                 double droneLocationY, double droneLocationZ, double currentBoreLength, 
                 double currentBoreDistance, double currentBoreMineDistance, double currentDroneCharge, 
                 double currentDroneGas, double currentDroneOre, int currentGPSIndex,
-                bool cargoFull, bool rechargeRequest, bool autoDock
+                bool cargoFull, bool rechargeRequest, bool autoDock,
+
+                bool droneAssignedCoordinates, int droneAssignsCount, int droneAssignedGridIndex, 
+                bool droneReady, bool droneMustWait, bool droneResetFunction, int droneControlSequence, 
+                bool droneRecallList, int droneRecallSequence, bool droneMining, 
+                bool droneStatusOK, string droneTransmissionOutput, bool droneTransmissionStatus
                 )
             {
                 this.droneName = droneName;
@@ -3644,6 +3665,19 @@ namespace IngameScript
                 this.cargoFull = cargoFull;
                 this.rechargeRequest = rechargeRequest;
                 this.autoDock = autoDock;
+                this.droneAssignedCoordinates = droneAssignedCoordinates;
+                this.droneAssignsCount = droneAssignsCount;
+                this.droneAssignedGridIndex = droneAssignedGridIndex;
+                this.droneReady = droneReady;
+                this.droneMustWait = droneMustWait;
+                this.droneResetFunction = droneResetFunction;
+                this.droneControlSequence = droneControlSequence;
+                this.droneRecallList = droneRecallList;
+                this.droneRecallSequence = droneRecallSequence;
+                this.droneMining = droneMining;
+                this.droneStatusOK = droneStatusOK;
+                this.droneTransmissionOutput = droneTransmissionOutput;
+                this.droneTransmissionStatus = droneTransmissionStatus;
             }
         }
 
@@ -3674,7 +3708,7 @@ namespace IngameScript
                     drone_location_x.Add(rc_locx);
                     drone_location_y.Add(rc_locy);
                     drone_location_z.Add(rc_locz);
-                    drone_charge_storage.Add(rc_dn_chg);
+                    drone_charge_storage.Add(recieved_drone_charge_string);
                     drone_gas_storage.Add(rc_dn_gas);
                     drone_ore_storage.Add(rc_dn_str);
                     drone_gps_grid_list_position.Add(-1);
@@ -3685,7 +3719,7 @@ namespace IngameScript
                     droneTranmissionOutput.Add("");
                     drone_ready.Add(false);
                     drone_must_wait.Add(true);
-                    dcs.Add(0.0);
+                    droneChargeStorageNumber.Add(0.0);
                     droneStatusOK.Add(true);
                     droneTransmissionStatus.Add(true);
                     drone_recall_list.Add(false);
@@ -3719,19 +3753,19 @@ namespace IngameScript
                             drone_location_x[i] = rc_locx;
                             drone_location_y[i] = rc_locy;
                             drone_location_z[i] = rc_locz;
-                            drone_charge_storage[i] = rc_dn_chg;
+                            drone_charge_storage[i] = recieved_drone_charge_string;
                             drone_gas_storage[i] = rc_dn_gas;
                             drone_ore_storage[i] = rc_dn_str;
-                            dcs[i] = rc_d_cn;
+                            droneChargeStorageNumber[i] = recieved_drone_charge_number;
                             droneTransmissionStatus[i] = true;
                             drone_cargo_full[i] = rc_dn_cargo_full;
                             drone_recharge_request[i] = rc_dn_rchg_req;
                             drone_auto_pilot_enabled[i] = rc_auto_pilot_enabled;
-                            if (dcs[i] <= bclm)
+                            if (droneChargeStorageNumber[i] <= bclm)
                             {
                                 droneStatusOK[i] = false;
                             }
-                            if (dcs[i] > bclm)
+                            if (droneChargeStorageNumber[i] > bclm)
                             {
                                 droneStatusOK[i] = true;
                             }
@@ -3756,7 +3790,7 @@ namespace IngameScript
                             drone_location_x.Add(rc_locx);
                             drone_location_y.Add(rc_locy);
                             drone_location_z.Add(rc_locz);
-                            drone_charge_storage.Add(rc_dn_chg);
+                            drone_charge_storage.Add(recieved_drone_charge_string);
                             drone_gas_storage.Add(rc_dn_gas);
                             drone_ore_storage.Add(rc_dn_str);
                             drone_mining.Add(false);
@@ -3767,7 +3801,7 @@ namespace IngameScript
                             droneTranmissionOutput.Add("");
                             drone_ready.Add(false);
                             drone_must_wait.Add(true);
-                            dcs.Add(0.0);
+                            droneChargeStorageNumber.Add(0.0);
                             droneStatusOK.Add(true);
                             droneTransmissionStatus.Add(true);
                             drone_recall_list.Add(false);

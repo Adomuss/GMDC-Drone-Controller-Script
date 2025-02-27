@@ -205,7 +205,7 @@ namespace IngameScript
         IMyRemoteControl remote_control_actual;
         IMyProgrammableBlock pb_i_act;
         Vector3D mainGPSCoordinates;
-        Vector3D c_gps_crds;
+        Vector3D centralGridGPSCoordinates;
         Vector3D next_gps_crds;
         Vector3D target_gps_coords;
         Vector3D alignGPSCoordinates;
@@ -243,9 +243,7 @@ namespace IngameScript
         List<int> drone_recall_sequence;
         List<bool> drone_reset_func;
         List<string> droneTranmissionOutput;
-        List<Vector3D> grid_bore_positions;
-        List<bool> grid_bore_occupied;
-        List<bool> grid_bore_finished;
+        List<GridBoreData> gridBoreDataList;
         List<string> cl;
         List<string> cl2;
         List<int> tla;
@@ -293,7 +291,6 @@ namespace IngameScript
         bool i_stop = false;
         bool n_intf = false;
         string it_ag;
-        //decimal dps_r_d = 0.0m;
         List<IMyRemoteControl> rm_ctl_all;
         List<IMyRemoteControl> rm_ctl_tag;
         List<IMyRadioAntenna> at_all;
@@ -316,16 +313,11 @@ namespace IngameScript
         int t_drn_dmg = 0;
         int t_dn_unk = 0;
         int t_dn_ok = 0;
-        string g1;
-        string g2;
         int di = 0;
         int total_drones_undocking = 0;
         int undock_timer = 0;
         bool drones_undocking = false;
         bool can_loading = false;
-        string px = "";
-        string py = "";
-        string pz = "";
         double bx = 0.0;
         double by = 0.0;
         double bz = 0.0;
@@ -367,39 +359,20 @@ namespace IngameScript
         #endregion
         public void Save()
         {
-            if (setup_complete)
-            {
-                sb = new StringBuilder();
-                if (grid_bore_finished.Count > 0 && grid_bore_occupied.Count > 0)
-                {
-                    for (int i = 0; i < grid_bore_finished.Count; i++)
-                    {
+            if (!setup_complete || gridBoreDataList == null) return; // Early exit if not ready
 
-                        if (grid_bore_finished[i])
-                        {
-                            g1 = "1";
-                        }
-                        else
-                        {
-                            g1 = "0";
-                        }
-                        if (grid_bore_occupied[i])
-                        {
-                            g2 = "1";
-                        }
-                        else
-                        {
-                            g2 = "0";
-                        }
-                        px = grid_bore_positions[i].X.ToString();
-                        py = grid_bore_positions[i].Y.ToString();
-                        pz = grid_bore_positions[i].Z.ToString();
-                        sb.Append(g1 + ":" + g2 + ":" + px + ":" + py + ":" + pz + ":" + ";");
-                    }
-                    Storage = sb.ToString();
-                    sb.Clear();
-                }
+            sb.Clear(); // Reuse existing StringBuilder
+            for (int i = 0; i < gridBoreDataList.Count; i++)
+            {
+                var bore = gridBoreDataList[i];
+                sb.AppendFormat("{0}:{1}:{2}:{3}:{4};",
+                    bore.boreFinished ? "1" : "0",
+                    bore.boreOccupied ? "1" : "0",
+                    bore.borePosition.X,
+                    bore.borePosition.Y,
+                    bore.borePosition.Z);
             }
+            Storage = sb.ToString();
         }
 
 
@@ -542,7 +515,6 @@ namespace IngameScript
             //debugger            
             //Echo($"{init_grid_complete} {c_gd}");
 
-            //Echo($"{core_out} {grid_bore_positions.Count} {debugcount}");
         }
 
         private void time_counter_reset()
@@ -602,7 +574,7 @@ namespace IngameScript
                     }
 
                 }
-                if (display_tag_vis.Count > 0 && display_tag_vis[0] != null && grid_bore_finished.Count > 0 && frame_generator_finished)
+                if (display_tag_vis.Count > 0 && display_tag_vis[0] != null && gridBoreDataList.Count > 0 && frame_generator_finished)
                 {
                     frame_generator_finished = false;
                     if (spritecount >= spritecount_limit_main)
@@ -866,9 +838,9 @@ namespace IngameScript
                         drone_must_wait[i] = true;
                     }
                 }
-                if (drone_gps_grid_list_position[i] > -1 && drone_gps_grid_list_position[i] < grid_bore_positions.Count)
+                if (drone_gps_grid_list_position[i] > -1 && drone_gps_grid_list_position[i] < gridBoreDataList.Count)
                 {
-                    if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                    if (gridBoreDataList[drone_gps_grid_list_position[i]].boreOccupied && !drone_mining[i])
                     {
                         if (!launched_drone_status || drones_undocking)
                         {
@@ -883,7 +855,7 @@ namespace IngameScript
                             drone_must_wait[i] = true;
                         }
                     }
-                    else if (bores_completed < total_mining_runs && !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                    else if (bores_completed < total_mining_runs && !gridBoreDataList[drone_gps_grid_list_position[i]].boreOccupied && !gridBoreDataList[drone_gps_grid_list_position[i]].boreFinished && !drone_mining[i])
                     {
                         if (!launched_drone_status)
                         {
@@ -898,14 +870,19 @@ namespace IngameScript
                             drone_must_wait[i] = true;
                         }
                     }
-                    if (!grid_bore_finished[drone_gps_grid_list_position[i]])
+                    if (!gridBoreDataList[drone_gps_grid_list_position[i]].boreFinished)
                     {
                         int queued_count = CntIntVls(drone_gps_grid_list_position, drone_gps_grid_list_position[i]);
-                        if (grid_bore_occupied[drone_gps_grid_list_position[i]] && queued_count == 0)
+                        if (gridBoreDataList[drone_gps_grid_list_position[i]].boreOccupied && queued_count == 0)
                         {
-                            grid_bore_occupied[drone_gps_grid_list_position[i]] = false;
+                            GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                            bore.boreOccupied = false;
+                            gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                         }
-
+                    }
+                    else
+                    {
+                        Echo($"Warning: Invalid bore index {drone_gps_grid_list_position[i]} for drone {i}");
                     }
                 }
 
@@ -925,9 +902,9 @@ namespace IngameScript
                     if (bores_completed < total_mining_runs && mining_grid_valid != false && !drone_assigned_coordinates[i] && drone_must_wait[i] == false)
                     {
 
-                        if (grid_bore_finished.Count > 0)
+                        if (gridBoreDataList.Count > 0)
                         {
-                            if (skip_bores_number > grid_bore_finished.Count)
+                            if (skip_bores_number > gridBoreDataList.Count)
                             {
                                 skip_bores_number = 0;
                             }
@@ -935,21 +912,23 @@ namespace IngameScript
                             {
                                 for (int j = 0; j < skip_bores_number; j++)
                                 {
-                                    if (j > grid_bore_finished.Count - 1 || j > skip_bores_number - 1)
+                                    if (j > gridBoreDataList.Count - 1 || j > skip_bores_number - 1)
                                     {
                                         break;
                                     }
-                                    grid_bore_finished[j] = true;
+                                    GridBoreData bore = gridBoreDataList[j];
+                                    bore.boreFinished = true;
+                                    gridBoreDataList[j] = bore;
                                 }
                             }
-                            for (int k = 0; k < grid_bore_finished.Count; k++)
+                            for (int k = 0; k < gridBoreDataList.Count; k++)
                             {
 
-                                if (k > grid_bore_finished.Count - 1)
+                                if (k > gridBoreDataList.Count - 1)
                                 {
-                                    k = grid_bore_finished.Count - 1;
+                                    k = gridBoreDataList.Count - 1;
                                 }
-                                if (!grid_bore_finished[k] && !grid_bore_occupied[k])
+                                if (!gridBoreDataList[k].boreFinished && !gridBoreDataList[k].boreOccupied)
                                 {
                                     current_gps_idx = k;
                                     break;
@@ -960,13 +939,13 @@ namespace IngameScript
                         if (gps_grid_position_value == -1)
                         {
                             gps_grid_position_value = current_gps_idx;
-                            drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
+                            drone_gps_coordinates_ds[i] = gridBoreDataList[gps_grid_position_value].borePosition;
                             drone_gps_grid_list_position[i] = gps_grid_position_value;
                         }
                         else
                         {
                             gps_grid_position_value = drone_gps_grid_list_position[i];
-                            drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
+                            drone_gps_coordinates_ds[i] = gridBoreDataList[gps_grid_position_value].borePosition;
                         }
                         if (!mining_grid_valid)
                         {
@@ -990,11 +969,11 @@ namespace IngameScript
                     }
                     if (drone_gps_grid_list_position[i] > -1)
                     {
-                        if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                        if (gridBoreDataList[drone_gps_grid_list_position[i]].boreOccupied && !drone_mining[i])
                         {
                             drone_must_wait[i] = true;
                         }
-                        else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                        else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || !gridBoreDataList[drone_gps_grid_list_position[i]].boreOccupied && !gridBoreDataList[drone_gps_grid_list_position[i]].boreFinished && !drone_mining[i])
                         {
                             drone_must_wait[i] = false;
                         }
@@ -1002,14 +981,16 @@ namespace IngameScript
                         {
                             drone_control_sequence[i] = 1;
                             drone_mining[i] = true;
-                            grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
+                            GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                            bore.boreOccupied = true;
+                            gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                         }
                         else
                         {
                             drone_control_sequence[i] = 0;
                             drone_mining[i] = false;
                         }
-                        if (grid_bore_finished[drone_gps_grid_list_position[i]])
+                        if (gridBoreDataList[drone_gps_grid_list_position[i]].boreFinished)
                         {
                             //suspect coordinates here 2
                             Echo($"Drone position finished {i}");
@@ -1045,7 +1026,9 @@ namespace IngameScript
                 {
                     drone_control_sequence[i] = 2;
                     drone_mining[i] = true;
-                    grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
+                    GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                    bore.boreOccupied = true;
+                    gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                     currentDroneBoreIndex = gps_grid_position_value.ToString();
                     commandOutput = "7";
                     drone_command_builder(currentDroneBoreIndex, currentMiningDroneBoreLocationX, currentMiningDroneBoreLocationY, currentMiningDroneBoreLocationZ, currentMiningDroneCustomData_5, commandOutput, currentMiningDroneBoreLength, currentMiningDroneIgnoreDistance, currentMiningDroneAlignLocationX, currentMiningDroneAlignLocationY, currentMiningDroneAlignLocationZ);
@@ -1178,11 +1161,15 @@ namespace IngameScript
                 }
                 if (drone_control_sequence[i] >= 8 && drone_control_status[i].Contains("Docked") && drone_mining[i] || drone_control_sequence[i] == 4 && drone_control_status[i].Contains("Docked") && drone_mining[i])
                 {
-                    grid_bore_occupied[drone_gps_grid_list_position[i]] = false;
+                    GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                    bore.boreOccupied = false;
+                    gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                 }
                 if (drone_control_sequence[i] >= 8 && drone_control_status[i].Contains("Dock") && drone_mining[i] && drone_tunnel_complete[i] == "True")
                 {
-                    grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+                    GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                    bore.boreFinished = true;
+                    gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                 }
                 if (drone_control_sequence[i] == 8 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && drone_assigned_coordinates[i] && !run_arg)
                 {
@@ -1216,7 +1203,9 @@ namespace IngameScript
                 if (drone_control_sequence[i] == 8 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && drone_assigned_coordinates[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 9;
-                    grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+                    GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                    bore.boreFinished = true;
+                    gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
 
                     currentDroneBoreIndex = gps_grid_position_value.ToString();
                     commandOutput = "0";
@@ -1245,7 +1234,9 @@ namespace IngameScript
                 {
                     drone_control_sequence[i] = 11;
                     drone_tunnel_complete[i] = "False";
-                    grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+                    GridBoreData bore = gridBoreDataList[drone_gps_grid_list_position[i]];
+                    bore.boreFinished = true;
+                    gridBoreDataList[drone_gps_grid_list_position[i]] = bore;
                     t_mne_sq_cmp++;
                     gps_grid_position_value = -1;
                     drone_reset_func[i] = false;
@@ -1517,21 +1508,29 @@ namespace IngameScript
             #endregion
         }
 
+        public struct GridBoreData
+        {
+            public Vector3D borePosition;
+            public bool boreOccupied;
+            public bool boreFinished;
+            public GridBoreData(Vector3D borePosition, bool boreOccupied, bool boreFinished)
+            {
+                this.borePosition = borePosition;
+                this.boreOccupied = boreOccupied;
+                this.boreFinished = boreFinished;
+            }
+        }
         private void ProcessJobGrid()
         {
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
             if (nPtsY == 0 && !created_grid || nPtsX == 0 && !created_grid || gridSize == 0 && !created_grid)
             {
-                grid_bore_positions = new List<Vector3D>();
-                grid_bore_occupied = new List<bool>();
-                grid_bore_finished = new List<bool>();
+                gridBoreDataList = new List<GridBoreData>();
                 created_grid = true;
-                c_gps_crds = mainGPSCoordinates;
-                grid_bore_occupied.Add(false);
-                grid_bore_finished.Add(false);
-                grid_bore_positions.Add(c_gps_crds);
-                total_mining_runs = grid_bore_positions.Count;
+                centralGridGPSCoordinates = mainGPSCoordinates;  
+                gridBoreDataList.Add(new GridBoreData(centralGridGPSCoordinates, false, false));
+                total_mining_runs = gridBoreDataList.Count;
                 current_gps_idx = 0;
                 if (readyFlag)
                 {
@@ -1543,9 +1542,7 @@ namespace IngameScript
 
                 if (!bores_regen)
                 {
-                    grid_bore_positions = new List<Vector3D>();
-                    grid_bore_finished = new List<bool>();
-                    grid_bore_occupied = new List<bool>();
+                    gridBoreDataList = new List<GridBoreData>();
                     bores_regen = true;
                 }
 
@@ -1553,7 +1550,7 @@ namespace IngameScript
                 {
                     readyFlag = false;
                 }
-                //grid_bore_positions.Clear();
+                gridBoreDataList.Clear();
                 Vector3D gravity = remote_control_actual.GetNaturalGravity();
                 if (align_target_valid)
                 {
@@ -1625,7 +1622,7 @@ namespace IngameScript
 
                 }
                 //grid data found - terminite initialisation
-                if (grid_bore_positions.Count > 0 && init_grid_complete)
+                if (gridBoreDataList.Count > 0 && init_grid_complete)
                 {
                     created_grid = true;
                     pb_i_act.CustomData = "";
@@ -1634,7 +1631,7 @@ namespace IngameScript
                     it_ag = "";
                 }
 
-                total_mining_runs = grid_bore_positions.Count;
+                total_mining_runs = gridBoreDataList.Count;
 
                 if (nPtsY == 0 || nPtsY == 0 || gridSize == 0 || nPtsY == 0 && nPtsY == 0 && gridSize == 0)
                 {
@@ -2030,8 +2027,8 @@ namespace IngameScript
 
         private void UpdateDroneCounts()
         {
-            int startInstructions = Runtime.CurrentInstructionCount;
-            bores_completed = CntTrueVls(grid_bore_finished);
+            int startInstructions = Runtime.CurrentInstructionCount;            
+            bores_completed = CntTrueVlsGridBoreDataFinished(gridBoreDataList);
             bores_remaining = total_mining_runs - bores_completed;
             total_drones_mining = CntTrueVls(drone_mining);
             total_drones_undocking = CntIntVls(drone_control_sequence, 2);
@@ -2083,19 +2080,25 @@ namespace IngameScript
             else if (undock_timer != 0)
                 undock_timer = 0;
 
-            if (grid_bore_occupied.Count > 0)
+            if (gridBoreDataList.Count > 0)
             {
-                if (boreQueueCounts.Length < grid_bore_occupied.Count)
-                    boreQueueCounts = new int[grid_bore_occupied.Count];
-                Array.Clear(boreQueueCounts, 0, grid_bore_occupied.Count);
+                if (boreQueueCounts.Length < gridBoreDataList.Count)
+                    boreQueueCounts = new int[gridBoreDataList.Count];
+                Array.Clear(boreQueueCounts, 0, gridBoreDataList.Count);
 
                 for (int d = 0; d < drone_gps_grid_list_position.Count; d++)
                     if (drone_gps_grid_list_position[d] >= 0 && drone_gps_grid_list_position[d] < boreQueueCounts.Length)
                         boreQueueCounts[drone_gps_grid_list_position[d]]++;
 
-                for (int l = 0; l < grid_bore_occupied.Count; l++)
-                    if (grid_bore_occupied[l] && boreQueueCounts[l] == 0)
-                        grid_bore_occupied[l] = false;
+                for (int l = 0; l < gridBoreDataList.Count; l++)
+                {
+                    GridBoreData bore = gridBoreDataList[l];
+                    if (gridBoreDataList[l].boreOccupied && boreQueueCounts[l] == 0)
+                    {
+                        bore.boreOccupied = false;
+                        gridBoreDataList[l] = bore;
+                    }                        
+                }
             }
             Echo($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
         }
@@ -2112,16 +2115,16 @@ namespace IngameScript
                 dp_txm.Append("Mining seq. complete"); ;
             }
 
-            if (grid_bore_positions.Count > 0)
+            if (gridBoreDataList.Count > 0)
             {
                 dp_txm.Append('\n');
-                dp_txm.Append("Grid pos: " + grid_bore_positions.Count);
+                dp_txm.Append("Grid pos: " + gridBoreDataList.Count);
                 dp_txm.Append('\n');
                 dp_txm.Append("Grid dist: " + cst_dt7 + "m #X: " + cst_dt8 + " #Y: " + cst_dt9);
                 dp_txm.Append('\n');
                 dp_txm.Append("Grid OK: " + mining_grid_valid);
                 dp_txm.Append('\n');
-                dp_txm.Append("Bores: " + grid_bore_positions.Count + " Remain: " + bores_remaining + "  Skip: " + skip_bores_number);
+                dp_txm.Append("Bores: " + gridBoreDataList.Count + " Remain: " + bores_remaining + "  Skip: " + skip_bores_number);
                 dp_txm.Append('\n');
             }
             else
@@ -2519,11 +2522,11 @@ namespace IngameScript
                 listheader_generated = true;
             }
 
-            for (int i = 0; i < grid_bore_finished.Count; i++)
+            for (int i = 0; i < gridBoreDataList.Count; i++)
             {
                 for (int j = 0; j < drone_gps_grid_list_position.Count; j++)
                 {
-                    if (!grid_bore_occupied[i])
+                    if (!gridBoreDataList[i].boreOccupied)
                     {
                         drone_namer = "";
                     }
@@ -2534,22 +2537,24 @@ namespace IngameScript
                     }
                     if (drone_assigns_count[j] > 1)
                     {
-                        grid_bore_occupied[i] = false;
+                        GridBoreData bore = gridBoreDataList[i];
+                        bore.boreOccupied = false;
+                        gridBoreDataList[i] = bore;
                     }
                     drone_assigns_count[j] = 0;
 
                 }
-                if (!grid_bore_finished[i])
+                if (!gridBoreDataList[i].boreFinished)
                 {
                     dp_txl.Append('\n');
-                    dp_txl.Append($"i: {i}  Mining: {grid_bore_occupied[i].ToString()}  Finished: {grid_bore_finished[i].ToString()} Drone: {drone_namer}");
+                    dp_txl.Append($"i: {i}  Mining: {gridBoreDataList[i].boreOccupied.ToString()}  Finished: {gridBoreDataList[i].boreFinished.ToString()} Drone: {drone_namer}");
 
                 }
-                if (i == grid_bore_finished.Count - 1)
+                if (i == gridBoreDataList.Count - 1)
                 {
                     listgenerator_finished = true;
                 }
-                percent_list = ((double)i / (double)grid_bore_finished.Count) * 100;
+                percent_list = ((double)i / (double)gridBoreDataList.Count) * 100;
                 yield return false;
             }
             yield return true;
@@ -2577,10 +2582,7 @@ namespace IngameScript
                 for (int j = 0; j < numPointsY; j++)
                 {
                     Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
-
-                    grid_bore_positions.Add(position);
-                    grid_bore_occupied.Add(false);
-                    grid_bore_finished.Add(false);
+                    gridBoreDataList.Add(new GridBoreData(position,false,false));
                 }
                 yield return false;
             }
@@ -2606,18 +2608,15 @@ namespace IngameScript
                         for (int j = 0; j < core_numpoints_y; j++)
                         {
                             Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
-                            grid_bore_positions.Add(position);
-                            grid_bore_occupied.Add(false);
-                            grid_bore_finished.Add(false);
+                            gridBoreDataList.Add(new GridBoreData(position, false, false));
                         }
                         yield return false;
                     }
                 }
             }
             gridcount = gridcount_inner + gridcount_outer;
-            percent_grid = (double)grid_bore_positions.Count / (double)gridcount;
-            //Echo($"{gridcount} {grid_bore_positions.Count} {gridcount}");
-            if (grid_bore_positions.Count == gridcount)
+            percent_grid = (double)gridBoreDataList.Count / (double)gridcount;
+            if (gridBoreDataList.Count == gridcount)
             {
                 init_grid_complete = true;
             }
@@ -2646,7 +2645,7 @@ namespace IngameScript
             var scale_factor_y = (float)(Viewport_size_y / height_real) * 1.5f;
             //build sprite frame
 
-            if (grid_bore_positions.Count > 0)
+            if (gridBoreDataList.Count > 0)
             {
                 //m_gps_crds,planeNrml, grdsz, nPtsX, nPtsY, core_out
                 //planeNrml, grdsz, nPtsX, nPtsY, core_out
@@ -2680,10 +2679,10 @@ namespace IngameScript
                 Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
                 Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
 
-                for (int i = 0; i < grid_bore_positions.Count; i++)
+                for (int i = 0; i < gridBoreDataList.Count; i++)
                 {
                     sprite_total++;
-                    Vector3D relativePoint = grid_bore_positions[i] - centerPoint;
+                    Vector3D relativePoint = gridBoreDataList[i].borePosition - centerPoint;
                     double xPlanar = Vector3D.Dot(relativePoint, xAxis);
                     double yPlanar = Vector3D.Dot(relativePoint, yAxis);
                     var CentX = (float)xPlanar;
@@ -2691,9 +2690,9 @@ namespace IngameScript
                     string Image;
                     var bore_colour = new Color();
                     var alpha_bytes = 1.0f;
-                    Image = grid_bore_finished[i] ? "CircleHollow" : "Circle";
-                    alpha_bytes = grid_bore_occupied[i] ? 1.0f : 0.5f;
-                    bore_colour = grid_bore_occupied[i] ? Color.LightSkyBlue : Color.DeepSkyBlue;
+                    Image = gridBoreDataList[i].boreFinished ? "CircleHollow" : "Circle";
+                    alpha_bytes = gridBoreDataList[i].boreOccupied ? 1.0f : 0.5f;
+                    bore_colour = gridBoreDataList[i].boreOccupied ? Color.LightSkyBlue : Color.DeepSkyBlue;
 
                     var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
                     //background sprite
@@ -2709,7 +2708,7 @@ namespace IngameScript
                     };
                     //Echo($"{position}");
                     sprites.Add(sprite);
-                    percent_list_vis = (((double)i + (double)1) / ((double)grid_bore_positions.Count)) * 100;
+                    percent_list_vis = (((double)i + (double)1) / ((double)gridBoreDataList.Count)) * 100;
                     spritecount++;
                     yield return false;
                 }
@@ -2874,7 +2873,7 @@ namespace IngameScript
                 }
                 if (drone_name.Count == 0)
                 {
-                    if (sprite_total == grid_bore_positions.Count)
+                    if (sprite_total == gridBoreDataList.Count)
                     {
                         frame_generator_finished = true;
                     }
@@ -2886,7 +2885,7 @@ namespace IngameScript
                 }
                 if (drone_name.Count > 0)
                 {
-                    if (sprite_total == grid_bore_positions.Count && drone_total == drone_name.Count)
+                    if (sprite_total == gridBoreDataList.Count && drone_total == drone_name.Count)
                     {
                         frame_generator_finished = true;
                         drone_total = 0;
@@ -2930,8 +2929,8 @@ namespace IngameScript
         }
         public void CyclNextCord()
         {
-            current_gps_idx = (current_gps_idx + 1) % grid_bore_positions.Count;
-            next_gps_crds = grid_bore_positions[current_gps_idx];
+            current_gps_idx = (current_gps_idx + 1) % gridBoreDataList.Count;
+            next_gps_crds = gridBoreDataList[current_gps_idx].borePosition;
         }
 
 
@@ -3021,6 +3020,7 @@ namespace IngameScript
         {
             if (!string.IsNullOrEmpty(Storage)) // Check null or empty
             {
+                gridBoreDataList.Clear();
                 string[] str_data = Storage.Split(';');
                 for (int i = 0; i < str_data.Length; i++)
                 {
@@ -3033,19 +3033,17 @@ namespace IngameScript
                         bool bnParsed = int.TryParse(str_datai[0], out bn);
                         bool bcParsed = int.TryParse(str_datai[1], out bc);
 
-                        grid_bore_finished.Add(bnParsed && bn > 0); // Default false if unparsed
-                        grid_bore_occupied.Add(bcParsed && bc > 0); // Default false if unparsed
 
                         if (str_datai.Length >= 5) // Full bn:bc:x:y:z
                         {
                             double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
                             double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
                             double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
-                            grid_bore_positions.Add(new Vector3D(x, y, z));
+                            gridBoreDataList.Add(new GridBoreData(new Vector3D(x, y, z), bcParsed && bc > 0, bnParsed && bn > 0));
                         }
                         else
                         {
-                            grid_bore_positions.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                            gridBoreDataList.Add(new GridBoreData(new Vector3D(0, 0, 0), false, true)); // Default position if incomplete
                         }
                     }
                 }
@@ -3250,8 +3248,7 @@ namespace IngameScript
             drone_gps_coordinates_ds = new List<Vector3D>();
             drone_control_sequence = new List<int>();
             drone_gps_grid_list_position = new List<int>();
-            drone_assigned_coordinates = new List<bool>();
-            grid_bore_positions = new List<Vector3D>();
+            drone_assigned_coordinates = new List<bool>();            
             drone_drill_depth_value = new List<string>();
             drone_mine_distance_status = new List<string>();
             drone_mine_depth_start_status = new List<string>();
@@ -3274,6 +3271,8 @@ namespace IngameScript
             drone_cargo_full = new List<string>();
             drone_recharge_request = new List<string>();
             drone_auto_pilot_enabled = new List<string>();
+            gridBoreDataList = new List<GridBoreData>();
+            sb = new StringBuilder();
             bores_regen = false;
             cl = new List<string>();
             cl2 = new List<string>();
@@ -3675,6 +3674,15 @@ namespace IngameScript
             #endregion
         }
 
+        int CntTrueVlsGridBoreDataFinished(List<GridBoreData> boreList)
+        {
+            int count = 0;
+            for (int i = 0; i < boreList.Count; i++)
+            {
+                if (boreList[i].boreFinished) count++;
+            }
+            return count;
+        }
         void update_display()  // Extracted from drone_processing
         {
             dp_txm.Clear().EnsureCapacity(512); // ~400-600 chars typical

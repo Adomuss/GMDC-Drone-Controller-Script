@@ -1228,6 +1228,36 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                if (drone_control_sequence[i] >= 8 && drone_ready[i] && drone_dock_status[i] == "False" && drone_control_status.Contains("RTB Ready") && drone_assigned_coordinates[i] && !run_arg)
+                {
+                    drone_control_sequence[i] = 13;
+                    //grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+
+                    cd1 = gps_grid_position_value.ToString();
+                    cm = "0";
+                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmit_to_drone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
+                if (drone_control_sequence[i] == 13 && drone_ready[i] && drone_dock_status[i] == "False" && drone_control_status.Contains("Idle") && drone_assigned_coordinates[i] && !run_arg)
+                {
+                    drone_control_sequence[i] = 8;
+                    //grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+
+                    cd1 = gps_grid_position_value.ToString();
+                    cm = "6";
+                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmit_to_drone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
                 if (drone_control_sequence[i] == 9 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && can_run && drone_assigned_coordinates[i] && !run_arg || drone_control_sequence[i] == 9 && drone_ready[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && drone_assigned_coordinates[i] && drone_assigned_coordinates[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 10;
@@ -1338,7 +1368,7 @@ namespace IngameScript
                 }
                 if (drone_recall_list[i])
                 {
-                    if (drone_recall_sequence[i] == 0 && drone_control_status[i] == "Idle" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocked" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Nav" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocking" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Docking" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Initiating mining")
+                    if (drone_recall_sequence[i] == 0 && drone_control_status[i] == "Idle" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocked" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Nav" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Undocking" || drone_recall_sequence[i] == 0 && drone_control_status[i] == "Docking" || drone_recall_sequence[i] == 0 && (drone_control_status[i] == "Initiating mining" || drone_control_status[i].Contains("RTB Ready")))
                     {
                         drone_recall_sequence[i] = 1;
                     }

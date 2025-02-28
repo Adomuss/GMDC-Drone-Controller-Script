@@ -2284,93 +2284,115 @@ namespace IngameScript
         void Get_Drone_Message_Data(string data_message)
         {
             int startInstructions = Runtime.CurrentInstructionCount;
-            Echo("Processing drone message");
-            string[] messageData = data_message.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-            Echo("Message split: " + messageData.Length + " parts");
+            // get custom data from programmable block
+            String[] messageData = data_message.Split(':');
             if (messageData.Length < 21 || !messageData[0].Contains(drone_tag))
             {
                 Confirmed_Drone_Message = false;
-                Echo("Message rejected: too short or tag mismatch");
                 return;
             }
-            int i = -1;
-            for (int j = 0; j < droneDataList.Count; j++)
-            {
-                if (droneDataList[j].droneName == messageData[0])
-                {
-                    i = j;
-                    break;
-                }
-            }
-            Echo("Drone index: " + i);
-            DroneData drone;
+
+            int i = droneDataList.FindIndex(d => d.droneName == messageData[0]);
+            DroneData drone = new DroneData();
+
             if (i >= 0)
             {
                 drone = droneDataList[i];
-                Echo("Existing drone found");
             }
             else
             {
-                drone = new DroneData(
-                    messageData[0], "OK", false, "Idle", false, false, false, false,
-                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false,
-                    false, 0, -1, false, true, false, 0, false, 0, false, true, "", false, new Vector3D(0, 0, 0)
-                );
-                Echo("New drone created");
+
+                drone = new DroneData(messageData[0], "OK", false, "Idle", false, false, false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false, false, 0, -1, false, true, false, 0, false, 0, false, true, "", false, new Vector3D(0, 0, 0));
             }
+            //drone.droneName = messageData[0]; - not needed as it gets picked up from message
+            //populate drone data from message data
             drone.droneDamage = messageData[1];
-            bool tunnel;
-            drone.droneTunnelFinished = bool.TryParse(messageData[2], out tunnel) ? tunnel : false;
+            if (!bool.TryParse(messageData[2], out drone.droneTunnelFinished))
+            {
+                drone.droneTunnelFinished = false;
+            }
             drone.droneStatusOutput = messageData[3];
-            bool docked;
-            drone.isDocked = bool.TryParse(messageData[4], out docked) ? docked : false;
-            bool undocked;
-            drone.isUndocked = bool.TryParse(messageData[5], out undocked) ? undocked : false;
-            bool auto;
-            drone.isAutopiloting = bool.TryParse(messageData[6], out auto) ? auto : false;
-            bool rcAuto;
-            drone.rcAutopilotEnabled = bool.TryParse(messageData[7], out rcAuto) ? rcAuto : false;
-            double x;
-            drone.droneLocationX = double.TryParse(messageData[8], out x) ? x : 0.0;
-            double y;
-            drone.droneLocationY = double.TryParse(messageData[9], out y) ? y : 0.0;
-            double z;
-            drone.droneLocationZ = double.TryParse(messageData[10], out z) ? z : 0.0;
-            double length;
-            drone.currentBoreLength = double.TryParse(messageData[11], out length) ? length : 0.0;
-            double dist;
-            drone.currentBoreDistance = double.TryParse(messageData[12], out dist) ? dist : 0.0;
-            double mineDist;
-            drone.currentBoreMineDistance = double.TryParse(messageData[13], out mineDist) ? mineDist : 0.0;
-            double charge;
-            drone.currentDroneCharge = double.TryParse(messageData[14], out charge) ? charge : 0.0;
-            double gas;
-            drone.currentDroneGas = double.TryParse(messageData[15], out gas) ? gas : 0.0;
-            double ore;
-            drone.currentDroneOre = double.TryParse(messageData[16], out ore) ? ore : 0.0;
-            int gps;
-            drone.currentGPSIndex = int.TryParse(messageData[17], out gps) ? gps : -1;
-            bool full;
-            drone.cargoFull = bool.TryParse(messageData[18], out full) ? full : false;
-            bool recharge;
-            drone.rechargeRequest = bool.TryParse(messageData[19], out recharge) ? recharge : false;
-            bool autoDock;
-            drone.autoDock = bool.TryParse(messageData[20], out autoDock) ? autoDock : false;
+            if (!bool.TryParse(messageData[4], out drone.isDocked))
+            {
+                drone.isDocked = false;
+            }
+            if (!bool.TryParse(messageData[5], out drone.isUndocked))
+            {
+                drone.isUndocked = false;
+            }
+            if (!bool.TryParse(messageData[6], out drone.isAutopiloting))
+            {
+                drone.isAutopiloting = false;
+            }
+            if (!bool.TryParse(messageData[7], out drone.rcAutopilotEnabled))
+            {
+                drone.rcAutopilotEnabled = false;
+            }
+            if (!double.TryParse(messageData[8], out drone.droneLocationX))
+            {
+                drone.droneLocationX = 0.0;
+            }
+            if (!double.TryParse(messageData[9], out drone.droneLocationY))
+            {
+                drone.droneLocationY = 0.0;
+            }
+            if (!double.TryParse(messageData[10], out drone.droneLocationZ))
+            {
+                drone.droneLocationZ = 0.0;
+            }
+            if (!double.TryParse(messageData[11], out drone.currentBoreLength))
+            {
+                drone.currentBoreLength = 0.0;
+            }
+            if (!double.TryParse(messageData[12], out drone.currentBoreDistance))
+            {
+                drone.currentBoreDistance = 0.0;
+            }
+            if (!double.TryParse(messageData[13], out drone.currentBoreMineDistance))
+            {
+                drone.currentBoreMineDistance = 0.0;
+            }
+            if (!double.TryParse(messageData[14], out drone.currentDroneCharge))
+            {
+                drone.currentDroneCharge = 0.0;
+            }
+            if (!double.TryParse(messageData[15], out drone.currentDroneGas))
+            {
+                drone.currentDroneGas = 0.0;
+            }
+            if (!double.TryParse(messageData[16], out drone.currentDroneOre))
+            {
+                drone.currentDroneOre = 0.0;
+            }
+            if (!int.TryParse(messageData[17], out drone.currentGPSIndex))
+            {
+                drone.currentGPSIndex = -1;
+            }
+            if (!bool.TryParse(messageData[18], out drone.cargoFull))
+            {
+                drone.cargoFull = false;
+            }
+            if (!bool.TryParse(messageData[19], out drone.rechargeRequest))
+            {
+                drone.rechargeRequest = false;
+            }
+            if (!bool.TryParse(messageData[20], out drone.autoDock))
+            {
+                drone.autoDock = false;
+            }
+            drone.droneGPSCoordinates = new Vector3D(0, 0, 0);
             if (i >= 0)
             {
-                droneDataList[i] = drone;
+                droneDataList[i] = drone; // if drone already exists update it
                 Confirmed_Drone_Message = true;
                 recieved_drone_name_index = i;
-                Echo("Drone updated");
             }
             else
             {
-                droneDataList.Add(drone);
+                droneDataList.Add(drone); // if drone does not exist add it
                 Confirmed_Drone_Message = true;
                 recieved_drone_name_index = droneDataList.Count - 1;
-                Echo("Drone added");
             }
-            Echo("Get_Drone_Message_Data: " + (Runtime.CurrentInstructionCount - startInstructions));
         }
 
         void GetRemoteControlData()

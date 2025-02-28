@@ -1070,7 +1070,20 @@ namespace IngameScript
                     }
                 }
 
-                if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
+                if (drone_control_sequence[i] == 2 && drone_control_status[i] == "Undocking" && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu )
+                {
+                    drone_control_sequence[i] = 13;
+                    cd1 = gps_grid_position_value.ToString();
+                    cm = "0";
+                    drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmit_to_drone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
+                if (drone_control_sequence[i] == 8 && drone_control_status[i].Contains("RTB Ready") && drone_dock_status[i] == "False" && drone_assigned_coordinates[i] && drone_mining[i] && !run_arg)
                 {
                     drone_control_sequence[i] = 13;
                     cd1 = gps_grid_position_value.ToString();

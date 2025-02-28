@@ -1,5 +1,6 @@
 ﻿using Sandbox.Game.EntityComponents;
 using Sandbox.Game.GameSystems.Conveyors;
+using Sandbox.Game.Weapons.Guns;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -380,6 +381,7 @@ namespace IngameScript
         private void ManageCommunications()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
+            Echo($"Registering listeners: rx_ch='{rx_ch}', rx_ch_2='{rx_ch_2}'");
             listen = IGC.RegisterBroadcastListener(rx_ch);
             listen_prspt = IGC.RegisterBroadcastListener(rx_ch_2);
             ProcessMessages();
@@ -389,9 +391,12 @@ namespace IngameScript
         private void UpdateMiningGrid()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
+            Echo("Starting UpdateMiningGrid");
+            Echo("Grid bores: " + gridBoreDataList.Count);
             InitializeMiningGrid();
             ValidateCustomData();
             PingDrones();
+            Echo("Remote controls: " + rm_ctl_tag.Count);
             GetRemoteControlData();
             Echo($"Pre-Prospect: valid={target_valid}, coords={target_gps_coords}");
             if (Prospect_Message)
@@ -401,7 +406,6 @@ namespace IngameScript
                 Echo($"Post-Prospect: valid={target_valid}, coords={target_gps_coords}");
                 if (target_valid)
                 {
-                    Echo($"Formatting CustomData with: {target_gps_coords.X}, {target_gps_coords.Y}, {target_gps_coords.Z}");
                     miningCoordinatesNew.Clear().AppendFormat("GPS:PDT:{0:0.##}:{1:0.##}:{2:0.##}:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:",
                         target_gps_coords.X, target_gps_coords.Y, target_gps_coords.Z);
                     Me.CustomData = miningCoordinatesNew.ToString();
@@ -1777,65 +1781,27 @@ namespace IngameScript
             #endregion
         }
 
+
+
         private void ProcessMessages()
         {
-            #region check_drone_messages
-            //manage recieved communications
-            if (ant_act != null)
+            int startInstructions = Runtime.CurrentInstructionCount;
+            while (listen.HasPendingMessage)
             {
-                if (listen.HasPendingMessage)
-                {
-                    MyIGCMessage new_drone_message = listen.AcceptMessage();
-                    drone_messages_list.Add(new_drone_message);
-                }
-
-                //process drone message list here
-                if (drone_messages_list.Count < droneDataList.Count)
-                {
-                    Drone_Message = true;
-                }
-
-
-                if (drone_messages_list.Count > 0)
-                {
-                    //pull first message in the list if valid
-                    dataMessageFromDrone = drone_messages_list[0].Data.ToString();
-                    Get_Drone_Message_Data(dataMessageFromDrone);
-                    //recieved_drone_message_to_database();
-                }
-
-                if (drone_messages_list.Count > droneDataList.Count)
-                {
-                    Drone_Message = false;
-                }
-
-
-                #endregion
-
-                #region check_prospector_messages
-                //process drone message list here
-                if (listen_prspt.HasPendingMessage)
-                {
-                    MyIGCMessage new_prospector_message = listen_prspt.AcceptMessage();
-                    prospector_messages_list.Add(new_prospector_message);
-
-                }
-                //process prospector message list here
-                if (prospector_messages_list.Count <= 0)
-                {
-                    Prospect_Message = false;
-                }
-                if (prospector_messages_list.Count > 0)
-                {
-                    Prospect_Message = true;
-                    //move this to prospect message management
-                    data_in_prospector = prospector_messages_list[0].Data.ToString();
-                    remote_control_actual.CustomData = data_in_prospector;
-                    prospector_messages_list.RemoveAt(0);
-                    created_grid = false;
-                }
+                var msg = listen.AcceptMessage();
+                drone_messages_list.Add(msg);
+                Echo($"Drone message added: {msg.Data}");
+                Get_Drone_Message_Data(msg.Data.ToString());
+                drone_messages_list.Clear(); // Process one per cycle
             }
-            #endregion
+            while (listen_prspt.HasPendingMessage)
+            {
+                var msg = listen_prspt.AcceptMessage();
+                prospector_messages_list.Add(msg);
+                Echo($"Prospector message added: {msg.Data}");
+            }
+            Echo($"Drone messages: {drone_messages_list.Count}, Prospector messages: {prospector_messages_list.Count}");
+            Echo($"ProcessMessages: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void PingDrones()
@@ -1916,198 +1882,67 @@ namespace IngameScript
 
             presence_check();
         }
-
         private void ProcessInterface()
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
             #region Interface_detection
-            if (pb_tg.Count > 0)
+            if (pb_tg.Count == 0 || pb_tg[0] == null)
             {
-                pb_i_act = pb_tg[0];
-                can_intf = true;
-                it_ag = pb_i_act.CustomData;
-                Echo($"Interface PB: {intfc_tag}");
-                Echo($"Display command: {it_ag}");
+                Echo("No valid interface PB found");
+                can_intf = false;
+                return;
             }
+            pb_i_act = pb_tg[0];
+            it_ag = pb_i_act.CustomData ?? ""; // Null coalesce to empty string
+            can_intf = true;
+            Echo($"Interface PB: {intfc_tag}");
+            Echo($"Display command: '{it_ag}'");
             #endregion
             #region interface_command_processing
-            if (can_intf && pb_i_act.CustomData != null)
+            if (can_intf)
             {
-                if (it_ag == "" && !n_intf)
-                {
-                    n_intf = true;
-                }
-                else
-                {
-                    n_intf = false;
-                }
-                if (it_ag.Contains("init") && !i_init)
-                {
-                    i_init = true;
-                }
-                if (!it_ag.Contains("init") && i_init)
-                {
-                    i_init = false;
-                }
-                if (it_ag.Contains("reset") && !i_res)
-                {
-                    i_res = true;
-                }
-                else
-                {
-                    i_res = false;
-                }
-                if (it_ag.Contains("run") && !i_run)
-                {
-                    i_run = true;
-                }
-                else
-                {
-                    i_run = false;
-                }
-                if (it_ag.Contains("recall") && !i_recall)
-                {
-                    i_recall = true;
-                }
-                else
-                {
-                    i_recall = false;
-                }
-                if (it_ag.Contains("eject") && !i_eject)
-                {
-                    i_eject = true;
-                }
-                else
-                {
-                    i_eject = false;
-                }
-                if (it_ag.Contains("freeze") && !i_frz)
-                {
-                    i_frz = true;
-                }
-                else
-                {
-                    i_frz = false;
-                }
-                if (it_ag.Contains("stop") && !i_stop)
-                {
-                    i_stop = true;
-                }
-                else
-                {
-                    i_stop = false;
-                }
+                if (it_ag == "" && !n_intf) { n_intf = true; } else { n_intf = false; }
+                i_init = it_ag.Contains("init"); // Simplified—Contains() safe on empty string
+                i_res = it_ag.Contains("reset");
+                i_run = it_ag.Contains("run");
+                i_recall = it_ag.Contains("recall");
+                i_eject = it_ag.Contains("eject");
+                i_frz = it_ag.Contains("freeze");
+                i_stop = it_ag.Contains("stop");
             }
-            if (!can_intf || n_intf || pb_i_act.CustomData == null)
+            if (!can_intf || n_intf)
             {
-                i_frz = false;
-                i_eject = false;
-                i_recall = false;
-                i_run = false;
-                i_res = false;
-                i_init = false;
+                i_frz = i_eject = i_recall = i_run = i_res = i_init = i_stop = false;
             }
             #endregion
+            Echo($"ProcessInterface: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void HandleCommands(string argument)
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            Echo($"HandleCommands arg: '{argument}' (length: {argument?.Length ?? -1})");
+            if (string.IsNullOrEmpty(argument))
+            {
+                Echo("No argument—defaulting");
+                argument = ""; // Ensure non-null
+            }
             #region run_command_processing
             if (argument == "setup" && setup_complete)
             {
                 setup_complete = false;
-                argument = "";
                 Echo("Running Setup..");
             }
-            if (argument.Contains("run") || i_run)
-            {
-                can_run = true;
-                canReset = false;
-                canTransmit = true;
-                mustRecall_Command = false;
-                can_init = false;
-                mustFreeze_Command = false;
-                commandAsk = "Run";
-            }
-            if (argument.Contains("reset") || i_res)
-            {
-                canReset = true;
-                mustUndock_Command = false;
-                can_run = false;
-                canTransmit = true;
-                mustRecall_Command = false;
-                can_init = false;
-                mustFreeze_Command = false;
-                commandAsk = "Reset";
-                current_gps_idx = 0;
-            }
-            if (argument.Contains("stop") || i_stop)
-            {
-                canTransmit = false;
-                mustUndock_Command = false;
-                can_run = false;
-                canReset = false;
-                mustRecall_Command = false;
-                can_init = false;
-                mustFreeze_Command = false;
-                commandAsk = "Stop";
-            }
-            if (argument.Contains("recall") || i_recall)
-            {
-                mustRecall_Command = true;
-                mustUndock_Command = false;
-                canReset = false;
-                canTransmit = true;
-                can_run = false;
-                mustFreeze_Command = false;
-                commandAsk = "Recall";
-                current_gps_idx = 0;
-            }
-            if (argument.Contains("init") || i_init)
-            {
-                mustRecall_Command = false;
-                mustUndock_Command = false;
-                canReset = false;
-                canTransmit = false;
-                can_run = false;
-                can_init = true;
-                mustFreeze_Command = false;
-                commandAsk = "Init";
-                current_gps_idx = 0;
-                r_gps_idx = current_gps_idx;
-                Storage = null;
-
-            }
-            if (argument.Contains("eject") || i_eject)
-            {
-                mustRecall_Command = false;
-                mustUndock_Command = true;
-                canReset = false;
-                canTransmit = true;
-                can_run = false;
-                mustFreeze_Command = false;
-                commandAsk = "Eject";
-                current_gps_idx = 0;
-            }
-            if (argument.Contains("freeze") || i_frz)
-            {
-                canTransmit = true;
-                mustFreeze_Command = true;
-                mustUndock_Command = false;
-                can_run = false;
-                canReset = false;
-                mustRecall_Command = false;
-                can_init = false;
-                commandAsk = "Freeze";
-            }
-            if (mustUndock_Command || mustRecall_Command || mustFreeze_Command)
-            {
-                run_arg = true;
-            }
-            else
-            {
-                run_arg = false;
-            }
+            if (argument.Contains("run") || i_run) { can_run = true; canReset = false; canTransmit = true; mustRecall_Command = false; can_init = false; mustFreeze_Command = false; commandAsk = "Run"; }
+            if (argument.Contains("reset") || i_res) { canReset = true; mustUndock_Command = false; can_run = false; canTransmit = true; mustRecall_Command = false; can_init = false; mustFreeze_Command = false; commandAsk = "Reset"; current_gps_idx = 0; }
+            if (argument.Contains("stop") || i_stop) { canTransmit = false; mustUndock_Command = false; can_run = false; canReset = false; mustRecall_Command = false; can_init = false; mustFreeze_Command = false; commandAsk = "Stop"; }
+            if (argument.Contains("recall") || i_recall) { mustRecall_Command = true; mustUndock_Command = false; canReset = false; canTransmit = true; can_run = false; mustFreeze_Command = false; commandAsk = "Recall"; current_gps_idx = 0; }
+            if (argument.Contains("init") || i_init) { mustRecall_Command = false; mustUndock_Command = false; canReset = false; canTransmit = false; can_run = false; can_init = true; mustFreeze_Command = false; commandAsk = "Init"; current_gps_idx = 0; r_gps_idx = current_gps_idx; Storage = null; }
+            if (argument.Contains("eject") || i_eject) { mustRecall_Command = false; mustUndock_Command = true; canReset = false; canTransmit = true; can_run = false; mustFreeze_Command = false; commandAsk = "Eject"; current_gps_idx = 0; }
+            if (argument.Contains("freeze") || i_frz) { canTransmit = true; mustFreeze_Command = true; mustUndock_Command = false; can_run = false; canReset = false; mustRecall_Command = false; can_init = false; commandAsk = "Freeze"; }
+            if (mustUndock_Command || mustRecall_Command || mustFreeze_Command) { run_arg = true; } else { run_arg = false; }
             #endregion
+            Echo($"HandleCommands: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void drone_render_call()
@@ -2280,118 +2115,7 @@ namespace IngameScript
                 current_gps_idx = 0;
             }
         }
-        void Get_Drone_Message_Data(string data_message)
-        {
-            int startInstructions = Runtime.CurrentInstructionCount;
-            // get custom data from programmable block
-            String[] messageData = data_message.Split(':');
-            if (messageData.Length < 20 || !messageData[0].Contains(drone_tag))
-            {
-                Confirmed_Drone_Message = false;
-                return;
-            }
 
-            int i = droneDataList.FindIndex(d=> d.droneName == messageData[0]);
-            DroneData drone = new DroneData();
-            
-            if (i >= 0)
-            {
-                drone = droneDataList[i];                
-            }
-            else
-            {
-                
-                drone = new DroneData(messageData[0], "OK", false, "Idle", false, false, false, false, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false,false,0,-1,false,true,false,0,false,0,false,true,"",false, new Vector3D(0, 0, 0));  
-            }
-            //drone.droneName = messageData[0]; - not needed as it gets picked up from message
-            //populate drone data from message data
-            drone.droneDamage = messageData[1];
-            if (!bool.TryParse(messageData[2], out drone.droneTunnelFinished))
-            {
-                drone.droneTunnelFinished = false;
-            }
-            drone.droneStatusOutput = messageData[3];
-            if (!bool.TryParse(messageData[4], out drone.isDocked))
-            {
-                drone.isDocked = false;
-            }
-            if (!bool.TryParse(messageData[5], out drone.isUndocked))
-            {
-                drone.isUndocked = false;
-            }
-            if (!bool.TryParse(messageData[6], out drone.isAutopiloting))
-            {
-                drone.isAutopiloting = false;
-            }
-            if (!bool.TryParse(messageData[7], out drone.rcAutopilotEnabled))
-            {
-                drone.rcAutopilotEnabled = false;
-            }
-            if (!double.TryParse(messageData[8], out drone.droneLocationX))
-            {
-                drone.droneLocationX = 0.0;
-            }
-            if (!double.TryParse(messageData[9], out drone.droneLocationY))
-            {
-                drone.droneLocationY = 0.0;
-            }
-            if (!double.TryParse(messageData[10], out drone.droneLocationZ))
-            {
-                drone.droneLocationZ = 0.0;
-            }
-            if (!double.TryParse(messageData[11], out drone.currentBoreLength))
-            {
-                drone.currentBoreLength = 0.0;
-            }
-            if (!double.TryParse(messageData[12], out drone.currentBoreDistance))
-            {
-                drone.currentBoreDistance = 0.0;
-            }
-            if (!double.TryParse(messageData[13], out drone.currentBoreMineDistance))
-            {
-                drone.currentBoreMineDistance = 0.0;
-            }
-            if (!double.TryParse(messageData[14], out drone.currentDroneCharge))
-            {
-                drone.currentDroneCharge = 0.0;
-            }
-            if (!double.TryParse(messageData[15], out drone.currentDroneGas))
-            {
-                drone.currentDroneGas = 0.0;
-            }
-            if (!double.TryParse(messageData[16], out drone.currentDroneOre))
-            {
-                drone.currentDroneOre = 0.0;
-            }
-            if (!int.TryParse(messageData[17], out drone.currentGPSIndex))
-            {
-                drone.currentGPSIndex = -1;
-            }
-            if (!bool.TryParse(messageData[18], out drone.cargoFull))
-            {
-                drone.cargoFull = false;
-            }
-            if (!bool.TryParse(messageData[19], out drone.rechargeRequest))
-            {
-                drone.rechargeRequest = false;
-            }
-            if (!bool.TryParse(messageData[20], out drone.autoDock))
-            {
-                drone.autoDock = false;
-            }
-            if (i >= 0)
-            {                
-                droneDataList[i] = drone; // if drone already exists update it
-                Confirmed_Drone_Message = true;
-                recieved_drone_name_index = i;
-            }
-            else
-            {                              
-                droneDataList.Add(drone); // if drone does not exist add it
-                Confirmed_Drone_Message = true;
-                recieved_drone_name_index = droneDataList.Count - 1;
-            }
-        }
 
         void GetRemoteControlData()
         {

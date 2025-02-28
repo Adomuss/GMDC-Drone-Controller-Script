@@ -115,8 +115,7 @@ namespace IngameScript
         bool mustFreeze_Command = false;
         bool can_init = false;        
         bool general_reset;
-        bool mining_grid_valid = false;
-        List<bool> drone_must_wait;
+        bool mining_grid_valid = false;        
         double ignoreDepth = 0.0;
         double safe_dstvl = 0.0;
         bool target_valid = false;
@@ -672,7 +671,7 @@ namespace IngameScript
             if (droneDataList.Count > 0 && canReset)
             {
                 reset_status_count = CntIntVlsDroneDataInt(droneDataList,d => d.droneAssignedGridIndex, -1);
-                docked_status_count = CntStsVlstDroneDataString(droneDataList,d => d.droneStatusOutput, "Docked");
+                docked_status_count = CntStsVlstDroneData(droneDataList,d => d.droneStatusOutput, "Docked");
             }
             if (droneDataList.Count > 0)
             {
@@ -3143,7 +3142,7 @@ namespace IngameScript
             }
             return truCnt;
         }
-        int CntStsVlstDroneDataString(List<DroneData> list, Func<DroneData, string> fieldSelector, string matchValue)
+        int CntStsVlstDroneData(List<DroneData> list, Func<DroneData, string> fieldSelector, string matchValue)
         {
             int trueCount = 0;
 

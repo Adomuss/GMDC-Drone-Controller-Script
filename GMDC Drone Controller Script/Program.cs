@@ -379,20 +379,19 @@ namespace IngameScript
             Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
             UpdateRuntimeMetrics(updateSource);
-            Echo("Post-UpdateRuntimeMetrics");
+            //Echo("Post-UpdateRuntimeMetrics");
             InitializeSystem();
-            Echo("Post-InitializeSystem");
+            //Echo("Post-InitializeSystem");
             ProcessInputs(argument);
-            Echo("Post-ProcessInputs");
-            Echo($"{recievedDroneNameIndex} {recievedDroneName}");
+            //Echo("Post-ProcessInputs");
             ManageCommunications();
-            Echo("Post-ManageCommunications");
+            //Echo("Post-ManageCommunications");
             UpdateMiningGrid();
-            Echo("Post-UpdateMiningGrid");
+            //Echo("Post-UpdateMiningGrid");
             HandleDroneOperations();
-            Echo("Post-HandleDroneOperations");
+            //Echo("Post-HandleDroneOperations");
             RenderDisplays();
-            Echo("Post-RenderDisplays");
+            //Echo("Post-RenderDisplays");
             UpdateStatus();
             Echo($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
         }
@@ -424,7 +423,7 @@ namespace IngameScript
             }
             CheckSystemStatus();
             Echo($"GMDC {ver} Running {icon}");
-            Echo($"Channel: {drone_tag} {recievedDroneNameIndex} {recievedDroneName}");
+            Echo($"Channel: {drone_tag}");
             Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -748,8 +747,7 @@ namespace IngameScript
             
             if (recievedDroneNameIndex != -1 && Confirmed_Drone_Message && droneDataList.Count > 0 && recievedDroneNameIndex < droneDataList.Count)
             {                
-                int i = recievedDroneNameIndex;
-                Echo($"recieved index = {recievedDroneNameIndex}");
+                int i = recievedDroneNameIndex;                
                 droneData droneInfo = droneDataList[i];
                 
 
@@ -1810,10 +1808,8 @@ namespace IngameScript
                 {
                     //pull first message in the list if valid
                     data_in_drone = drone_messages_list[0].Data.ToString();
-                    Get_Drone_Message_Data(data_in_drone);
-                    Echo("Post Message 1");
-                    recievedMessagetoDroneDatabase(recievedDroneName);
-                    Echo("Post to database 1");
+                    Get_Drone_Message_Data(data_in_drone);                    
+                    recievedMessagetoDroneDatabase(recievedDroneName);                    
                 }
                 Echo($"{drone_messages_list.Count} {droneDataList.Count}");
                 if (drone_messages_list.Count > droneDataList.Count)
@@ -2294,7 +2290,7 @@ namespace IngameScript
             
             // get custom data from programmable block
             String[] msgdta = data_message.Split(':');
-            if (msgdta.Length < 21) 
+            if (msgdta.Length < 22) 
             {
                 Echo($"Recieved bad message");
                 return;
@@ -2785,7 +2781,7 @@ namespace IngameScript
             }
             gridcount = gridcount_inner + gridcount_outer;
             percent_grid = (double)gridDataList.Count / (double)gridcount;
-            //Echo($"{gridcount} {gridDataList.Count} {gridcount}");
+            
             if (gridDataList.Count == gridcount)
             {
                 init_grid_complete = true;
@@ -2876,7 +2872,7 @@ namespace IngameScript
                         Color = bore_colour.Alpha(alpha_bytes),
                         Alignment = TextAlignment.CENTER
                     };
-                    //Echo($"{position}");
+                    
                     sprites.Add(sprite);
                     percent_list_vis = (((double)i + (double)1) / ((double)gridDataList.Count)) * 100;
                     spritecount++;
@@ -3930,28 +3926,23 @@ namespace IngameScript
                                 droneInfo.droneDockingReady = false;
                             }
                             droneInfo.droneTransmissionStatus = true;
-
-                            Echo("excepto1");
+                            
                             if (i < dcs.Count)
                             {
                                 dcs[i] = rc_d_cn;
-
-                                Echo("excepto2");
+                                
                                 if (dcs[i] <= bclm)
                                 {
                                     dst[i] = false;
-                                }
-                                Echo("excepto3");
+                                }                                
                                 if (dcs[i] > bclm)
                                 {
                                     dst[i] = true;
                                 }
-                            }
-                            Echo("excepto4");
+                            }                            
                             droneDataList[i] = droneInfo;
                             Confirmed_Drone_Message = true;
-                            recievedDroneNameIndex = i;
-                            recievedDroneName = "";
+                            recievedDroneNameIndex = i;                            
                             break;
                         }
                         //drone not found at end of list so add drone to list

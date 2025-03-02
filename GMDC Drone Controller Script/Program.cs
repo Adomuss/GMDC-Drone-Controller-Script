@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.386B";
+        string ver = "V0.387B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";

@@ -1796,13 +1796,13 @@ namespace IngameScript
                     MyIGCMessage new_drone_message = listen.AcceptMessage();
                     drone_messages_list.Add(new_drone_message);
                 }
-                Echo($"{drone_messages_list.Count} {droneDataList.Count}");
+
                 //process drone message list here
                 if (drone_messages_list.Count < droneDataList.Count)
                 {
                     Drone_Message = true;
                 }
-                Echo($"{drone_messages_list.Count} {droneDataList.Count}");
+
 
                 if (drone_messages_list.Count > 0)
                 {
@@ -1811,12 +1811,12 @@ namespace IngameScript
                     Get_Drone_Message_Data(data_in_drone);                    
                     recievedMessagetoDroneDatabase(recievedDroneName);                    
                 }
-                Echo($"{drone_messages_list.Count} {droneDataList.Count}");
+
                 if (drone_messages_list.Count > droneDataList.Count)
                 {
                     Drone_Message = false;
                 }
-                Echo($"{drone_messages_list.Count} {droneDataList.Count}");
+
 
                 #endregion
 

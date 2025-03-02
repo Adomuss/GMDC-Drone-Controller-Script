@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.386";
+        string ver = "V0.386B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -401,8 +401,9 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+            
         }
+
 
         private void InitializeSystem()
         {
@@ -733,26 +734,31 @@ namespace IngameScript
 
         private void ProcessDroneState()
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
+
             #region drone_state_machine_management
-            if (recievedDroneNameIndex != -1 && Confirmed_Drone_Message)
+            Echo($"Failpost 0");
+            Echo($"recieved index = {recievedDroneNameIndex}");
+            if (recievedDroneNameIndex != -1 && Confirmed_Drone_Message && droneDataList.Count > 0)
             {                
                 int i = recievedDroneNameIndex;
                 droneData droneInfo = droneDataList[i];
                 
 
-                if (can_init || canReset || droneDataList[i].droneResetFunc || can_loading)
+                if (can_init || canReset || (droneDataList[i].droneResetFunc && droneDataList.Count >0) || can_loading)
                 {
                     general_reset = true;
                 }
                 else general_reset = false;
                 di = i;
+                Echo($"Failpost 0a");
                 fltc = CntTrueVls(dst);
                 if (fltc < droneDataList.Count)
                 {
                     flto = true;
                 }
                 else flto = false;
-
+                Echo($"Failpost 0b");
                 //recall sequence reset - global
                 if (!droneDataList[i].droneRecallList || canReset || can_init || can_loading)
                 {
@@ -760,7 +766,7 @@ namespace IngameScript
                     droneDataList[i] = droneInfo;                    
                 }
                 dp_txm.Clear();
-                
+                Echo($"Failpost 1");
                 if (droneDataList[i].droneGPSListPosition > -1 && !droneDataList[i].droneAssignedCoordinates)
                 {                    
                     droneInfo.droneGPSListPosition = -1;
@@ -773,6 +779,7 @@ namespace IngameScript
                     droneInfo.droneRecallList = true;
                     droneDataList[i] = droneInfo;                    
                 }
+                Echo($"Failpost 2");
                 if (droneDataList[i].droneRecallList)
                 {
                     
@@ -785,14 +792,14 @@ namespace IngameScript
                     IGC.SendBroadcastMessage(tx_drone_recall_channel, command_operate, TransmissionDistance.TransmissionDistanceMax);
                 }
 
-
+                Echo($"Failpost 3");
                 if (droneDataList[i].droneControlStatus.Contains("Docked") && droneDataList[i].droneGPSListPosition == -1 && droneDataList[i].droneMining && droneDataList[i].droneControlSequence == 0)
                 {
                     droneInfo.droneMining = false;
                     droneDataList[i] = droneInfo;
                 }
 
-                
+                Echo("Failpost 4");
 
 
 
@@ -815,6 +822,7 @@ namespace IngameScript
                         droneDataList[i] = droneInfo;                        
                     }
                 }
+                
                 else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || droneDataList[i].droneMining && total_drones_mining <= bores_remaining)
                 {
                     if (!launched_drone_status)
@@ -835,6 +843,7 @@ namespace IngameScript
                         
                     }
                 }
+                Echo($"Failpost 5");
                 if (droneDataList[i].droneGPSListPosition == -1 && total_drones_mining >= bores_remaining || drones_undocking)
                 {
                     if (!launched_drone_status)
@@ -904,6 +913,7 @@ namespace IngameScript
                     }
                 }
 
+                Echo("Failpost 6");
                 if (droneDataList[i].droneControlSequence == 12)
                 {
                     gps_grid_position_value = -1;
@@ -914,6 +924,7 @@ namespace IngameScript
                 {
                     can_run = false;
                     droneInfo.droneControlSequence = 12;
+                    droneDataList[i] = droneInfo;
                     current_gps_idx = 0;
                 }
 
@@ -1576,10 +1587,13 @@ namespace IngameScript
 
             }
             #endregion
+            Echo($"ProcessDroneState: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void ProcessRecallCommand()
         {
+
+            int startInstructions = Runtime.CurrentInstructionCount;
             if (mustRecall_Command)
             {
                 IGC.SendBroadcastMessage(tx_recall_channel, command_recall, TransmissionDistance.TransmissionDistanceMax);
@@ -1592,12 +1606,16 @@ namespace IngameScript
             {
                 current_gps_idx = 0;
             }
+            
         }
+
 
         private void timeCountReset()
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
             time_delay = false;
             time_count = 0;
+            Echo($"timeCountReset: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void UpdateActiveDroneLimits()
@@ -1911,6 +1929,8 @@ namespace IngameScript
 
         private void ProcessInterface()
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            
             #region Interface_detection
             if (pb_tg.Count > 0)
             {
@@ -1999,6 +2019,7 @@ namespace IngameScript
                 i_init = false;
             }
             #endregion
+            Echo($"ProcessInterface: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void HandleCommands(string argument)
@@ -2143,6 +2164,7 @@ namespace IngameScript
 
         private void UpdateDroneCounts()
         {
+
             int startInstructions = Runtime.CurrentInstructionCount;            
             bores_completed = CntTrueVlsGridBoreDataFinished(gridDataList);
             bores_remaining = total_mining_runs - bores_completed;
@@ -2267,99 +2289,55 @@ namespace IngameScript
         }
         void Get_Drone_Message_Data(string data_message)
         {
-            // get custom data from programmable block
-            String[] msgdta = data_message.Split(':');
-
-            //Define GPS coordinates from 
-            if (msgdta.Length > 5)
+            int startInstructions = Runtime.CurrentInstructionCount;
+            string[] messageData = data_message.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+            if (messageData.Length < 21 || !messageData[0].Contains(drone_tag)) { Confirmed_Drone_Message = false; return; }
+            int i = -1;
+            for (int j = 0; j < droneDataList.Count; j++)
             {
-                recievedDroneName = msgdta[0];
-                if (recievedDroneName.Contains(drone_tag))
-                {
-                    recievedDroneDamageState = msgdta[1];
-                    recievedDroneTunnelFinished = msgdta[2];
-                    receivedDroneControlStatus = msgdta[3];
-                    receievdDroneDockStatus = msgdta[4];
-                    recievedDroneUndockStatus = msgdta[5];
-                    recievedDroneAutopilot = msgdta[6];
-                    recievedDroneAutopilotEnabled = msgdta[7];
-                    recievedDroneLocationX = msgdta[8];
-                    recievedDroneLocationY = msgdta[9];
-                    recievedDroneLocationZ = msgdta[10];
-                    receievdDroneDrillDepth = msgdta[11];
-                    receivedDroneMinedDistance = msgdta[12];
-                    recivedDroneMineStart = msgdta[13];
-                    recivedDroneCharge = msgdta[14];
-                    recievedDroneGas = msgdta[15];
-                    recivedDroneOre = msgdta[16];
-                    if (msgdta.Length > 16)
-                    {
-                        recievedDroneListPosition = msgdta[17];
-                    }
-                    if (msgdta.Length > 17)
-                    {
-                        recivedDroneCargoFull = msgdta[18];
-                    }
-                    if (msgdta.Length > 18)
-                    {
-                        recievedDroneRechargeRequest = msgdta[19];
-                    }
-                    if (msgdta.Length > 19)
-                    {
-                        recievedDroneAutoDockEnabled = msgdta[20];
-                    }
-                    if (msgdta.Length > 20)
-                    {
-                        recievedDroneDockingReady = msgdta[21];
-                    }
-                }
-                else
-                {
-                    recievedDroneName = "";
-                    recievedDroneDamageState = "";
-                    recievedDroneTunnelFinished = "";
-                    receivedDroneControlStatus = "";
-                    receievdDroneDockStatus = "";
-                    recievedDroneUndockStatus = "";
-                    recievedDroneAutopilot = "";
-                    recievedDroneAutopilotEnabled = "";
-                    recievedDroneLocationX = "";
-                    recievedDroneLocationY = "";
-                    recievedDroneLocationZ = "";
-                    receievdDroneDrillDepth = "";
-                    receivedDroneMinedDistance = "";
-                    recivedDroneMineStart = "";
-                    recivedDroneCharge = "";
-                    recievedDroneGas = "";
-                    recivedDroneOre = "";
-                    recievedDroneListPosition = "";
-                    recivedDroneCargoFull = "";
-                    recievedDroneRechargeRequest = "";
-                    recievedDroneAutoDockEnabled = "";
-                    recievedDroneDockingReady = "";
-
-                }
-                //parsing in wrong area
-                if (recievedDroneListPosition == "")
-                {
-                    _recievedDroneListPosition = -1;
-                }
-                else
-                {
-                    if (!int.TryParse(recievedDroneListPosition, out _recievedDroneListPosition))
-                    {
-                        _recievedDroneListPosition = -1;
-                    }
-                }
-                if (recivedDroneCharge == "")
-                {
-                    rc_d_cn = 0.0;
-                }
-                if (!double.TryParse(recivedDroneCharge, out rc_d_cn))
-                {
-                    rc_d_cn = 0.0;
-                }
+                if (droneDataList[j].droneName == messageData[0]) { i = j; break; }
             }
+            droneData drone = i >= 0 ? droneDataList[i] : new droneData(
+                messageData[0], "OK", "Idle", false, false, false, false, false,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, false, false, false, false,
+                Vector3D.Zero, false, false, true, 0, 0, false, false, "", true, 0, false
+            );
+            drone.droneDamageState = messageData[1];
+            bool.TryParse(messageData[2], out drone.droneTunnelFinished);
+            drone.droneControlStatus = messageData[3];
+            bool.TryParse(messageData[4], out drone.droneDockStatus);
+            bool.TryParse(messageData[5], out drone.droneUndockStatus);
+            bool.TryParse(messageData[6], out drone.droneAutopilotStatus);
+            bool.TryParse(messageData[7], out drone.droneAutopilotEnabled);
+            double.TryParse(messageData[8], out drone.droneLocationX);
+            double.TryParse(messageData[9], out drone.droneLocationY);
+            double.TryParse(messageData[10], out drone.droneLocationZ);
+            double.TryParse(messageData[11], out drone.droneDrillDepth);
+            double.TryParse(messageData[12], out drone.droneMinedDistanceCurrent);
+            double.TryParse(messageData[13], out drone.droneMineDistanceStart);
+            double.TryParse(messageData[14], out drone.droneStoredCharge);
+            double.TryParse(messageData[15], out drone.droneStoredGas);
+            double.TryParse(messageData[16], out drone.droneStoredOre);
+            int.TryParse(messageData[17], out drone.droneGPSListPosition);
+            bool.TryParse(messageData[18], out drone.droneCargoFull);
+            bool.TryParse(messageData[19], out drone.droneRechargeRequest);
+            bool.TryParse(messageData[20], out drone.droneAutodockEnabled);
+            bool.TryParse(messageData.Length > 21 ? messageData[21] : "False", out drone.droneDockingReady);
+            if (i >= 0)
+            {
+                droneDataList[i] = drone;
+                dcs[i] = rc_d_cn;
+                dst[i] = rc_d_cn > bclm;
+            }
+            else
+            {
+                droneDataList.Add(drone);
+                dcs.Add(rc_d_cn);
+                dst.Add(rc_d_cn > bclm);
+            }
+            Confirmed_Drone_Message = true;
+            recievedDroneNameIndex = i >= 0 ? i : droneDataList.Count - 1;
+            Echo($"Get_Drone_Message_Data: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         void GetRemoteControlData()
@@ -3970,6 +3948,7 @@ namespace IngameScript
                         //drone not found at end of list so add drone to list
                         if (i == (droneDataList.Count - 1) && !nametag.Equals(recievedDroneName) && !found)
                         {
+                            droneInfo = droneDataList[i];
                             droneInfo.droneName = recievedDroneName;
                             droneInfo.droneDamageState = recievedDroneDamageState;
                             if (!bool.TryParse(recievedDroneTunnelFinished, out droneInfo.droneTunnelFinished))
@@ -4094,7 +4073,7 @@ namespace IngameScript
                             //drone_recall_list.Add(false);
                             //drone_reset_func.Add(false);
                             //drone_assigns_count.Add(0);
-                            droneDataList[i] = droneInfo;
+                            droneDataList.Add(droneInfo);
                             Confirmed_Drone_Message = true;
                             recievedDroneNameIndex = i + 1;
                         }
@@ -4106,6 +4085,7 @@ namespace IngameScript
 
         void update_display()  // Extracted from drone_processing
         {
+            int startInstructions = Runtime.CurrentInstructionCount;
             dp_txm.Clear().EnsureCapacity(512); // ~400-600 chars typical
             dp_txm.AppendLine($"GMDC {ver} Running {icon}")
                   .AppendLine($"------------------------------")
@@ -4130,6 +4110,7 @@ namespace IngameScript
             if (align_target_valid) dp_txm.AppendLine("Secondary/Asteroid:").AppendLine(align_gps_coords.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(dp_txm);
+            Echo($"update_display: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
 

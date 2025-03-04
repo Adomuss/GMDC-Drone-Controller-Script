@@ -151,6 +151,7 @@ namespace IngameScript
         string remoteControlCustomData11 = "";
         string remoteControlCustomData12 = "";
         #endregion
+        #region Drone Transmission Variables
         //drone transmission message construction variables
         string cd1 = "";
         string xp = "";
@@ -163,6 +164,7 @@ namespace IngameScript
         string xp2 = "";
         string yp2 = "";
         string zp2 = "";
+        #endregion
         //counter update variables
         int t_mne_sq_cmp = 0;
         int total_mining_runs = 1;
@@ -230,8 +232,8 @@ namespace IngameScript
         string command_recall = "recall";
         string command_operate = "operate";
         bool mustUndock_Command = false;
-        bool run_arg = false;
-        bool renew_header = true;
+        bool cantRunMode = false;
+        bool renewHeader = true;
         Color Cgreen = new Color(0, 255, 0);
         Color Cyellow = new Color(255, 255, 0);
         Color Cred = new Color(255, 0, 0);
@@ -940,7 +942,7 @@ namespace IngameScript
 
                 updateDisplay(i);
                 //initialise drone transmission information
-                gps_grid_position_value = drone_gps_grid_list_position[i];                
+                gps_grid_position_value = drone_gps_grid_list_position[i];
                 tx_chan = drone_name[i];
                 cd1 = gps_grid_position_value.ToString();
                 cm = "0";
@@ -962,441 +964,19 @@ namespace IngameScript
                     yp2 = "";
                     zp2 = "";
                 }
-                
+
                 Check_Drone_Readiness(i, droneControlStatus);
                 //drone state machine start
-                if (droneReady[i] && drone_tunnel_complete[i] == "False" && drone_dock_status[i] == "True" && can_run && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 0;
-
-                }
-
-                if (droneControlSequence[i] == 1 && droneAssignedCoordinates[i] && !droneMustWait[i] && !run_arg || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docked Idle" && drone_dock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 1;
-
-                }
-                if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocked" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docking" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 2;
-                }
-
-                if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocking" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
-                {
-                    machineControlState = 3;
-
-                }
-                if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 4;
-                }
-                if (droneControlSequence[i] == 13 && droneControlStatus[i] == "Idle" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg || droneControlSequence[i] == 5 && droneControlStatus[i] == "Docking" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg && dcs[i] <= bclu)
-                {
-                    machineControlState = 5;
-                }
-                if (droneControlSequence[i] == 3 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 6;
-
-                }
-                if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Nav End" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 7;
-                }
-                if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Docked Idle" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 8;
-                }
-
-                if (droneControlSequence[i] == 5 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 9;
-                }
-
-                if (droneControlSequence[i] == 6 && droneControlStatus[i] == "Nav End" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 10;
-                }
-                if (droneControlSequence[i] == 7 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 11;
-                }
-                if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Docked") && drone_mining[i] || droneControlSequence[i] == 4 && droneControlStatus[i].Contains("Docked") && drone_mining[i])
-                {
-                    machineControlState = 12;                    
-                }
-                if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Dock") && drone_mining[i] && drone_tunnel_complete[i] == "True")
-                {
-                    machineControlState = 13;                    
-                }
-                if (droneControlSequence[i] == 8 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !run_arg)
-                {
-                    machineControlState = 14;
-                }
-                if (droneControlSequence[i] == 8 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !run_arg || droneControlSequence[i] == 8 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !run_arg || droneControlSequence[i] >= 1 && droneControlSequence[i] <= 4 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !run_arg)
-                {
-                    machineControlState = 15;
-                }
-                if (droneControlSequence[i] == 8 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !run_arg)
-                {
-                    machineControlState = 16;
-                }
-                if (droneControlSequence[i] == 9 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && can_run && droneAssignedCoordinates[i] && !run_arg || droneControlSequence[i] == 9 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && droneAssignedCoordinates[i] && !run_arg)
-                {
-                    machineControlState = 17;
-                }
-                if (droneControlSequence[i] == 10 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset && droneAssignedCoordinates[i] && !run_arg || droneControlSequence[i] == 10 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !run_arg || droneControlSequence[i] == 0 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !run_arg)
-                {
-                    machineControlState = 18;
-                }
-                if (droneControlSequence[i] == 11 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && t_mne_sq_cmp <= total_mining_runs && mining_grid_valid && !run_arg)
-                {
-                    machineControlState = 19;
-                }
-                if (droneControlSequence[i] == 11 && droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && current_gps_idx < total_mining_runs && droneAssignedCoordinates[i] && t_mne_sq_cmp > total_mining_runs && !run_arg || droneControlSequence[i] == 11 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && mining_grid_valid == false && t_mne_sq_cmp >= total_mining_runs && !run_arg)
-                {
-                    machineControlState = 20;
-                }
-                if (droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset || droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset && !run_arg)
-                {
-                    machineControlState = 21;
-                }
-                if (droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && general_reset && droneControlSequence[i] == 0 && !run_arg || droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && general_reset && !run_arg || droneControlSequence[i] == 6 && droneControlStatus[i] == "Docked Idle" && drone_dock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !run_arg)
-                {
-                    machineControlState = 22;
-                }
+                ManageDroneStateMachineState(i);
                 //switch case for main drone control here
 
-                switch (machineControlState)
-                {
-                    case 0:
-                        {
-                            if (bores_completed < total_mining_runs && mining_grid_valid != false && !droneAssignedCoordinates[i] && droneMustWait[i] == false)
-                            {
-                                if (grid_bore_finished.Count > 0)
-                                {
-                                    if (skip_bores_number > grid_bore_finished.Count)
-                                    {
-                                        skip_bores_number = 0;
-                                    }
-                                    if (skip_bores_number > 0)
-                                    {
-                                        for (int j = 0; j < skip_bores_number; j++)
-                                        {
-                                            if (j > grid_bore_finished.Count - 1 || j > skip_bores_number - 1)
-                                            {
-                                                break;
-                                            }
-                                            grid_bore_finished[j] = true;
-                                        }
-                                    }
-                                    for (int k = 0; k < grid_bore_finished.Count; k++)
-                                    {
-
-                                        if (k > grid_bore_finished.Count - 1)
-                                        {
-                                            k = grid_bore_finished.Count - 1;
-                                        }
-                                        if (!grid_bore_finished[k] && !grid_bore_occupied[k])
-                                        {
-                                            current_gps_idx = k;
-                                            break;
-                                        }
-                                    }
-                                }
-                                receivedGPSIndex = current_gps_idx;
-                                if (gps_grid_position_value == -1)
-                                {
-                                    gps_grid_position_value = current_gps_idx;
-                                    drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
-                                    drone_gps_grid_list_position[i] = gps_grid_position_value;
-                                }
-                                else
-                                {
-                                    gps_grid_position_value = drone_gps_grid_list_position[i];
-                                    drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
-                                }
-                                if (!mining_grid_valid)
-                                {
-                                    total_mining_runs = 1;
-                                    drone_gps_coordinates_ds[i] = m_gps_crds;
-                                    gps_grid_position_value = 0;
-                                    current_gps_idx = 0;
-                                }
-                                //suspect code here
-                                Echo($"Drone coords: {i}");
-                                droneAssignedCoordinates[i] = true;
-                                Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
-                            }
-                            else if (!mining_grid_valid)
-                            {
-                                total_mining_runs = 1;
-                                drone_gps_coordinates_ds[i] = m_gps_crds;
-                                droneAssignedCoordinates[i] = true;
-                                gps_grid_position_value = 0;
-                                current_gps_idx = 0;
-                            }
-                            if (drone_gps_grid_list_position[i] > -1)
-                            {
-                                if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
-                                {
-                                    droneMustWait[i] = true;
-                                }
-                                else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
-                                {
-                                    droneMustWait[i] = false;
-                                }
-                                if (bores_completed != total_mining_runs && !droneMustWait[i])
-                                {
-                                    droneControlSequence[i] = 1;
-                                    drone_mining[i] = true;
-                                    grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
-                                }
-                                else
-                                {
-                                    droneControlSequence[i] = 0;
-                                    drone_mining[i] = false;
-                                }
-                                if (grid_bore_finished[drone_gps_grid_list_position[i]])
-                                {
-                                    //suspect coordinates here 2
-                                    Echo($"Drone position finished {i}");
-                                    droneControlSequence[i] = 0;
-                                    drone_mining[i] = false;
-                                    droneAssignedCoordinates[i] = false;
-                                    drone_gps_grid_list_position[i] = -1;
-                                }
-                            }
-                        }
-                        break;
-                    case 1:
-                        {
-                            droneControlSequence[i] = 2;
-                            drone_mining[i] = true;
-                            grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "7";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 2: 
-                        {
-                            droneControlSequence[i] = 3;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 3:
-                        {
-                            droneControlSequence[i] = 13;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 4:
-                        {
-                            droneControlSequence[i] = 13;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 5:
-                        {
-                            droneControlSequence[i] = 8;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "6";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 6:
-                        {
-                            droneControlSequence[i] = 4;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "4";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 7:
-                        {
-                            droneControlSequence[i] = 5;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 8:
-                        {
-                            droneControlSequence[i] = 1;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 9:
-                        {
-                            droneControlSequence[i] = 6;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "2";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 10:
-                        {
-                            droneControlSequence[i] = 7;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 11:
-                        {
-                            droneControlSequence[i] = 8;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "5";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 12:
-                        {
-                            grid_bore_occupied[drone_gps_grid_list_position[i]] = false;
-                        }
-                        break;
-                    case 13:
-                        {
-                            grid_bore_finished[drone_gps_grid_list_position[i]] = true;
-                        }
-                        break;
-                    case 14:
-                        {
-                            droneControlSequence[i] = 1;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 15:
-                        {
-                            droneControlSequence[i] = 0;
-                            droneAssignedCoordinates[i] = false;
-                            drone_mining[i] = false;
-                            gps_grid_position_value = -1;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 16:
-                        {
-                            droneControlSequence[i] = 9;
-                            grid_bore_finished[drone_gps_grid_list_position[i]] = true;
-
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 17:
-                        {
-                            droneControlSequence[i] = 10;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 18:
-                        {
-                            droneControlSequence[i] = 11;
-                            drone_tunnel_complete[i] = "False";
-                            grid_bore_finished[drone_gps_grid_list_position[i]] = true;
-                            t_mne_sq_cmp++;
-                            gps_grid_position_value = -1;
-                            droneResetFunction[i] = false;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "8";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 19:
-                        {
-                            droneControlSequence[i] = 0;
-                            droneAssignedCoordinates[i] = false;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 20:
-                        {
-                            droneControlSequence[i] = 12;
-                            droneAssignedCoordinates[i] = false;
-                            gps_grid_position_value = -1;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                            dp_txm.Append('\n');
-                            dp_txm.Append("Mining seq. complete");
-                        }
-                        break;
-                    case 21:
-                        {
-                            droneControlSequence[i] = 0;
-                            t_mne_sq_cmp = 0;
-                            drone_tunnel_complete[i] = "False";
-                            droneAssignedCoordinates[i] = false;
-                            drone_mining[i] = false;
-                            current_gps_idx = 0;
-                            gps_grid_position_value = -1;
-                            droneResetFunction[i] = false;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "8";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                    case 22:
-                        {
-                            droneControlSequence[i] = 0;
-                            t_mne_sq_cmp = 0;
-                            drone_tunnel_complete[i] = "False";
-                            droneAssignedCoordinates[i] = false;
-                            drone_mining[i] = false;
-                            current_gps_idx = 0;
-                            gps_grid_position_value = -1;
-                            droneResetFunction[i] = false;
-                            cd1 = gps_grid_position_value.ToString();
-                            cm = "0";
-                            drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                            droneTranmissionOutput[i] = c.ToString();
-                        }
-                        break;
-                }
+                StateMachine(i, machineControlState);
                 //transmit regular mode
-                    if (canTransmit && droneTransmissionStatus[i] && !run_arg)
-                    {
-                        transmit_to_drone();
-                        droneTransmissionStatus[i] = false;
-                    }
+                if (canTransmit && droneTransmissionStatus[i] && !cantRunMode)
+                {
+                    transmit_to_drone();
+                    droneTransmissionStatus[i] = false;
+                }
 
                 if (mustRecall_Command && !droneRecallList[i] && !mustUndock_Command)
                 {
@@ -1540,6 +1120,442 @@ namespace IngameScript
 
             }
             #endregion
+        }
+
+        private void StateMachine(int i, int machineControlState)
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            switch (machineControlState)
+            {
+                case 0:
+                    {
+                        if (bores_completed < total_mining_runs && mining_grid_valid != false && !droneAssignedCoordinates[i] && droneMustWait[i] == false)
+                        {
+                            if (grid_bore_finished.Count > 0)
+                            {
+                                if (skip_bores_number > grid_bore_finished.Count)
+                                {
+                                    skip_bores_number = 0;
+                                }
+                                if (skip_bores_number > 0)
+                                {
+                                    for (int j = 0; j < skip_bores_number; j++)
+                                    {
+                                        if (j > grid_bore_finished.Count - 1 || j > skip_bores_number - 1)
+                                        {
+                                            break;
+                                        }
+                                        grid_bore_finished[j] = true;
+                                    }
+                                }
+                                for (int k = 0; k < grid_bore_finished.Count; k++)
+                                {
+
+                                    if (k > grid_bore_finished.Count - 1)
+                                    {
+                                        k = grid_bore_finished.Count - 1;
+                                    }
+                                    if (!grid_bore_finished[k] && !grid_bore_occupied[k])
+                                    {
+                                        current_gps_idx = k;
+                                        break;
+                                    }
+                                }
+                            }
+                            receivedGPSIndex = current_gps_idx;
+                            if (gps_grid_position_value == -1)
+                            {
+                                gps_grid_position_value = current_gps_idx;
+                                drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
+                                drone_gps_grid_list_position[i] = gps_grid_position_value;
+                            }
+                            else
+                            {
+                                gps_grid_position_value = drone_gps_grid_list_position[i];
+                                drone_gps_coordinates_ds[i] = grid_bore_positions[gps_grid_position_value];
+                            }
+                            if (!mining_grid_valid)
+                            {
+                                total_mining_runs = 1;
+                                drone_gps_coordinates_ds[i] = m_gps_crds;
+                                gps_grid_position_value = 0;
+                                current_gps_idx = 0;
+                            }
+                            //suspect code here
+                            Echo($"Drone coords: {i}");
+                            droneAssignedCoordinates[i] = true;
+                            Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
+                        }
+                        else if (!mining_grid_valid)
+                        {
+                            total_mining_runs = 1;
+                            drone_gps_coordinates_ds[i] = m_gps_crds;
+                            droneAssignedCoordinates[i] = true;
+                            gps_grid_position_value = 0;
+                            current_gps_idx = 0;
+                        }
+                        if (drone_gps_grid_list_position[i] > -1)
+                        {
+                            if (grid_bore_occupied[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                            {
+                                droneMustWait[i] = true;
+                            }
+                            else if (total_drones_mining < bores_remaining && bores_completed < total_mining_runs || !grid_bore_occupied[drone_gps_grid_list_position[i]] && !grid_bore_finished[drone_gps_grid_list_position[i]] && !drone_mining[i])
+                            {
+                                droneMustWait[i] = false;
+                            }
+                            if (bores_completed != total_mining_runs && !droneMustWait[i])
+                            {
+                                droneControlSequence[i] = 1;
+                                drone_mining[i] = true;
+                                grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
+                            }
+                            else
+                            {
+                                droneControlSequence[i] = 0;
+                                drone_mining[i] = false;
+                            }
+                            if (grid_bore_finished[drone_gps_grid_list_position[i]])
+                            {
+                                //suspect coordinates here 2
+                                Echo($"Drone position finished {i}");
+                                droneControlSequence[i] = 0;
+                                drone_mining[i] = false;
+                                droneAssignedCoordinates[i] = false;
+                                drone_gps_grid_list_position[i] = -1;
+                            }
+                        }
+                    }
+                    break;
+                case 1:
+                    {
+                        droneControlSequence[i] = 2;
+                        drone_mining[i] = true;
+                        grid_bore_occupied[drone_gps_grid_list_position[i]] = true;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "7";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 2:
+                    {
+                        droneControlSequence[i] = 3;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 3:
+                    {
+                        droneControlSequence[i] = 13;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 4:
+                    {
+                        droneControlSequence[i] = 13;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 5:
+                    {
+                        droneControlSequence[i] = 8;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "6";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 6:
+                    {
+                        droneControlSequence[i] = 4;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "4";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 7:
+                    {
+                        droneControlSequence[i] = 5;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 8:
+                    {
+                        droneControlSequence[i] = 1;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 9:
+                    {
+                        droneControlSequence[i] = 6;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "2";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 10:
+                    {
+                        droneControlSequence[i] = 7;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 11:
+                    {
+                        droneControlSequence[i] = 8;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "5";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 12:
+                    {
+                        grid_bore_occupied[drone_gps_grid_list_position[i]] = false;
+                    }
+                    break;
+                case 13:
+                    {
+                        grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+                    }
+                    break;
+                case 14:
+                    {
+                        droneControlSequence[i] = 1;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 15:
+                    {
+                        droneControlSequence[i] = 0;
+                        droneAssignedCoordinates[i] = false;
+                        drone_mining[i] = false;
+                        gps_grid_position_value = -1;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 16:
+                    {
+                        droneControlSequence[i] = 9;
+                        grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 17:
+                    {
+                        droneControlSequence[i] = 10;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 18:
+                    {
+                        droneControlSequence[i] = 11;
+                        drone_tunnel_complete[i] = "False";
+                        grid_bore_finished[drone_gps_grid_list_position[i]] = true;
+                        t_mne_sq_cmp++;
+                        gps_grid_position_value = -1;
+                        droneResetFunction[i] = false;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "8";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 19:
+                    {
+                        droneControlSequence[i] = 0;
+                        droneAssignedCoordinates[i] = false;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 20:
+                    {
+                        droneControlSequence[i] = 12;
+                        droneAssignedCoordinates[i] = false;
+                        gps_grid_position_value = -1;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        dp_txm.Append('\n');
+                        dp_txm.Append("Mining seq. complete");
+                    }
+                    break;
+                case 21:
+                    {
+                        droneControlSequence[i] = 0;
+                        t_mne_sq_cmp = 0;
+                        drone_tunnel_complete[i] = "False";
+                        droneAssignedCoordinates[i] = false;
+                        drone_mining[i] = false;
+                        current_gps_idx = 0;
+                        gps_grid_position_value = -1;
+                        droneResetFunction[i] = false;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "8";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+                case 22:
+                    {
+                        droneControlSequence[i] = 0;
+                        t_mne_sq_cmp = 0;
+                        drone_tunnel_complete[i] = "False";
+                        droneAssignedCoordinates[i] = false;
+                        drone_mining[i] = false;
+                        current_gps_idx = 0;
+                        gps_grid_position_value = -1;
+                        droneResetFunction[i] = false;
+                        cd1 = gps_grid_position_value.ToString();
+                        cm = "0";
+                        drone_command_builder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                    }
+                    break;
+            }
+            Echo($"StateMachine: {Runtime.CurrentInstructionCount - startInstructions}");
+        }
+
+        private void ManageDroneStateMachineState(int i)
+        {
+            int startInstructions = Runtime.CurrentInstructionCount;
+            if (droneReady[i] && drone_tunnel_complete[i] == "False" && drone_dock_status[i] == "True" && can_run && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 0;
+
+            }
+
+            if (droneControlSequence[i] == 1 && droneAssignedCoordinates[i] && !droneMustWait[i] && !cantRunMode || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docked Idle" && drone_dock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 1;
+
+            }
+            if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocked" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docking" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 2;
+            }
+
+            if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocking" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode && dcs[i] <= bclu)
+            {
+                machineControlState = 3;
+
+            }
+            if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 4;
+            }
+            if (droneControlSequence[i] == 13 && droneControlStatus[i] == "Idle" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode || droneControlSequence[i] == 5 && droneControlStatus[i] == "Docking" && drone_dock_status[i] == "False" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode && dcs[i] <= bclu)
+            {
+                machineControlState = 5;
+            }
+            if (droneControlSequence[i] == 3 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 6;
+
+            }
+            if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Nav End" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 7;
+            }
+            if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Docked Idle" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 8;
+            }
+
+            if (droneControlSequence[i] == 5 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 9;
+            }
+
+            if (droneControlSequence[i] == 6 && droneControlStatus[i] == "Nav End" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 10;
+            }
+            if (droneControlSequence[i] == 7 && droneControlStatus[i] == "Idle" && drone_undock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 11;
+            }
+            if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Docked") && drone_mining[i] || droneControlSequence[i] == 4 && droneControlStatus[i].Contains("Docked") && drone_mining[i])
+            {
+                machineControlState = 12;
+            }
+            if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Dock") && drone_mining[i] && drone_tunnel_complete[i] == "True")
+            {
+                machineControlState = 13;
+            }
+            if (droneControlSequence[i] == 8 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !cantRunMode)
+            {
+                machineControlState = 14;
+            }
+            if (droneControlSequence[i] == 8 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !cantRunMode || droneControlSequence[i] == 8 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !cantRunMode || droneControlSequence[i] >= 1 && droneControlSequence[i] <= 4 && !droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && !cantRunMode)
+            {
+                machineControlState = 15;
+            }
+            if (droneControlSequence[i] == 8 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !cantRunMode)
+            {
+                machineControlState = 16;
+            }
+            if (droneControlSequence[i] == 9 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && can_run && droneAssignedCoordinates[i] && !cantRunMode || droneControlSequence[i] == 9 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && droneAssignedCoordinates[i] && !cantRunMode)
+            {
+                machineControlState = 17;
+            }
+            if (droneControlSequence[i] == 10 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset && droneAssignedCoordinates[i] && !cantRunMode || droneControlSequence[i] == 10 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !cantRunMode || droneControlSequence[i] == 0 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && droneAssignedCoordinates[i] && !cantRunMode)
+            {
+                machineControlState = 18;
+            }
+            if (droneControlSequence[i] == 11 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && t_mne_sq_cmp <= total_mining_runs && mining_grid_valid && !cantRunMode)
+            {
+                machineControlState = 19;
+            }
+            if (droneControlSequence[i] == 11 && droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && current_gps_idx < total_mining_runs && droneAssignedCoordinates[i] && t_mne_sq_cmp > total_mining_runs && !cantRunMode || droneControlSequence[i] == 11 && droneReady[i] && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && droneAssignedCoordinates[i] && mining_grid_valid == false && t_mne_sq_cmp >= total_mining_runs && !cantRunMode)
+            {
+                machineControlState = 20;
+            }
+            if (droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset || droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "True" && general_reset && !cantRunMode)
+            {
+                machineControlState = 21;
+            }
+            if (droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && general_reset && droneControlSequence[i] == 0 && !cantRunMode || droneControlStatus[i].Contains("Docked") && drone_dock_status[i] == "True" && drone_tunnel_complete[i] == "False" && general_reset && !cantRunMode || droneControlSequence[i] == 6 && droneControlStatus[i] == "Docked Idle" && drone_dock_status[i] == "True" && droneAssignedCoordinates[i] && drone_mining[i] && !cantRunMode)
+            {
+                machineControlState = 22;
+            }
+            Echo($"ManageDroneStateMachineState: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void Check_Drone_Readiness(int i, List<string> droneControlStatus)
@@ -2058,11 +2074,11 @@ namespace IngameScript
             }
             if (mustUndock_Command || mustRecall_Command || mustFreeze_Command)
             {
-                run_arg = true;
+                cantRunMode = true;
             }
             else
             {
-                run_arg = false;
+                cantRunMode = false;
             }
             #endregion
         }
@@ -2072,10 +2088,10 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             if (display_tag_drone.Count == 0 || drone_name.Count == 0 || display_tag_drone[0] == null) return;
 
-            if (renew_header)
+            if (renewHeader)
             {
                 droneInformation.Clear().Append($"Mining Drone Status - GMDC {ver}\n");
-                renew_header = false;
+                renewHeader = false;
             }
 
             int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
@@ -2096,7 +2112,7 @@ namespace IngameScript
                 {
                     sD = ((IMyTextSurfaceProvider)display_tag_drone[displayIndex]).GetSurface(srfD);
                     sD.WriteText(droneInformation);
-                    renew_header = true;
+                    renewHeader = true;
                 }
             }
             Echo($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");

@@ -567,6 +567,7 @@ namespace IngameScript
         {
             Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0, 3)}% ({Math.Round(_Runtime, 3)}ms) S#:{spritecount} {sprite_insert}");
             Echo($"Drones #: {drone_name.Count}");
+            Echo($"StateMachine #: {machineControlState}");
             Echo($"Drone comms buffer: {drone_messages_list.Count} OK: {Drone_Message}");
             Echo($"Cycles since last broadcast: {time_count} ({Math.Round((((double)drone_comms_processing_delay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) {time_delay}");
             Echo($"Cycles since last ping: {pngt_count} ({Math.Round((((double)drone_ping_time_delay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
@@ -2245,6 +2246,11 @@ namespace IngameScript
         }
         void Get_Drone_Message_Data(string data_message)
         {
+            if (string.IsNullOrEmpty(data_message))
+            {
+                Echo("Message empty - early exit");
+                return;
+            }
             // get custom data from programmable block
             String[] msgdta = data_message.Split(':');
 
@@ -2313,6 +2319,8 @@ namespace IngameScript
                     receivedDroneGPSList = "";
                     receivedDroneCargoFull = "";
                     receivedDroneRechargeRequest = "";
+                    recievedDroneAutdock = "";
+                    recievedDroneDockingReady = "";
 
                 }
                 if (receivedDroneGPSList == "")
@@ -2339,6 +2347,16 @@ namespace IngameScript
 
         void GetRemoteControlData()
         {
+            if(remote_control_actual == null)
+            {
+                Echo("Remote control is not present in RC read");
+                return;
+            }
+            if (string.IsNullOrEmpty(remote_control_actual.CustomData))
+            {
+                Echo("Remote control custom data empty");
+                return;
+            }
             String[] remoteGpsCommand = remote_control_actual.CustomData.Split(':');
 
             if (remoteGpsCommand.Length < 6)

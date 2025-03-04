@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.386";
+        string ver = "V0.388B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -102,6 +102,8 @@ namespace IngameScript
         string rc_dn_gps_lst;
         string rc_dn_cargo_full;
         string rc_dn_rchg_req;
+        string recievedDroneAutdock;
+        string recievedDroneDockingReady;
         string rc_auto_pilot_enabled;
         int recieved_drone_list_position;
         double rc_d_cn = 0.0;
@@ -234,6 +236,8 @@ namespace IngameScript
         List<string> drone_cargo_full;
         List<string> drone_recharge_request;
         List<string> drone_auto_pilot_enabled;
+        List<string> droneAutodock;
+        List<string> droneDockingReady;
         List<int> drone_assigns_count;
         List<double> dcs;
         List<bool> drone_assigned_coordinates;
@@ -2201,6 +2205,14 @@ namespace IngameScript
                     {
                         rc_dn_rchg_req = msgdta[19];
                     }
+                    if (msgdta.Length > 19)
+                    {
+                        recievedDroneAutdock = msgdta[20];
+                    }
+                    if (msgdta.Length > 20)
+                    {
+                        recievedDroneDockingReady = msgdta[21];
+                    }
                 }
                 else
                 {
@@ -3258,6 +3270,8 @@ namespace IngameScript
             sprites = new List<MySprite>();
             rm_ctl_all = new List<IMyRemoteControl>();
             rm_ctl_tag = new List<IMyRemoteControl>();
+            droneAutodock = new List<string>();
+            droneDockingReady = new List<string>();
             drone_cargo_full = new List<string>();
             drone_recharge_request = new List<string>();
             drone_auto_pilot_enabled = new List<string>();
@@ -3569,6 +3583,8 @@ namespace IngameScript
                     drone_cargo_full.Add(rc_dn_cargo_full);
                     drone_recharge_request.Add(rc_dn_rchg_req);
                     drone_auto_pilot_enabled.Add(rc_auto_pilot_enabled);
+                    droneAutodock.Add(recievedDroneAutdock);
+                    droneDockingReady.Add(recievedDroneDockingReady);
                 }
                 //drones do exist so check current drone list to see if it exists
                 if (drone_name.Count > 0)
@@ -3604,6 +3620,8 @@ namespace IngameScript
                             drone_cargo_full[i] = rc_dn_cargo_full;
                             drone_recharge_request[i] = rc_dn_rchg_req;
                             drone_auto_pilot_enabled[i] = rc_auto_pilot_enabled;
+                            droneAutodock[i] =recievedDroneAutdock;
+                            droneDockingReady[i] =recievedDroneDockingReady;
                             if (dcs[i] <= bclm)
                             {
                                 dst[i] = false;
@@ -3653,6 +3671,8 @@ namespace IngameScript
                             drone_cargo_full.Add(rc_dn_cargo_full);
                             drone_recharge_request.Add(rc_dn_rchg_req);
                             drone_auto_pilot_enabled.Add(rc_auto_pilot_enabled);
+                            droneAutodock.Add(recievedDroneAutdock);
+                            droneDockingReady.Add(recievedDroneDockingReady);
                             Confirmed_Drone_Message = true;
                             recieved_drone_name_index = i + 1;
                         }

@@ -67,18 +67,18 @@ namespace IngameScript
         double gridSize;
         int numPointsY;
         int numPointsX;
-
+        bool miningCoordsValid = false;
         bool gridCreated = false;
         int maxActiveDronesCount;
         string droneDataInput;
         string prospectorDataInput;
         double bclm = 1.0;
         string receivedDroneName;
-        string rc_dds;
-        string rc_tnl_end;
-        string rc_dn_sts;
-        string recieved_drone_dock;
-        string recieved_drone_undock;
+        string receivedDroneDamageStatus;
+        string receivedDroneTunnelFinished;
+        string receivedDroneStatus;
+        string receivedDroneDocked;
+        string receivedDroneUndocked;
         string recived_drone_autopilot;
         string rc_dn_drl_dpth;
         string rc_dn_drl_crnt;
@@ -163,9 +163,6 @@ namespace IngameScript
         string remoteControlCustomData10 = "";
         string remoteControlCustomData11 = "";
         string remoteControlCustomData12 = "";
-        string alignGPSStringX = "";
-        string alignGPSStringY = "";
-        string alignGPSStringZ = "";
 
         string cd1 = "";
         string xp = "";
@@ -470,20 +467,20 @@ namespace IngameScript
             ValidateCustomData();
             PingDrones();
             GetRemoteControlData();
-            Echo($"Pre-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
+            //Echo($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
             if (prospectAlignTargetValid)
             {
-                Echo($"Pre-Prospect: Align coords={alignGPSCoordinates}");
+                //Echo($"Pre-Prospect:  Align coords={alignGPSCoordinates}");
             }
             if (prospectorMessageReceived)
             {
                 Storage = null;
                 prospectAlignTargetValid = false;
                 GetRemoteControlData();
-                Echo($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
+                //Echo($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
                 if (prospectAlignTargetValid)
                 {
-                    Echo($"Post-Prospect: Align coords=:{alignGPSCoordinates}");
+                    Echo($"Post-Prospect: Main PB: {miningCoordsValid} Align coords=:{alignGPSCoordinates}");
                 }
                 if (prospectTargetValid)
                 {
@@ -2196,11 +2193,11 @@ namespace IngameScript
                 receivedDroneName = messageData[0];
                 if (receivedDroneName.Contains(drone_tag))
                 {
-                    rc_dds = messageData[1];
-                    rc_tnl_end = messageData[2];
-                    rc_dn_sts = messageData[3];
-                    recieved_drone_dock = messageData[4];
-                    recieved_drone_undock = messageData[5];
+                    receivedDroneDamageStatus = messageData[1];
+                    receivedDroneTunnelFinished = messageData[2];
+                    receivedDroneStatus = messageData[3];
+                    receivedDroneDocked = messageData[4];
+                    receivedDroneUndocked = messageData[5];
                     recived_drone_autopilot = messageData[6];
                     rc_auto_pilot_enabled = messageData[7];
                     rc_locx = messageData[8];
@@ -2236,11 +2233,11 @@ namespace IngameScript
                 else
                 {
                     receivedDroneName = "";
-                    rc_dds = "";
-                    rc_tnl_end = "";
-                    rc_dn_sts = "";
-                    recieved_drone_dock = "";
-                    recieved_drone_undock = "";
+                    receivedDroneDamageStatus = "";
+                    receivedDroneTunnelFinished = "";
+                    receivedDroneStatus = "";
+                    receivedDroneDocked = "";
+                    receivedDroneUndocked = "";
                     recived_drone_autopilot = "";
                     rc_auto_pilot_enabled = "";
                     rc_locx = "";
@@ -2425,6 +2422,9 @@ namespace IngameScript
             }
             if (gpsCommand.Length > 4)
             {
+                bool mAlignX;
+                bool mAlignY;
+                bool mAlignZ;
                 customData1 = gpsCommand[1];
                 customData2 = gpsCommand[2];
                 customData3 = gpsCommand[3];
@@ -2434,17 +2434,41 @@ namespace IngameScript
                 {
                     miningGPSCoordinates.X = 0.0;
                     customData2 = "";
+                    mAlignX = false;
+                }
+                else
+                {
+                    mAlignX = true;
                 }
                 if (!double.TryParse(customData3, out miningGPSCoordinates.Y))
                 {
                     miningGPSCoordinates.Y = 0.0;
                     customData3 = "";
+                    mAlignY = false;
+                } 
+                else
+                {
+                    mAlignY = true;
                 }
                 if (!double.TryParse(customData4, out miningGPSCoordinates.Z))
                 {
                     miningGPSCoordinates.Z = 0.0;
                     customData4 = "";
+                    mAlignZ = false;
+                } 
+                else
+                {
+                    mAlignZ = true;
                 }
+                if (mAlignX && mAlignY && mAlignZ)
+                {
+                    miningCoordsValid = true;
+                }
+                else
+                {
+                    miningCoordsValid = false;
+                }
+
             }
             //5 should be colour data
             if (gpsCommand.Length > 5)
@@ -2539,8 +2563,9 @@ namespace IngameScript
                 }
             }
 
-            if (gpsCommand.Length > 15 && gpsCommand.Length < 23 && !prospectAlignTargetValid)
+            if (gpsCommand.Length > 15 && gpsCommand.Length < 24 && !prospectAlignTargetValid)
             {
+                Echo($"gpsCommandLen:{gpsCommand.Length}");
                 bool targetAlignX;
                 bool targetAlignY;
                 bool targetAlignZ;
@@ -3671,11 +3696,11 @@ namespace IngameScript
                 if (droneName.Count <= 0)
                 {
                     droneName.Add(receivedDroneName);
-                    droneDamageState.Add(rc_dds);
-                    droneTunnelFinished.Add(rc_tnl_end);
-                    droneControlStatus.Add(rc_dn_sts);
-                    droneDocked.Add(recieved_drone_dock);
-                    droneUndocked.Add(recieved_drone_undock);
+                    droneDamageState.Add(receivedDroneDamageStatus);
+                    droneTunnelFinished.Add(receivedDroneTunnelFinished);
+                    droneControlStatus.Add(receivedDroneStatus);
+                    droneDocked.Add(receivedDroneDocked);
+                    droneUndocked.Add(receivedDroneUndocked);
                     droneAutopiloting.Add(recived_drone_autopilot);
                     droneGPSListPosition.Add(-1);
                     droneGPSCoordinates.Add(remoteControlActual.GetPosition());
@@ -3720,11 +3745,11 @@ namespace IngameScript
                         {
                             found = true;
                             droneName[i] = receivedDroneName;
-                            droneDamageState[i] = rc_dds;
-                            droneTunnelFinished[i] = rc_tnl_end;
-                            droneControlStatus[i] = rc_dn_sts;
-                            droneDocked[i] = recieved_drone_dock;
-                            droneUndocked[i] = recieved_drone_undock;
+                            droneDamageState[i] = receivedDroneDamageStatus;
+                            droneTunnelFinished[i] = receivedDroneTunnelFinished;
+                            droneControlStatus[i] = receivedDroneStatus;
+                            droneDocked[i] = receivedDroneDocked;
+                            droneUndocked[i] = receivedDroneUndocked;
                             droneAutopiloting[i] = recived_drone_autopilot;
                             droneBoreDepth[i] = (rc_dn_drl_dpth);
                             droneBoreDepthCurrent[i] = rc_dn_drl_crnt;
@@ -3759,11 +3784,11 @@ namespace IngameScript
                         if (i == (droneName.Count - 1) && !nametag.Equals(receivedDroneName) && !found)
                         {
                             droneName.Add(receivedDroneName);
-                            droneDamageState.Add(rc_dds);
-                            droneTunnelFinished.Add(rc_tnl_end);
-                            droneControlStatus.Add(rc_dn_sts);
-                            droneDocked.Add(recieved_drone_dock);
-                            droneUndocked.Add(recieved_drone_undock);
+                            droneDamageState.Add(receivedDroneDamageStatus);
+                            droneTunnelFinished.Add(receivedDroneTunnelFinished);
+                            droneControlStatus.Add(receivedDroneStatus);
+                            droneDocked.Add(receivedDroneDocked);
+                            droneUndocked.Add(receivedDroneUndocked);
                             droneAutopiloting.Add(recived_drone_autopilot);
                             droneGPSCoordinates.Add(remoteControlActual.GetPosition());
                             droneBoreDepth.Add(rc_dn_drl_dpth);

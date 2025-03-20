@@ -1,4 +1,5 @@
-﻿using Sandbox.ModAPI.Ingame;
+﻿using Sandbox.Game.Components;
+using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -48,7 +49,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.390B";
+        string ver = "V0.392B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1838,7 +1839,7 @@ namespace IngameScript
                 canInterfaceCommand = true;
                 interfaceArgument = pbInterfaceActual.CustomData;
                 Echo($"Interface PB: {interfaceTag}");
-                Echo($"Display command: {interfaceArgument}");
+                Echo($"Display command: {interfaceArgument} {prospectAlignTargetValid}");
             }
             #endregion
             #region interface_command_processing
@@ -2293,6 +2294,7 @@ namespace IngameScript
                 remoteControlCustomData4 = "";
                 remoteControlCustomData5 = "";
                 remoteControlCustomData6 = "";
+
                 prospectTargetValid = false;
                 return;
             }
@@ -2329,7 +2331,7 @@ namespace IngameScript
                 }
 
             }
-            if (remoteGpsCommand.Length < 12 && remoteGpsCommand.Length > 7)
+            if (remoteGpsCommand.Length < 11 && remoteGpsCommand.Length > 7 && !prospectAlignTargetValid)
             {
                 remoteControlCustomData7 = "";
                 remoteControlCustomData8 = "";
@@ -2352,30 +2354,30 @@ namespace IngameScript
                 remoteControlCustomData10 = remoteGpsCommand[10];
                 remoteControlCustomData11 = remoteGpsCommand[11];
                 remoteControlCustomData12 = remoteGpsCommand[12];
-                if (!double.TryParse(remoteControlCustomData10, out alignGPSCoordinates.X))
+                if (!double.TryParse(remoteControlCustomData9, out alignGPSCoordinates.X))
                 {
                     alignGPSCoordinates.X = 0.0;
-                    remoteControlCustomData10 = "";
+                    remoteControlCustomData9 = "";
                     AlignX = false;
                 }
                 else
                 {
                     AlignX = true;
                 }
-                if (!double.TryParse(remoteControlCustomData11, out alignGPSCoordinates.Y))
+                if (!double.TryParse(remoteControlCustomData10, out alignGPSCoordinates.Y))
                 {
                     alignGPSCoordinates.Y = 0.0;
-                    remoteControlCustomData11 = "";
+                    remoteControlCustomData10 = "";
                     AlignY = false;
                 }
                 else
                 {
                     AlignY = true;
                 }
-                if (!double.TryParse(remoteControlCustomData12, out alignGPSCoordinates.Z))
+                if (!double.TryParse(remoteControlCustomData11, out alignGPSCoordinates.Z))
                 {
                     alignGPSCoordinates.Z = 0.0;
-                    remoteControlCustomData12 = "";
+                    remoteControlCustomData11 = "";
                     AlignZ = false;
                 }
                 else
@@ -2562,8 +2564,12 @@ namespace IngameScript
                     customData15 = "";
                 }
             }
-
-            if (gpsCommand.Length > 15 && gpsCommand.Length < 24 && !prospectAlignTargetValid)
+            if(prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
+            {
+                string tempbro = Me.CustomData;               
+                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}";
+            }
+            if (gpsCommand.Length > 20  && !prospectAlignTargetValid)
             {
                 Echo($"gpsCommandLen:{gpsCommand.Length}");
                 bool targetAlignX;

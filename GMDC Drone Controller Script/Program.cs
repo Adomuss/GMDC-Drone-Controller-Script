@@ -49,7 +49,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.392B";
+        string ver = "V0.393B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2284,6 +2284,11 @@ namespace IngameScript
                 Echo($"Remote Control {antennaTagName} not present");
                 return;
             }
+            if (string.IsNullOrEmpty(remoteControlActual.CustomData))
+                {
+                Echo("Prospector job data not found");
+                return;
+                }
             String[] remoteGpsCommand = remoteControlActual.CustomData.Split(':');
 
             if (remoteGpsCommand.Length < 6)
@@ -2564,11 +2569,7 @@ namespace IngameScript
                     customData15 = "";
                 }
             }
-            if(prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
-            {
-                string tempbro = Me.CustomData;               
-                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}";
-            }
+
             if (gpsCommand.Length > 20  && !prospectAlignTargetValid)
             {
                 Echo($"gpsCommandLen:{gpsCommand.Length}");
@@ -2639,6 +2640,11 @@ namespace IngameScript
                 {
                     prospectAlignTargetValid = false;
                 }
+            }
+            if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
+            {
+                string tempbro = Me.CustomData;
+                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:";
             }
         }
 

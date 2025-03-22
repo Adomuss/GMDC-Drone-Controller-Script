@@ -3,6 +3,7 @@ using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Reflection;
 using System.Text;
 using VRage.Game.GUI.TextPanel;
@@ -49,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.393B";
+        string ver = "V0.394B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -439,6 +440,11 @@ namespace IngameScript
                 Echo("Setup complete!");
             }
             CheckSystemSetupStatus();
+            if (!setupComplete)
+            {                
+                Echo("Setup incomplete - exiting");
+                return;
+            }
             Echo($"GMDC {ver} Running {icon}");
             Echo($"Channel: {drone_tag}");
             Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -490,7 +496,7 @@ namespace IngameScript
                         targetGPSCoordinates.X, targetGPSCoordinates.Y, targetGPSCoordinates.Z);
                     if (prospectAlignTargetValid)
                     {
-                        miningCoordinatesNew.Append($"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:");
+                        miningCoordinatesNew.Append($"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
                     }
                     Me.CustomData = miningCoordinatesNew.ToString();
                 }
@@ -2478,7 +2484,7 @@ namespace IngameScript
 
             }
             //5 should be colour data
-            if (gpsCommand.Length > 5)
+            if (gpsCommand.Length > 6)
             {
                 customData6 = gpsCommand[6];
                 if (!Double.TryParse(customData6, out drillLength))
@@ -2487,7 +2493,7 @@ namespace IngameScript
                     customData6 = "";
                 }
             }
-            if (gpsCommand.Length > 6)
+            if (gpsCommand.Length > 7)
             {
                 customData7 = gpsCommand[7];
                 if (!Double.TryParse(customData7, out gridSize))
@@ -2496,7 +2502,7 @@ namespace IngameScript
                     customData7 = "";
                 }
             }
-            if (gpsCommand.Length > 7)
+            if (gpsCommand.Length > 8)
             {
                 customData8 = gpsCommand[8];
                 if (!int.TryParse(customData8, out numPointsX))
@@ -2505,7 +2511,7 @@ namespace IngameScript
                     customData8 = "";
                 }
             }
-            if (gpsCommand.Length > 8)
+            if (gpsCommand.Length > 9)
             {
                 customData9 = gpsCommand[9];
 
@@ -2515,7 +2521,7 @@ namespace IngameScript
                     customData9 = "";
                 }
             }
-            if (gpsCommand.Length > 9)
+            if (gpsCommand.Length > 10)
             {
                 customData10 = gpsCommand[10];
                 if (!Double.TryParse(customData10, out ignoreDepth))
@@ -2524,7 +2530,7 @@ namespace IngameScript
                     customData10 = "";
                 }
             }
-            if (gpsCommand.Length > 10)
+            if (gpsCommand.Length > 11)
             {
                 customData11 = gpsCommand[11];
                 if (!bool.TryParse(customData11, out dronesLaunchedStatus))
@@ -2533,7 +2539,7 @@ namespace IngameScript
                     customData11 = "";
                 }
             }
-            if (gpsCommand.Length > 11)
+            if (gpsCommand.Length > 12)
             {
                 customData12 = gpsCommand[12];
                 if (!int.TryParse(customData12, out dronesInFlightFactor))
@@ -2542,7 +2548,7 @@ namespace IngameScript
                     customData12 = "";
                 }
             }
-            if (gpsCommand.Length > 12)
+            if (gpsCommand.Length > 13)
             {
                 customData13 = gpsCommand[13];
                 if (!int.TryParse(customData13, out dronesActiveHardLimit))
@@ -2551,7 +2557,7 @@ namespace IngameScript
                     customData13 = "";
                 }
             }
-            if (gpsCommand.Length > 13)
+            if (gpsCommand.Length > 14)
             {
                 customData14 = gpsCommand[14];
                 if (!int.TryParse(customData14, out skipBoresNumber))
@@ -2560,7 +2566,7 @@ namespace IngameScript
                     customData14 = "";
                 }
             }
-            if (gpsCommand.Length > 14)
+            if (gpsCommand.Length > 15)
             {
                 customData15 = gpsCommand[15];
                 if (!bool.TryParse(customData15, out coreOutGrid))
@@ -2570,35 +2576,35 @@ namespace IngameScript
                 }
             }
 
-            if (gpsCommand.Length > 20  && !prospectAlignTargetValid)
+            if (gpsCommand.Length > 16  && !prospectAlignTargetValid)
             {
                 Echo($"gpsCommandLen:{gpsCommand.Length}");
                 bool targetAlignX;
                 bool targetAlignY;
                 bool targetAlignZ;
-                if (gpsCommand.Length > 15)
-                {
-                    customData16 = gpsCommand[16];
-                }
                 if (gpsCommand.Length > 16)
-                {
-                    customData17 = gpsCommand[17];
+                {                    
+                    customData16 = gpsCommand[16];                    
                 }
                 if (gpsCommand.Length > 17)
                 {
-                    customData18 = gpsCommand[18];
+                    customData17 = gpsCommand[17];                    
                 }
                 if (gpsCommand.Length > 18)
                 {
-                    customData19 = gpsCommand[19];
+                    customData18 = gpsCommand[18];                    
                 }
                 if (gpsCommand.Length > 19)
                 {
-                    customData20 = gpsCommand[20];
+                    customData19 = gpsCommand[19];                    
                 }
                 if (gpsCommand.Length > 20)
                 {
-                    customData21 = gpsCommand[21];
+                    customData20 = gpsCommand[20];                    
+                }
+                if (gpsCommand.Length > 21)
+                {
+                    customData21 = gpsCommand[21];                    
                 }
 
                 
@@ -3593,12 +3599,14 @@ namespace IngameScript
             if (antennaTag.Count <= 0 || antennaTag[0] == null)
             {
                 Echo($"Antenna with tag: '{antennaTagName}' not found.");
+                setupComplete = !setupComplete;
                 return;
             }
             antennaActual = antennaTag[0];
             if (remoteControlTag.Count <= 0 || remoteControlTag[0] == null)
             {
                 Echo($"remote control with tag: '{antennaTagName}' not found.");
+                setupComplete = !setupComplete;
                 return;
             }
             remoteControlActual = remoteControlTag[0];
@@ -3607,6 +3615,7 @@ namespace IngameScript
             if (lightsTag.Count <= 0 || lightsTag[0] == null)
             {
                 Echo($"Indicator light with tag: '{lightsTagName}' not found.");
+                setupComplete = !setupComplete;
                 return;
             }
             lightIndicatorActual = lightsTag[0];

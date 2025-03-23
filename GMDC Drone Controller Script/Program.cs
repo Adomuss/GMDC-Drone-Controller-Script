@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.397B";
+        string ver = "V0.398B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1102,6 +1102,10 @@ namespace IngameScript
                     {
                         gridBoreFinished[droneGPSListPosition[i]] = true;
                         gridBoreOccupied[droneGPSListPosition[i]] = true;
+                    } else
+                    {
+                        gridBoreOccupied[droneGPSListPosition[i]] = true;
+                        gridBoreFinished[droneGPSListPosition[i]] = false;
                     }
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();

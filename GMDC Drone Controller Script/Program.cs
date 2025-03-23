@@ -189,6 +189,7 @@ namespace IngameScript
         int t_drn_idle = 0;
         int t_drn_exit = 0;
         int t_drn_mine = 0;
+        int t_drn_nav = 0;
         int boresRemaining;
         bool faultLightOutput = false;
         int faultCounter = 0;
@@ -402,7 +403,7 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            Echo("Running Modular Main - v1");
+            //Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
@@ -427,7 +428,7 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void InitializeSystem()
@@ -1098,12 +1099,6 @@ namespace IngameScript
                 }
                 if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
-                    if (droneTunnelFinished[i] == "True")
-                    {
-                        gridBoreFinished[droneGPSListPosition[i]] = true;
-                        gridBoreOccupied[droneGPSListPosition[i]] = true;
-                    }
-
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "0";
@@ -2074,7 +2069,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav;
         }
 
         private void UpdateDroneCounts()
@@ -2101,6 +2096,7 @@ namespace IngameScript
                 stats.Mining += status.Contains("Min") ? 1 : 0;
                 stats.RTBA += status.Contains("RTB: Request") ? 1 : 0;
                 stats.RTBB += status.Contains("RTB: Ready") ? 1 : 0;
+                stats.Nav += status.Contains("Nav") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
                 stats.Ok += damage == "OK" ? 1 : 0;
@@ -2108,6 +2104,7 @@ namespace IngameScript
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle = stats.Idle;
             t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining;
+            t_drn_nav = stats.Nav;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
 
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -3851,8 +3848,8 @@ namespace IngameScript
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")
                   .AppendLine(dronesLaunchedStatus
-                      ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
-                      : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged}")
+                      ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} - Nav: {t_drn_nav} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
+                      : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} - Nav: {t_drn_nav} Fault: {totalDronesDamaged}")
                   .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
                   .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Mining: {t_drn_mine} Exit: {t_drn_exit}")
                   .AppendLine()

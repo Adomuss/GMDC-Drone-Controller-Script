@@ -1102,11 +1102,8 @@ namespace IngameScript
                     {
                         gridBoreFinished[droneGPSListPosition[i]] = true;
                         gridBoreOccupied[droneGPSListPosition[i]] = true;
-                    } else
-                    {
-                        gridBoreOccupied[droneGPSListPosition[i]] = true;
-                        gridBoreFinished[droneGPSListPosition[i]] = false;
                     }
+
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "0";

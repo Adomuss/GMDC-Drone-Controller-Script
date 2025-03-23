@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.396B";
+        string ver = "V0.397B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -189,6 +189,7 @@ namespace IngameScript
         int t_drn_idle = 0;
         int t_drn_exit = 0;
         int t_drn_mine = 0;
+        int t_drn_nav = 0;
         int boresRemaining;
         bool faultLightOutput = false;
         int faultCounter = 0;
@@ -250,8 +251,6 @@ namespace IngameScript
         List<string> fct;
         List<bool> dst;
         List<bool> droneTransmissionStatus;
-        //int cbval = 0;
-        //bool clbt = false;
         int gridBoresCompleted;
         int gpsGridPositionValue = -1;
         string drone_namer = "";
@@ -290,7 +289,6 @@ namespace IngameScript
         bool i_stop = false;
         bool noInterfaceCommand = false;
         string interfaceArgument;
-        //decimal dps_r_d = 0.0m;
         List<IMyRemoteControl> remoteControlAll;
         List<IMyRemoteControl> remoteControlTag;
         List<IMyRadioAntenna> antennaAll;
@@ -806,11 +804,10 @@ namespace IngameScript
                 {
                     droneRecallSequence[i] = 0;
                 }
-                displayTextMain.Clear();
-
+                displayTextMain.Clear();                
                 if (droneGPSListPosition[i] > -1 && !droneAssignedCoordinates[i])
                 {
-                    droneGPSListPosition[i] = -1;
+                    droneGPSListPosition[i] = -1;                    
                 }
                 //if undocked request local recall sequence flag to ON
                 if (droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "True" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand || droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "False" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand)
@@ -828,12 +825,12 @@ namespace IngameScript
                     IGC.SendBroadcastMessage(droneTXRecallChannel, commandOperate, TransmissionDistance.TransmissionDistanceMax);
                 }
 
-
-                if (droneControlStatus[i].Contains("Docked") && droneGPSListPosition[i] == -1 && droneMining[i] && droneControlSequence[i] == 0)
+                if (droneControlStatus[i].Contains("Docked") && (droneGPSListPosition[i] == -1 || gridBoreFinished[droneGPSListPosition[i]]) && droneMining[i] && droneControlSequence[i] == 0)
                 {
                     droneMining[i] = false;
                 }
-                if (totalDronesMining >= boresRemaining && !droneMining[i] && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && droneMining[i] == false)
+
+                if (totalDronesMining >= boresRemaining && !droneMining[i] && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && !droneMining[i])
                 {
                     if (!dronesLaunchedStatus || dronesUndocking)
                     {
@@ -1011,7 +1008,7 @@ namespace IngameScript
                         {
                             droneMustWait[i] = false;
                         }
-                        if (gridBoresCompleted != totalMiningRuns && !droneMustWait[i])
+                        if (gridBoresCompleted != totalMiningRuns && !droneMustWait[i] && !gridBoreFinished[droneGPSListPosition[i]])
                         {
                             droneControlSequence[i] = 1;
                             droneMining[i] = true;
@@ -1054,13 +1051,30 @@ namespace IngameScript
                     yp2 = "";
                     zp2 = "";
                 }
-                if (droneControlSequence[i] == 1 && droneAssignedCoordinates[i] && !droneMustWait[i] && !disableRunArgument || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docked Idle" && droneDocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
+
+                if (droneControlSequence[i] == 1 && droneAssignedCoordinates[i] && !droneMustWait[i] && !disableRunArgument && !gridBoreFinished[droneGPSListPosition[i]] || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docked Idle" && droneDocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument &&!gridBoreFinished[droneGPSListPosition[i]])
                 {
                     droneControlSequence[i] = 2;
                     droneMining[i] = true;
                     gridBoreOccupied[droneGPSListPosition[i]] = true;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "7";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmitToDrone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
+                if (droneControlSequence[i] == 1 && droneAssignedCoordinates[i] && !disableRunArgument && !gridBoreFinished[droneGPSListPosition[i]] && droneDocked[i] == "True" && droneControlStatus[i] == "Docked Idle") //if bore has finished and docked then return to seq 0
+                {
+                    droneControlSequence[i] = 0;
+                    droneAssignedCoordinates[i] = false;
+                    droneMining[i] = false;
+                    gpsGridPositionValue = -1;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "0";
                     droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                     droneTranmissionOutput[i] = c.ToString();
                     if (canTransmit && droneTransmissionStatus[i])
@@ -2073,7 +2087,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav;
         }
 
         private void UpdateDroneCounts()
@@ -2100,13 +2114,15 @@ namespace IngameScript
                 stats.Mining += status.Contains("Min") ? 1 : 0;
                 stats.RTBA += status.Contains("RTB: Request") ? 1 : 0;
                 stats.RTBB += status.Contains("RTB: Ready") ? 1 : 0;
+                stats.Nav += status.Contains("Nav") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
                 stats.Ok += damage == "OK" ? 1 : 0;
+                
             }
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle = stats.Idle;
-            t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining;
+            t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining; t_drn_nav = stats.Nav;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
 
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -3853,7 +3869,7 @@ namespace IngameScript
                       ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
                       : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged}")
                   .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
-                  .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Mining: {t_drn_mine} Exit: {t_drn_exit}")
+                  .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Nav: {t_drn_nav} Mining: {t_drn_mine} Exit: {t_drn_exit} ")                  
                   .AppendLine()
                   .AppendLine($"Surface distance: {safe_dstvl}m")
                   .AppendLine($"Drill depth: {drillLength}m ({drillLength + safe_dstvl}m)")

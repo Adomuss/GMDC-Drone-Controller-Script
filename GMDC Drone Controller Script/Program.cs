@@ -3867,23 +3867,23 @@ namespace IngameScript
 
         public void ClearAllNonEmptyLists()
         {
-            // Clear Space Engineers block lists (IMyTerminalBlock and derivatives - reference types)
-            ClearReferenceLists<IMyRemoteControl>(remoteControlAll, remoteControlTag);
-            ClearReferenceLists<IMyRadioAntenna>(antennaAll, antennaTag);
-            ClearReferenceLists<IMyLightingBlock>(lightsAll, lightsTag);
-            ClearReferenceLists<IMyTerminalBlock>(display_all, display_tag_main, display_tag_list,
-                                                 display_tag_drone, display_tag_vis);
-            ClearReferenceLists<IMyProgrammableBlock>(programblockAll, interfacePBTag);
+            // Clear Space Engineers block lists (reference types)
+            ClearReferenceLists(remoteControlAll, remoteControlTag);
+            ClearReferenceLists(antennaAll, antennaTag);
+            ClearReferenceLists(lightsAll, lightsTag);
+            ClearReferenceLists(display_all, display_tag_main, display_tag_list,
+                               display_tag_drone, display_tag_vis);
+            ClearReferenceLists(programblockAll, interfacePBTag);
 
             // Clear other reference type lists (strings)
-            ClearReferenceLists<string>(droneName, droneDamageState, droneTunnelFinished,
-                                       droneControlStatus, droneDocked, droneUndocked,
-                                       droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
-                                       drone_mine_depth_start_status, drone_location_x,
-                                       drone_location_y, drone_location_z, drone_charge_storage,
-                                       drone_gas_storage, drone_ore_storage, droneTranmissionOutput,
-                                       cl, cl2, fct, drone_cargo_full, drone_recharge_request,
-                                       drone_auto_pilot_enabled, droneAutodock, droneDockingReady);
+            ClearReferenceLists(droneName, droneDamageState, droneTunnelFinished,
+                               droneControlStatus, droneDocked, droneUndocked,
+                               droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
+                               drone_mine_depth_start_status, drone_location_x,
+                               drone_location_y, drone_location_z, drone_charge_storage,
+                               drone_gas_storage, drone_ore_storage, droneTranmissionOutput,
+                               cl, cl2, fct, drone_cargo_full, drone_recharge_request,
+                               drone_auto_pilot_enabled, droneAutodock, droneDockingReady);
 
             // Clear value type lists (bool)
             ClearValueLists(droneMining, droneAssignedCoordinates, droneReady,
@@ -3906,14 +3906,14 @@ namespace IngameScript
             // Clear struct lists (MyIGCMessage)
             ClearValueLists(droneMessagesBuffer, prospectorMessagesBuffer);
 
-            // Clear StringBuilder instances
-            if (miningCoordinatesNew.Length > 0) miningCoordinatesNew.Clear();
-            if (displayTextMain.Length > 0) displayTextMain.Clear();
-            if (displayTextList.Length > 0) displayTextList.Clear();
-            if (droneInformation.Length > 0) droneInformation.Clear();
-            if (c.Length > 0) c.Clear();
-            if (jxt.Length > 0) jxt.Clear();
-            if (customDataString.Length > 0) customDataString.Clear();
+            // Clear StringBuilder instances with null checks
+            if (miningCoordinatesNew?.Length > 0) miningCoordinatesNew.Clear();
+            if (displayTextMain?.Length > 0) displayTextMain.Clear();
+            if (displayTextList?.Length > 0) displayTextList.Clear();
+            if (droneInformation?.Length > 0) droneInformation.Clear();
+            if (c?.Length > 0) c.Clear();
+            if (jxt?.Length > 0) jxt.Clear();
+            if (customDataString?.Length > 0) customDataString.Clear();
         }
 
         // For reference types (classes)
@@ -3921,7 +3921,7 @@ namespace IngameScript
         {
             foreach (var list in lists)
             {
-                if (list != null && list.Count > 0)
+                if (list?.Count > 0) // Safe null check
                 {
                     list.Clear();
                 }
@@ -3933,7 +3933,7 @@ namespace IngameScript
         {
             foreach (var list in lists)
             {
-                if (list != null && list.Count > 0)
+                if (list?.Count > 0) // Safe null check
                 {
                     list.Clear();
                 }

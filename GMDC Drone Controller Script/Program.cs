@@ -444,6 +444,7 @@ namespace IngameScript
             if (!setupComplete)
             {
                 Echo("Setup incomplete - exiting");
+                ClearAllNonEmptyLists();
                 return;
             }
             Echo($"GMDC {ver} Running {icon}");
@@ -3219,37 +3220,22 @@ namespace IngameScript
         }
         void reset_drone_data()
         {
-            droneName.Clear();
-            droneDamageState.Clear();
-            droneTunnelFinished.Clear();
-            droneControlStatus.Clear();
-            droneDocked.Clear();
-            droneUndocked.Clear();
-            droneAutopiloting.Clear();
-            droneGPSListPosition.Clear();
-            droneGPSCoordinates.Clear();
-            droneBoreDepth.Clear();
-            droneBoreDepthCurrent.Clear();
-            drone_mine_depth_start_status.Clear();
-            drone_location_x.Clear();
-            drone_location_y.Clear();
-            drone_location_z.Clear();
-            drone_charge_storage.Clear();
-            drone_gas_storage.Clear();
-            drone_ore_storage.Clear();
-            droneMining.Clear();
-            droneAssignedCoordinates.Clear();
-            droneControlSequence.Clear(); ;
-            droneRecallSequence.Clear();
-            droneTranmissionOutput.Clear();
-            droneReady.Clear();
-            droneMustWait.Clear();
-            dcs.Clear();
-            dst.Clear();
-            droneTransmissionStatus.Clear();
-            droneRecallList.Clear();
-            droneResetFunction.Clear();
-            drone_assigns_count.Clear();
+            ClearReferenceLists<string>(droneName, droneDamageState, droneTunnelFinished,
+                                       droneControlStatus, droneDocked, droneUndocked,
+                                       droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
+                                       drone_mine_depth_start_status, drone_location_x,
+                                       drone_location_y, drone_location_z, drone_charge_storage,
+                                       drone_gas_storage, drone_ore_storage,
+                                       droneTranmissionOutput, drone_cargo_full,
+                                       drone_recharge_request, drone_auto_pilot_enabled,
+                                       droneAutodock, droneDockingReady);
+            ClearValueLists<Vector3D>(droneGPSCoordinates);
+            ClearValueLists<int>(droneGPSListPosition, droneControlSequence, droneRecallSequence,
+                                drone_assigns_count);
+            ClearValueLists<bool>(droneMining, droneAssignedCoordinates, droneReady,
+                                 droneMustWait, droneRecallList, droneResetFunction,
+                                 dst, droneTransmissionStatus);
+            ClearValueLists<double>(dcs);
         }
         void reset_drone_list()
         {
@@ -3391,6 +3377,7 @@ namespace IngameScript
 
         public void SetupSystem()
         {
+            ClearAllNonEmptyLists();
             #region setup_system
             IMyGridTerminalSystem gts = GridTerminalSystem as IMyGridTerminalSystem;
             antennaTagName = "[" + drone_tag + " " + comms + "]";
@@ -3880,6 +3867,80 @@ namespace IngameScript
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(displayTextMain);
         }
 
+        public void ClearAllNonEmptyLists()
+        {
+            // Clear Space Engineers block lists (reference types)
+            ClearReferenceLists(remoteControlAll, remoteControlTag);
+            ClearReferenceLists(antennaAll, antennaTag);
+            ClearReferenceLists(lightsAll, lightsTag);
+            ClearReferenceLists(display_all, display_tag_main, display_tag_list,
+                               display_tag_drone, display_tag_vis);
+            ClearReferenceLists(programblockAll, interfacePBTag);
+
+            // Clear other reference type lists (strings)
+            ClearReferenceLists(droneName, droneDamageState, droneTunnelFinished,
+                               droneControlStatus, droneDocked, droneUndocked,
+                               droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
+                               drone_mine_depth_start_status, drone_location_x,
+                               drone_location_y, drone_location_z, drone_charge_storage,
+                               drone_gas_storage, drone_ore_storage, droneTranmissionOutput,
+                               cl, cl2, fct, drone_cargo_full, drone_recharge_request,
+                               drone_auto_pilot_enabled, droneAutodock, droneDockingReady);
+
+            // Clear value type lists (bool)
+            ClearValueLists(droneMining, droneAssignedCoordinates, droneReady,
+                           droneMustWait, droneRecallList, droneResetFunction,
+                           dst, droneTransmissionStatus, gridBoreOccupied, gridBoreFinished);
+
+            // Clear value type lists (int)
+            ClearValueLists(droneGPSListPosition, droneControlSequence, droneRecallSequence,
+                           tla, rst, drone_assigns_count);
+
+            // Clear value type lists (double)
+            ClearValueLists(dcs);
+
+            // Clear struct lists (Vector3D)
+            ClearValueLists(drone_location, droneGPSCoordinates, gridBorePosition);
+
+            // Clear struct lists (MySprite)
+            ClearValueLists(sprites);
+
+            // Clear struct lists (MyIGCMessage)
+            ClearValueLists(droneMessagesBuffer, prospectorMessagesBuffer);
+
+            // Clear StringBuilder instances with null checks
+            if (miningCoordinatesNew?.Length > 0) miningCoordinatesNew.Clear();
+            if (displayTextMain?.Length > 0) displayTextMain.Clear();
+            if (displayTextList?.Length > 0) displayTextList.Clear();
+            if (droneInformation?.Length > 0) droneInformation.Clear();
+            if (c?.Length > 0) c.Clear();
+            if (jxt?.Length > 0) jxt.Clear();
+            if (customDataString?.Length > 0) customDataString.Clear();
+        }
+
+        // For reference types (classes)
+        private void ClearReferenceLists<T>(params List<T>[] lists) where T : class
+        {
+            foreach (var list in lists)
+            {
+                if (list?.Count > 0) // Safe null check
+                {
+                    list.Clear();
+                }
+            }
+        }
+
+        // For value types and structs (no constraint)
+        private void ClearValueLists<T>(params List<T>[] lists)
+        {
+            foreach (var list in lists)
+            {
+                if (list?.Count > 0) // Safe null check
+                {
+                    list.Clear();
+                }
+            }
+        }
         //program end
 
     }

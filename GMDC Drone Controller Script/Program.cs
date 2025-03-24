@@ -15,7 +15,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller
+        // GMDC Drone controller 394 refactor
         // 
 
 
@@ -189,7 +189,6 @@ namespace IngameScript
         int t_drn_idle = 0;
         int t_drn_exit = 0;
         int t_drn_mine = 0;
-        int t_drn_nav = 0;
         int boresRemaining;
         bool faultLightOutput = false;
         int faultCounter = 0;
@@ -403,7 +402,7 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            //Echo("Running Modular Main - v1");
+            Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
@@ -428,7 +427,7 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            //Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void InitializeSystem()
@@ -436,7 +435,6 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             if (!setupComplete)
             {
-                ClearAllNonEmptyLists();
                 SetupSystem();
                 setupComplete = true;
                 Echo("Setup complete!");
@@ -445,7 +443,6 @@ namespace IngameScript
             if (!setupComplete)
             {
                 Echo("Setup incomplete - exiting");
-                ClearAllNonEmptyLists();
                 return;
             }
             Echo($"GMDC {ver} Running {icon}");
@@ -963,7 +960,7 @@ namespace IngameScript
                                 {
                                     k = gridBoreFinished.Count - 1;
                                 }
-                                if (!gridBoreFinished[k] && !gridBoreOccupied[k]) //not happy with this
+                                if (!gridBoreFinished[k] && !gridBoreOccupied[k])
                                 {
                                     currentGPSIndex = k;
                                     break;
@@ -1012,21 +1009,16 @@ namespace IngameScript
                         {
                             droneMustWait[i] = false;
                         }
-                        if (gridBoresCompleted != totalMiningRuns && !droneMustWait[i]) // attempt here
+                        if (gridBoresCompleted != totalMiningRuns && !droneMustWait[i])
                         {
                             droneControlSequence[i] = 1;
                             droneMining[i] = true;
-                            if (!gridBoreOccupied[droneGPSListPosition[i]])
-                            {
-                                gridBoreOccupied[droneGPSListPosition[i]] = true;
-                            }
+                            gridBoreOccupied[droneGPSListPosition[i]] = true;
                         }
                         else
                         {
                             droneControlSequence[i] = 0;
                             droneMining[i] = false;
-                            //droneAssignedCoordinates[i] = false; // attempt here
-                            //droneGPSListPosition[i] = -1;        // attempt here
                         }
                         if (gridBoreFinished[droneGPSListPosition[i]])
                         {
@@ -1115,7 +1107,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-                if (droneControlSequence[i] == 13 && droneControlStatus[i] == "Idle" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument || droneControlSequence[i] == 5 && droneControlStatus[i] == "Docking" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument && dcs[i] <= bclu || (droneControlStatus[i] == "Idle" || droneControlStatus[i].Contains("RTB")) && droneDocked[i] == "False" && boresRemaining == 0)
+                if (droneControlSequence[i] == 13 && droneControlStatus[i] == "Idle" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument || droneControlSequence[i] == 5 && droneControlStatus[i] == "Docking" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument && dcs[i] <= bclu)
                 {
                     droneControlSequence[i] = 8;
                     cd1 = gpsGridPositionValue.ToString();
@@ -1829,7 +1821,6 @@ namespace IngameScript
         {
             if (!setupComplete)
             {
-                ClearAllNonEmptyLists();
                 SetupSystem();
                 setupComplete = true;
                 Echo("Setup complete!");
@@ -2074,7 +2065,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB;
         }
 
         private void UpdateDroneCounts()
@@ -2101,7 +2092,6 @@ namespace IngameScript
                 stats.Mining += status.Contains("Min") ? 1 : 0;
                 stats.RTBA += status.Contains("RTB: Request") ? 1 : 0;
                 stats.RTBB += status.Contains("RTB: Ready") ? 1 : 0;
-                stats.Nav += status.Contains("Nav") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
                 stats.Ok += damage == "OK" ? 1 : 0;
@@ -2109,7 +2099,6 @@ namespace IngameScript
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle = stats.Idle;
             t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining;
-            t_drn_nav = stats.Nav;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
 
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -3227,22 +3216,37 @@ namespace IngameScript
         }
         void reset_drone_data()
         {
-            ClearReferenceLists<string>(droneName, droneDamageState, droneTunnelFinished,
-                                       droneControlStatus, droneDocked, droneUndocked,
-                                       droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
-                                       drone_mine_depth_start_status, drone_location_x,
-                                       drone_location_y, drone_location_z, drone_charge_storage,
-                                       drone_gas_storage, drone_ore_storage,
-                                       droneTranmissionOutput, drone_cargo_full,
-                                       drone_recharge_request, drone_auto_pilot_enabled,
-                                       droneAutodock, droneDockingReady);
-            ClearValueLists<Vector3D>(droneGPSCoordinates);
-            ClearValueLists<int>(droneGPSListPosition, droneControlSequence, droneRecallSequence,
-                                drone_assigns_count);
-            ClearValueLists<bool>(droneMining, droneAssignedCoordinates, droneReady,
-                                 droneMustWait, droneRecallList, droneResetFunction,
-                                 dst, droneTransmissionStatus);
-            ClearValueLists<double>(dcs);
+            droneName.Clear();
+            droneDamageState.Clear();
+            droneTunnelFinished.Clear();
+            droneControlStatus.Clear();
+            droneDocked.Clear();
+            droneUndocked.Clear();
+            droneAutopiloting.Clear();
+            droneGPSListPosition.Clear();
+            droneGPSCoordinates.Clear();
+            droneBoreDepth.Clear();
+            droneBoreDepthCurrent.Clear();
+            drone_mine_depth_start_status.Clear();
+            drone_location_x.Clear();
+            drone_location_y.Clear();
+            drone_location_z.Clear();
+            drone_charge_storage.Clear();
+            drone_gas_storage.Clear();
+            drone_ore_storage.Clear();
+            droneMining.Clear();
+            droneAssignedCoordinates.Clear();
+            droneControlSequence.Clear(); ;
+            droneRecallSequence.Clear();
+            droneTranmissionOutput.Clear();
+            droneReady.Clear();
+            droneMustWait.Clear();
+            dcs.Clear();
+            dst.Clear();
+            droneTransmissionStatus.Clear();
+            droneRecallList.Clear();
+            droneResetFunction.Clear();
+            drone_assigns_count.Clear();
         }
         void reset_drone_list()
         {
@@ -3853,8 +3857,8 @@ namespace IngameScript
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")
                   .AppendLine(dronesLaunchedStatus
-                      ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} - Nav: {t_drn_nav} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
-                      : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} - Nav: {t_drn_nav} Fault: {totalDronesDamaged}")
+                      ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
+                      : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged}")
                   .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
                   .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Mining: {t_drn_mine} Exit: {t_drn_exit}")
                   .AppendLine()
@@ -3871,81 +3875,6 @@ namespace IngameScript
             if (prospectAlignTargetValid) displayTextMain.AppendLine("Secondary/Asteroid:").AppendLine(alignGPSCoordinates.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(displayTextMain);
-        }
-
-        public void ClearAllNonEmptyLists()
-        {
-            // Clear Space Engineers block lists (reference types)
-            ClearReferenceLists(remoteControlAll, remoteControlTag);
-            ClearReferenceLists(antennaAll, antennaTag);
-            ClearReferenceLists(lightsAll, lightsTag);
-            ClearReferenceLists(display_all, display_tag_main, display_tag_list,
-                               display_tag_drone, display_tag_vis);
-            ClearReferenceLists(programblockAll, interfacePBTag);
-
-            // Clear other reference type lists (strings)
-            ClearReferenceLists(droneName, droneDamageState, droneTunnelFinished,
-                               droneControlStatus, droneDocked, droneUndocked,
-                               droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
-                               drone_mine_depth_start_status, drone_location_x,
-                               drone_location_y, drone_location_z, drone_charge_storage,
-                               drone_gas_storage, drone_ore_storage, droneTranmissionOutput,
-                               cl, cl2, fct, drone_cargo_full, drone_recharge_request,
-                               drone_auto_pilot_enabled, droneAutodock, droneDockingReady);
-
-            // Clear value type lists (bool)
-            ClearValueLists(droneMining, droneAssignedCoordinates, droneReady,
-                           droneMustWait, droneRecallList, droneResetFunction,
-                           dst, droneTransmissionStatus, gridBoreOccupied, gridBoreFinished);
-
-            // Clear value type lists (int)
-            ClearValueLists(droneGPSListPosition, droneControlSequence, droneRecallSequence,
-                           tla, rst, drone_assigns_count);
-
-            // Clear value type lists (double)
-            ClearValueLists(dcs);
-
-            // Clear struct lists (Vector3D)
-            ClearValueLists(drone_location, droneGPSCoordinates, gridBorePosition);
-
-            // Clear struct lists (MySprite)
-            ClearValueLists(sprites);
-
-            // Clear struct lists (MyIGCMessage)
-            ClearValueLists(droneMessagesBuffer, prospectorMessagesBuffer);
-
-            // Clear StringBuilder instances with null checks
-            if (miningCoordinatesNew?.Length > 0) miningCoordinatesNew.Clear();
-            if (displayTextMain?.Length > 0) displayTextMain.Clear();
-            if (displayTextList?.Length > 0) displayTextList.Clear();
-            if (droneInformation?.Length > 0) droneInformation.Clear();
-            if (c?.Length > 0) c.Clear();
-            if (jxt?.Length > 0) jxt.Clear();
-            if (customDataString?.Length > 0) customDataString.Clear();
-        }
-
-        // For reference types (classes)
-        private void ClearReferenceLists<T>(params List<T>[] lists) where T : class
-        {
-            foreach (var list in lists)
-            {
-                if (list?.Count > 0) // Safe null check
-                {
-                    list.Clear();
-                }
-            }
-        }
-
-        // For value types and structs (no constraint)
-        private void ClearValueLists<T>(params List<T>[] lists)
-        {
-            foreach (var list in lists)
-            {
-                if (list?.Count > 0) // Safe null check
-                {
-                    list.Clear();
-                }
-            }
         }
 
         //program end

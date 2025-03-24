@@ -815,6 +815,19 @@ namespace IngameScript
                 {
                     droneGPSListPosition[i] = -1;
                 }
+                if (droneName.Count > 0)
+                {
+                    if (droneGPSListPosition[i] > -1 && droneAssignedCoordinates[i] && droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneMining[i] && droneReady[i])
+                    {
+                        if (gridBoreFinished[droneGPSListPosition[i]])
+                        {
+                            droneGPSListPosition[i] = -1;
+                            droneMining[i] = false;
+                            droneAssignedCoordinates[i] = false;
+                        }
+
+                    }
+                }
                 //if undocked request local recall sequence flag to ON
                 if (droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "True" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand || droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "False" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand)
                 {
@@ -939,11 +952,10 @@ namespace IngameScript
                 {
                     if (droneControlSequence[i] == 0 && droneReady[i] && droneTunnelFinished[i] == "False" && droneControlStatus[i].Contains("Docked") && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)
                     {
-                        droneReady[i] = false;
                         droneMining[i] = false;
                         droneAssignedCoordinates[i] = false;
                         gridBoreOccupied[droneGPSListPosition[i]] = false;
-                        //droneGPSListPosition[i] = -1;
+                        droneGPSListPosition[i] = -1;
                         gpsGridPositionValue = -1;
                         cd1 = gpsGridPositionValue.ToString();
                         cm = "0";
@@ -1021,15 +1033,21 @@ namespace IngameScript
                         if (!miningGridValid)
                         {
                             totalMiningRuns = 1;
-                            droneGPSCoordinates[i] = miningGPSCoordinates;
+                            if (droneGPSCoordinates.Count > 0)
+                            {
+                                droneGPSCoordinates[i] = miningGPSCoordinates;
+                            }
                             gpsGridPositionValue = 0;
                             currentGPSIndex = 0;
                         }
-                                            Echo("attemp to detect assigned coordinates");
+                                            Echo("attempt to detect assigned coordinates");
                     //suspect code here
-                    Echo($"Drone coords: {i}");
-                    droneAssignedCoordinates[i] = true;
-                    Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
+                    Echo($"Drone coords: {i}");                    
+                        if (i < droneAssignedCoordinates.Count)
+                        {
+                            droneAssignedCoordinates[i] = true;
+                            Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
+                        }
                     }
                     else if (!miningGridValid)
                     {
@@ -1038,7 +1056,9 @@ namespace IngameScript
                         droneAssignedCoordinates[i] = true;
                         gpsGridPositionValue = 0;
                         currentGPSIndex = 0;
+                        Echo("invalid grid - defaulting");
                     }
+                    Echo("data staging");
                     if (droneGPSListPosition[i] > -1)
                     {
                         if (gridBoreOccupied[droneGPSListPosition[i]] && !droneMining[i])
@@ -1060,7 +1080,7 @@ namespace IngameScript
                             droneControlSequence[i] = 0;
                             droneMining[i] = false;
                         }
-
+                        Echo("pre finished bore check");
                         if (gridBoreFinished[droneGPSListPosition[i]])
                         {
                             //suspect coordinates here 2
@@ -1073,7 +1093,7 @@ namespace IngameScript
                         }
                     }
                 }
-
+                Echo("data staging");
 
                 tx_chan = droneName[i];
                 cd1 = gpsGridPositionValue.ToString();
@@ -1114,6 +1134,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 1");
                 if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocked" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument || droneControlSequence[i] == 2 && droneControlStatus[i] == "Docking" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 3;
@@ -1127,7 +1148,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-
+                Echo("data state 2");
                 if (droneControlSequence[i] == 2 && droneControlStatus[i] == "Undocking" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument && dcs[i] <= bclu)
                 {
                     droneControlSequence[i] = 13;
@@ -1141,6 +1162,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 3");
                 if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     if (droneGPSListPosition[i] > -1)
@@ -1158,6 +1180,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 4");
                 if (droneControlSequence[i] == 13 && droneControlStatus[i] == "Idle" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument || droneControlSequence[i] == 5 && droneControlStatus[i] == "Docking" && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument && dcs[i] <= bclu)
                 {
                     droneControlSequence[i] = 8;
@@ -1171,6 +1194,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 5");
                 if (droneControlSequence[i] == 3 && droneControlStatus[i] == "Idle" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 4;
@@ -1184,6 +1208,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 6");
                 if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Nav End" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 5;
@@ -1197,6 +1222,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 7");
                 if (droneControlSequence[i] == 4 && droneControlStatus[i] == "Docked Idle" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 1;
@@ -1210,7 +1236,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-
+                Echo("data state 8");
                 if (droneControlSequence[i] == 5 && droneControlStatus[i] == "Idle" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 6;
@@ -1224,7 +1250,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-
+                Echo("data state 9");
                 if (droneControlSequence[i] == 6 && droneControlStatus[i] == "Nav End" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 7;
@@ -1238,6 +1264,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 10");
                 if (droneControlSequence[i] == 7 && droneControlStatus[i] == "Idle" && droneUndocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 8;
@@ -1251,6 +1278,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 11");
                 if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Docked") && droneMining[i] || droneControlSequence[i] == 4 && droneControlStatus[i].Contains("Docked") && droneMining[i])
                 {
                     if (droneGPSListPosition[i] > -1)
@@ -1258,6 +1286,7 @@ namespace IngameScript
                         gridBoreOccupied[droneGPSListPosition[i]] = false;
                     }
                 }
+                Echo("data state 12");
                 if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Dock") && droneMining[i] && droneTunnelFinished[i] == "True")
                 {
                     if (droneGPSListPosition[i] > -1)
@@ -1265,6 +1294,7 @@ namespace IngameScript
                         gridBoreFinished[droneGPSListPosition[i]] = true;
                     }
                 }
+                Echo("data state 13");
                 if (droneGPSListPosition[i] > -1)
                 {
                     if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "False" && !gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
@@ -1281,6 +1311,7 @@ namespace IngameScript
                         }
                     }
                 }
+                Echo("data state 14");
                 if (droneControlSequence[i] == 8 && !droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 8 && !droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "True" && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] >= 1 && droneControlSequence[i] <= 4 && !droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && droneAssignedCoordinates[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;
@@ -1297,6 +1328,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 15");
                 if (droneGPSListPosition[i] > -1)
                 {
                     if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" && !gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
@@ -1315,6 +1347,7 @@ namespace IngameScript
                         }
                     }
                 }
+                Echo("data state 16");
                 if (droneGPSListPosition[i] > -1)
                 {
                     if (droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && canRun && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && droneAssignedCoordinates[i] && !disableRunArgument)
@@ -1331,6 +1364,7 @@ namespace IngameScript
                         }
                     }
                 }
+                Echo("data state 17");
                 if (droneGPSListPosition[i] > -1)
                 {
                     if (droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && generalReset && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 0 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
@@ -1352,6 +1386,7 @@ namespace IngameScript
                         }
                     }
                 }
+                Echo("data state 18");
                 if (droneControlSequence[i] == 11 && droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && droneAssignedCoordinates[i] && totalMiningSequencesComplete <= totalMiningRuns && miningGridValid && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;
@@ -1366,6 +1401,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 19");
                 if (droneControlSequence[i] == 11 && droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && currentGPSIndex < totalMiningRuns && droneAssignedCoordinates[i] && totalMiningSequencesComplete > totalMiningRuns && !disableRunArgument || droneControlSequence[i] == 11 && droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && droneAssignedCoordinates[i] && miningGridValid == false && totalMiningSequencesComplete >= totalMiningRuns && !disableRunArgument)
                 {
                     droneControlSequence[i] = 12;
@@ -1384,6 +1420,7 @@ namespace IngameScript
                     displayTextMain.Append('\n');
                     displayTextMain.Append("Mining seq. complete");
                 }
+                Echo("data state 20");
                 if (droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "True" && generalReset || droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "True" && generalReset && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;
@@ -1404,6 +1441,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
+                Echo("data state 21");
                 if (droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && generalReset && droneControlSequence[i] == 0 && !disableRunArgument || droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && generalReset && !disableRunArgument || droneControlSequence[i] == 6 && droneControlStatus[i] == "Docked Idle" && droneDocked[i] == "True" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;
@@ -1424,7 +1462,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-
+                Echo("data state 22");
                 if (mustRecall_Command && !droneRecallList[i] && !mustUndockCommand)
                 {
                     droneRecallList[i] = true;
@@ -1521,7 +1559,7 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-
+                Echo("data state 23");
                 if (mustUndockCommand)
                 {
                     if (droneControlStatus[i] == "Docked Idle")
@@ -1538,7 +1576,7 @@ namespace IngameScript
                         }
                     }
                 }
-
+                Echo("data state 24");
                 if (mustFreeze_Command)
                 {
                     if (droneControlStatus[i] == "Undocked" || droneControlStatus[i] == "Idle")
@@ -1557,13 +1595,13 @@ namespace IngameScript
                 }
                 droneMessageConfirmed = false;
                 receivedDroneNameIndex = -1;
-
+                Echo("data state 25");
 
                 if (droneMessagesBuffer.Count > 0)
                 {
                     droneMessagesBuffer.RemoveAt(0);
                 }
-
+                Echo("data state 26");
 
             }
             #endregion
@@ -2727,10 +2765,10 @@ namespace IngameScript
         }
 
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
-        {
+        {            
             string butter = "";
             string butter2 = "";
-            if (droneGPSListPosition[ivl] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl] <= gridBoreFinished.Count - 1)
+            if (droneGPSListPosition[ivl] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl] < gridBoreFinished.Count)
             {
                 butter = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
             }
@@ -2738,9 +2776,9 @@ namespace IngameScript
             {
                 butter = "N/A";
             }
-            if (droneGPSListPosition[ivl2] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl2] <= gridBoreFinished.Count - 1)
+            if (droneGPSListPosition[ivl2] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl2] < gridBoreFinished.Count)
             {
-                butter2 = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
+                butter2 = gridBoreFinished[droneGPSListPosition[ivl2]].ToString();
             }
             else
             {
@@ -2783,7 +2821,7 @@ namespace IngameScript
                 droneInformation.Append(cl[i]).Append(' ', padding);
                 if (slu) droneInformation.AppendLine(cl2[i]);
                 else droneInformation.AppendLine();
-            }
+            }            
         }
 
         IEnumerator<bool> GenListDisplay()

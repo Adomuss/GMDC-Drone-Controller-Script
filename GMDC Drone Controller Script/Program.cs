@@ -1348,7 +1348,7 @@ namespace IngameScript
                         
                 }
 
-                if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" && droneGPSListPosition[i] == -1) && !droneAssignedCoordinates[i] && !disableRunArgument)
+                if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True"  && droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;
                     cd1 = gpsGridPositionValue.ToString();

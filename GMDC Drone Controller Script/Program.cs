@@ -1104,11 +1104,6 @@ namespace IngameScript
                 }
                 if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
-                    if (droneTunnelFinished[i] == "True") //attempt here
-                    {                        
-                        gridBoreFinished[droneGPSListPosition[i]] = true;
-                        //gridBoreOccupied[droneGPSListPosition[i]] = false; // additional attempt to free up bore
-                    }
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "0";

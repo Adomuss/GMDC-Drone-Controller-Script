@@ -921,7 +921,6 @@ namespace IngameScript
                         {
                             gridBoreOccupied[droneGPSListPosition[i]] = false;
                         }
-
                     }
                 }
 
@@ -985,6 +984,17 @@ namespace IngameScript
                                 if (k > gridBoreFinished.Count - 1)
                                 {
                                     k = gridBoreFinished.Count - 1;
+                                }
+                                if (!gridBoreFinished[k])
+                                {
+                                    if (droneGPSListPosition.Count > 0)
+                                    {
+                                        int queued_count = CountIntegerValues(droneGPSListPosition, k);
+                                        if (!gridBoreOccupied[k] && queued_count > 0) //check if preassigned here
+                                        {
+                                            gridBoreOccupied[k] = true;
+                                        }
+                                    }
                                 }
                                 if (!gridBoreFinished[k] && !gridBoreOccupied[k])
                                 {

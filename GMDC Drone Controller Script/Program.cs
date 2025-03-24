@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.400B";
+        string ver = "V0.401B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -404,7 +404,7 @@ namespace IngameScript
 
         public void Main(string argument, UpdateType updateSource)
         {
-            Echo("Running Modular Main - v1");
+            //Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
@@ -429,7 +429,7 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void InitializeSystem()
@@ -827,7 +827,7 @@ namespace IngameScript
                         }
 
                     }
-                }
+                } 
                 //if undocked request local recall sequence flag to ON
                 if (droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "True" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand || droneGPSListPosition[i] == -1 && !droneAssignedCoordinates[i] && droneUndocked[i] == "False" && droneDocked[i] == "False" && !droneRecallList[i] && !mustUndockCommand)
                 {
@@ -3358,22 +3358,37 @@ namespace IngameScript
         }
         void reset_drone_data()
         {
-            ClearReferenceLists<string>(droneName, droneDamageState, droneTunnelFinished,
-                                       droneControlStatus, droneDocked, droneUndocked,
-                                       droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
-                                       drone_mine_depth_start_status, drone_location_x,
-                                       drone_location_y, drone_location_z, drone_charge_storage,
-                                       drone_gas_storage, drone_ore_storage,
-                                       droneTranmissionOutput, drone_cargo_full,
-                                       drone_recharge_request, drone_auto_pilot_enabled,
-                                       droneAutodock, droneDockingReady);
-            ClearValueLists<Vector3D>(droneGPSCoordinates);
-            ClearValueLists<int>(droneGPSListPosition, droneControlSequence, droneRecallSequence,
-                                drone_assigns_count);
-            ClearValueLists<bool>(droneMining, droneAssignedCoordinates, droneReady,
-                                 droneMustWait, droneRecallList, droneResetFunction,
-                                 dst, droneTransmissionStatus);
-            ClearValueLists<double>(dcs);
+            droneName.Clear();
+            droneDamageState.Clear();
+            droneTunnelFinished.Clear();
+            droneControlStatus.Clear();
+            droneDocked.Clear();
+            droneUndocked.Clear();
+            droneAutopiloting.Clear();
+            droneGPSListPosition.Clear();
+            droneGPSCoordinates.Clear();
+            droneBoreDepth.Clear();
+            droneBoreDepthCurrent.Clear();
+            drone_mine_depth_start_status.Clear();
+            drone_location_x.Clear();
+            drone_location_y.Clear();
+            drone_location_z.Clear();
+            drone_charge_storage.Clear();
+            drone_gas_storage.Clear();
+            drone_ore_storage.Clear();
+            droneMining.Clear();
+            droneAssignedCoordinates.Clear();
+            droneControlSequence.Clear(); ;
+            droneRecallSequence.Clear();
+            droneTranmissionOutput.Clear();
+            droneReady.Clear();
+            droneMustWait.Clear();
+            dcs.Clear();
+            dst.Clear();
+            droneTransmissionStatus.Clear();
+            droneRecallList.Clear();
+            droneResetFunction.Clear();
+            drone_assigns_count.Clear();
         }
         void reset_drone_list()
         {

@@ -938,7 +938,7 @@ namespace IngameScript
                 }
                 if (droneGPSListPosition[i] > -1) // attempting to reset droneGPSListPosition here if bore is finished - attempt here
                 {
-                    if (droneControlSequence[i] == 0 && droneTunnelFinished[i] == "False" && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)
+                    if (droneControlSequence[i] == 0 && droneTunnelFinished[i] == "False" && droneControlStatus[i].Contains("Docked") && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)
                     {
                         droneReady[i] = false;
                         droneMining[i] = false;
@@ -2700,7 +2700,7 @@ namespace IngameScript
         {
             string butter = "";
             string butter2 = "";
-            if (droneGPSListPosition[ivl] != -1)
+            if (droneGPSListPosition[ivl] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl] <= gridBoreFinished.Count - 1)
             {
                 butter = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
             }
@@ -2708,7 +2708,7 @@ namespace IngameScript
             {
                 butter = "N/A";
             }
-            if (droneGPSListPosition[ivl2] != -1)
+            if (droneGPSListPosition[ivl2] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl2] <= gridBoreFinished.Count - 1)
             {
                 butter2 = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
             }

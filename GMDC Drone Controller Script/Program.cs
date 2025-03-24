@@ -186,7 +186,8 @@ namespace IngameScript
         int t_drn_udck = 0;
         int t_drn_rechg = 0;
         int t_drn_unload = 0;
-        int t_drn_idle = 0;
+        int t_drn_idle_undocked = 0;
+        int t_drn_idle_docked = 0;
         int t_drn_exit = 0;
         int t_drn_mine = 0;
         int t_drn_nav = 0;
@@ -433,9 +434,11 @@ namespace IngameScript
 
         private void InitializeSystem()
         {
+
             int startInstructions = Runtime.CurrentInstructionCount;
             if (!setupComplete)
             {
+                
                 SetupSystem();
                 setupComplete = true;
                 Echo("Setup complete!");
@@ -933,6 +936,27 @@ namespace IngameScript
                 {
                     droneReady[i] = false;
                 }
+                if (droneGPSListPosition[i] > -1) // attempting to reset droneGPSListPosition here if bore is finished - attempt here
+                {
+                    if (droneControlSequence[i] == 0 && droneTunnelFinished[i] == "False" && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)
+                    {
+                        droneReady[i] = false;
+                        droneMining[i] = false;
+                        droneAssignedCoordinates[i] = false;
+                        gridBoreOccupied[droneGPSListPosition[i]] = false;
+                        droneGPSListPosition[i] = -1;
+                        gpsGridPositionValue = -1;
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        if (canTransmit && droneTransmissionStatus[i])
+                        {
+                            transmitToDrone();
+                            droneTransmissionStatus[i] = false;
+                        }
+                    }
+                }
                 if (droneReady[i] && droneTunnelFinished[i] == "False" && droneDocked[i] == "True" && canRun && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !droneMining[i] && !disableRunArgument)
                 {
                     if (gridBoresCompleted < totalMiningRuns && miningGridValid != false && !droneAssignedCoordinates[i] && droneMustWait[i] == false)
@@ -1098,6 +1122,10 @@ namespace IngameScript
                 }
                 if (droneControlSequence[i] == 8 && droneControlStatus[i].Contains("RTB Ready") && droneDocked[i] == "False" && droneAssignedCoordinates[i] && droneMining[i] && !disableRunArgument)
                 {
+                    if (droneGPSListPosition[i] > -1)
+                    {
+                        gridBoreOccupied[droneGPSListPosition[i]] = false; //trying to do this for mining efficiency - added here, may not work
+                    }
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "0";
@@ -1239,50 +1267,59 @@ namespace IngameScript
                         droneTransmissionStatus[i] = false;
                     }
                 }
-                if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" && !gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
+                if (droneGPSListPosition[i] > -1)
                 {
-                    droneControlSequence[i] = 9;
-                    gridBoreFinished[droneGPSListPosition[i]] = true;
+                    if (droneControlSequence[i] == 8 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" && !gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
+                    {
+                        droneControlSequence[i] = 9;
+                        gridBoreFinished[droneGPSListPosition[i]] = true;
 
-                    cd1 = gpsGridPositionValue.ToString();
-                    cm = "0";
-                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                    droneTranmissionOutput[i] = c.ToString();
-                    if (canTransmit && droneTransmissionStatus[i])
-                    {
-                        transmitToDrone();
-                        droneTransmissionStatus[i] = false;
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        if (canTransmit && droneTransmissionStatus[i])
+                        {
+                            transmitToDrone();
+                            droneTransmissionStatus[i] = false;
+                        }
                     }
                 }
-                if (droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && canRun && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && droneAssignedCoordinates[i] && !disableRunArgument)
+                if (droneGPSListPosition[i] > -1)
                 {
-                    droneControlSequence[i] = 10;
-                    cd1 = gpsGridPositionValue.ToString();
-                    cm = "0";
-                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                    droneTranmissionOutput[i] = c.ToString();
-                    if (canTransmit && droneTransmissionStatus[i])
+                    if (droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && canRun && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 9 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && droneAssignedCoordinates[i] && !disableRunArgument)
                     {
-                        transmitToDrone();
-                        droneTransmissionStatus[i] = false;
+                        droneControlSequence[i] = 10;
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        if (canTransmit && droneTransmissionStatus[i])
+                        {
+                            transmitToDrone();
+                            droneTransmissionStatus[i] = false;
+                        }
                     }
                 }
-                if (droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && generalReset && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 0 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
+                if (droneGPSListPosition[i] > -1)
                 {
-                    droneControlSequence[i] = 11;
-                    droneTunnelFinished[i] = "False";
-                    gridBoreFinished[droneGPSListPosition[i]] = true;
-                    totalMiningSequencesComplete++;
-                    gpsGridPositionValue = -1;
-                    droneResetFunction[i] = false;
-                    cd1 = gpsGridPositionValue.ToString();
-                    cm = "8";
-                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
-                    droneTranmissionOutput[i] = c.ToString();
-                    if (canTransmit && droneTransmissionStatus[i])
+                    if (droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && generalReset && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 10 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument || droneControlSequence[i] == 0 && droneReady[i] && droneDocked[i] == "True" && (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]]) && droneAssignedCoordinates[i] && !disableRunArgument)
                     {
-                        transmitToDrone();
-                        droneTransmissionStatus[i] = false;
+                        droneControlSequence[i] = 11;
+                        droneTunnelFinished[i] = "False";
+                        gridBoreFinished[droneGPSListPosition[i]] = true;
+                        totalMiningSequencesComplete++;
+                        gpsGridPositionValue = -1;
+                        droneResetFunction[i] = false;
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "8";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        if (canTransmit && droneTransmissionStatus[i])
+                        {
+                            transmitToDrone();
+                            droneTransmissionStatus[i] = false;
+                        }
                     }
                 }
                 if (droneControlSequence[i] == 11 && droneReady[i] && droneDocked[i] == "True" && droneTunnelFinished[i] == "False" && droneAssignedCoordinates[i] && totalMiningSequencesComplete <= totalMiningRuns && miningGridValid && !disableRunArgument)
@@ -2067,7 +2104,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav, IdleD;
         }
 
         private void UpdateDroneCounts()
@@ -2088,21 +2125,22 @@ namespace IngameScript
                 stats.Undocking += status.Contains("Undocking") ? 1 : 0;
                 stats.Undocked += status.Contains("Undocked") ? 1 : 0;
                 stats.Exit += status.Contains("Exit") ? 1 : 0;
-                stats.Idle += status.Contains("Idle") ? 1 : 0;
+                stats.Idle += status.Equals("Idle") ? 1 : 0;
                 stats.Recharge += status.Contains("Recharg") ? 1 : 0;
                 stats.Unload += status.Contains("Unload") ? 1 : 0;
                 stats.Mining += status.Contains("Min") ? 1 : 0;
                 stats.RTBA += status.Contains("RTB: Request") ? 1 : 0;
                 stats.RTBB += status.Contains("RTB: Ready") ? 1 : 0;
                 stats.Nav += status.Contains("Nav") ? 1 : 0;
+                stats.IdleD += status.Equals("Docked Idle") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
                 stats.Ok += damage == "OK" ? 1 : 0;
             }
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
-            t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle = stats.Idle;
+            t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle_undocked = stats.Idle;
             t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining;
-            t_drn_nav = stats.Nav;
+            t_drn_nav = stats.Nav; t_drn_idle_docked = stats.IdleD;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
 
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -3847,10 +3885,10 @@ namespace IngameScript
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")
                   .AppendLine(dronesLaunchedStatus
-                      ? $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
-                      : $"Drones active: {totalDronesMining} Idle: {t_drn_idle} Fault: {totalDronesDamaged}")
-                  .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
-                  .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Nav: {t_drn_nav} Mining: {t_drn_mine} Exit: {t_drn_exit}")
+                      ? $"Drones active: {totalDronesMining} - Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
+                      : $"Drones active: {totalDronesMining} - Fault: {totalDronesDamaged}")
+                  .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Idle: {t_drn_idle_docked} Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
+                  .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Idle: {t_drn_idle_undocked} Nav: {t_drn_nav} Mining: {t_drn_mine} Exit: {t_drn_exit}")
                   .AppendLine()
                   .AppendLine($"Surface distance: {safe_dstvl}m")
                   .AppendLine($"Drill depth: {drillLength}m ({drillLength + safe_dstvl}m)")

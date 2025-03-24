@@ -2089,7 +2089,7 @@ namespace IngameScript
             for (int i = 0; i < droneName.Count; i += 2)
             {
                 bool hasPair = i + 1 < droneName.Count;
-                scrnbldr(i, hasPair ? i + 1 : i, hasPair);
+                DroneScreenBuilder(i, hasPair ? i + 1 : i, hasPair);
 
                 int displayIndex = i / drones_per_screen;
                 if (displayIndex < display_tag_drone.Count && display_tag_drone[displayIndex] != null &&
@@ -2696,13 +2696,31 @@ namespace IngameScript
             }
         }
 
-        public void scrnbldr(int ivl, int ivl2, bool slu)
+        public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
+            string butter = "";
+            string butter2 = "";
+            if (droneGPSListPosition[ivl] != -1)
+            {
+                butter = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
+            }
+            else
+            {
+                butter = "N/A";
+            }
+            if (droneGPSListPosition[ivl2] != -1)
+            {
+                butter2 = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
+            }
+            else
+            {
+                butter2 = "N/A";
+            }
             // Pre-build strings into cl/cl2 for padding
             cl[0] = $"{droneName[ivl]} Status: {droneDamageState[ivl]} {droneControlStatus[ivl]}";
-            cl[1] = $"{droneName[ivl]} Docked: {droneDocked[ivl]}";
+            cl[1] = $"{droneName[ivl]} Docked: {droneDocked[ivl]} Rdy: {droneReady[ivl]}";
             cl[2] = $"{droneName[ivl]} Undocked: {droneUndocked[ivl]}";
-            cl[3] = $"{droneName[ivl]} Finished: {droneTunnelFinished[ivl]}";
+            cl[3] = $"{droneName[ivl]} Finished: {droneTunnelFinished[ivl]} Bore: {butter}";
             cl[4] = $"{droneName[ivl]} Mining: {droneMining[ivl]}";
             cl[5] = $"{droneName[ivl]} Waiting: {droneMustWait[ivl]} Reset: {droneResetFunction[ivl]}";
             cl[6] = $"Charge: {drone_charge_storage[ivl]}% Tank: {drone_gas_storage[ivl]}% Cargo: {drone_ore_storage[ivl]}%";
@@ -2715,9 +2733,9 @@ namespace IngameScript
             if (slu)
             {
                 cl2[0] = $"{droneName[ivl2]} Status: {droneDamageState[ivl2]} {droneControlStatus[ivl2]}";
-                cl2[1] = $"{droneName[ivl2]} Docked: {droneDocked[ivl2]}";
+                cl2[1] = $"{droneName[ivl2]} Docked: {droneDocked[ivl2]} Rdy: {droneReady[ivl2]}";
                 cl2[2] = $"{droneName[ivl2]} Undocked: {droneUndocked[ivl2]}";
-                cl2[3] = $"{droneName[ivl2]} Finished: {droneTunnelFinished[ivl2]}";
+                cl2[3] = $"{droneName[ivl2]} Finished: {droneTunnelFinished[ivl2]} Bore: {butter2}";
                 cl2[4] = $"{droneName[ivl2]} Mining: {droneMining[ivl2]}";
                 cl2[5] = $"{droneName[ivl2]} Waiting: {droneMustWait[ivl2]} Reset: {droneResetFunction[ivl2]}";
                 cl2[6] = $"Charge: {drone_charge_storage[ivl2]}% Tank: {drone_gas_storage[ivl2]}% Cargo: {drone_ore_storage[ivl2]}%";

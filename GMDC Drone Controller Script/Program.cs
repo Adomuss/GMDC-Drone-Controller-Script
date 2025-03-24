@@ -938,7 +938,6 @@ namespace IngameScript
                 }
                 if (droneGPSListPosition[i] > -1) // attempting to reset droneGPSListPosition here if bore is finished - attempt here
                 {
-                    Echo("In your base");
                     if (droneControlSequence[i] == 0 && droneReady[i] && droneTunnelFinished[i] == "False" && droneControlStatus[i].Contains("Docked") && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)
                     {
                         droneReady[i] = false;
@@ -956,9 +955,7 @@ namespace IngameScript
                             transmitToDrone();
                             droneTransmissionStatus[i] = false;
                         }
-                        Echo("takin yo stuff");
                     }
-                    Echo("brah");
                 }
                 if (droneReady[i] && droneTunnelFinished[i] == "False" && droneDocked[i] == "True" && canRun && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !droneMining[i] && !disableRunArgument)
                 {
@@ -1000,13 +997,16 @@ namespace IngameScript
                         if (gpsGridPositionValue == -1)
                         {
                             gpsGridPositionValue = currentGPSIndex;
-                            droneGPSCoordinates[i] = gridBorePosition[gpsGridPositionValue];
+                            droneGPSCoordinates[i] = gridBorePosition[gpsGridPositionValue];                            
                             droneGPSListPosition[i] = gpsGridPositionValue;
                         }
                         else
                         {
                             gpsGridPositionValue = droneGPSListPosition[i];
-                            droneGPSCoordinates[i] = gridBorePosition[gpsGridPositionValue];
+                            if (gpsGridPositionValue > -1 && gpsGridPositionValue < gridBorePosition.Count)
+                            {
+                                droneGPSCoordinates[i] = gridBorePosition[gpsGridPositionValue];
+                            }
                         }
                         if (!miningGridValid)
                         {
@@ -1015,10 +1015,11 @@ namespace IngameScript
                             gpsGridPositionValue = 0;
                             currentGPSIndex = 0;
                         }
-                        //suspect code here
-                        Echo($"Drone coords: {i}");
-                        droneAssignedCoordinates[i] = true;
-                        Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
+                                            Echo("attemp to detect assigned coordinates");
+                    //suspect code here
+                    Echo($"Drone coords: {i}");
+                    droneAssignedCoordinates[i] = true;
+                    Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
                     }
                     else if (!miningGridValid)
                     {
@@ -1048,7 +1049,8 @@ namespace IngameScript
                         {
                             droneControlSequence[i] = 0;
                             droneMining[i] = false;
-                        }                        
+                        }
+
                         if (gridBoreFinished[droneGPSListPosition[i]])
                         {
                             //suspect coordinates here 2
@@ -1056,11 +1058,13 @@ namespace IngameScript
                             droneControlSequence[i] = 0;
                             droneMining[i] = false;
                             droneAssignedCoordinates[i] = false;
-                            //droneGPSListPosition[i] = -1;
+                            droneGPSListPosition[i] = -1;
                             gpsGridPositionValue = -1;
                         }
                     }
                 }
+
+
                 tx_chan = droneName[i];
                 cd1 = gpsGridPositionValue.ToString();
                 cm = "0";

@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.401B";
+        string ver = "V0.402B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -179,6 +179,7 @@ namespace IngameScript
         string zp2 = "";
         int totalMiningSequencesComplete = 0;
         int totalMiningRuns = 1;
+        int totalDronesActive = 0;
         int totalDronesMining = 0;
         int t_drn_dckg = 0;
         int t_drn_dck = 0;
@@ -737,7 +738,7 @@ namespace IngameScript
                 screenStatus = "Not Ready";
             }
 
-            if (totalDronesMining > 0 && gridBoresCompleted < totalMiningRuns && canTransmit && canRun || faultLightOutput)
+            if (totalDronesActive > 0 && gridBoresCompleted < totalMiningRuns && canTransmit && canRun || faultLightOutput)
             {
                 lightIndicatorActual.BlinkIntervalSeconds = 0;
                 if (totalDronesUnknown > 0)
@@ -849,48 +850,48 @@ namespace IngameScript
                 {
                     droneMining[i] = false;
                 }
-                if (totalDronesMining >= boresRemaining && !droneMining[i] && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && droneMining[i] == false)
+                if ((totalDronesMining) >= boresRemaining && !droneMining[i] && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && !droneMining[i])
                 {
                     if (!dronesLaunchedStatus || dronesUndocking)
                     {
                         droneMustWait[i] = true;
                     }
-                    if (dronesLaunchedStatus && totalDronesMining > maxActiveDronesCount || dronesUndocking)
+                    if (dronesLaunchedStatus && totalDronesActive > maxActiveDronesCount || dronesUndocking)
                     {
                         droneMustWait[i] = true;
                     }
-                    if (dronesLaunchedStatus && totalDronesMining <= maxActiveDronesCount)
+                    if (dronesLaunchedStatus && totalDronesActive <= maxActiveDronesCount)
                     {
                         droneMustWait[i] = false;
                     }
                 }
-                else if (totalDronesMining < boresRemaining && gridBoresCompleted < totalMiningRuns || droneMining[i] && totalDronesMining <= boresRemaining)
+                else if ((totalDronesMining) < boresRemaining && gridBoresCompleted < totalMiningRuns || droneMining[i] && (totalDronesMining) <= boresRemaining)
                 {
                     if (!dronesLaunchedStatus)
                     {
                         droneMustWait[i] = false;
                     }
-                    if (dronesLaunchedStatus && totalDronesMining < maxActiveDronesCount)
+                    if (dronesLaunchedStatus && totalDronesActive < maxActiveDronesCount)
                     {
                         droneMustWait[i] = false;
                     }
 
-                    if (dronesLaunchedStatus && totalDronesMining > maxActiveDronesCount || dronesUndocking)
+                    if (dronesLaunchedStatus && totalDronesActive > maxActiveDronesCount || dronesUndocking)
                     {
                         droneMustWait[i] = true;
                     }
                 }
-                if (droneGPSListPosition[i] == -1 && totalDronesMining >= boresRemaining || dronesUndocking)
+                if (droneGPSListPosition[i] == -1 && (totalDronesMining) >= boresRemaining || dronesUndocking)
                 {
                     if (!dronesLaunchedStatus)
                     {
                         droneMustWait[i] = true;
                     }
-                    if (dronesLaunchedStatus && totalDronesMining >= maxActiveDronesCount || dronesUndocking)
+                    if (dronesLaunchedStatus && totalDronesActive >= maxActiveDronesCount || dronesUndocking)
                     {
                         droneMustWait[i] = true;
                     }
-                    if (dronesLaunchedStatus && totalDronesMining < maxActiveDronesCount || dronesUndocking)
+                    if (dronesLaunchedStatus && totalDronesActive < maxActiveDronesCount || dronesUndocking)
                     {
                         droneMustWait[i] = true;
                     }
@@ -903,11 +904,11 @@ namespace IngameScript
                         {
                             droneMustWait[i] = true;
                         }
-                        if (dronesLaunchedStatus && totalDronesMining >= maxActiveDronesCount || dronesUndocking)
+                        if (dronesLaunchedStatus && totalDronesActive >= maxActiveDronesCount || dronesUndocking)
                         {
                             droneMustWait[i] = true;
                         }
-                        if (dronesLaunchedStatus && totalDronesMining < maxActiveDronesCount || dronesUndocking)
+                        if (dronesLaunchedStatus && totalDronesActive < maxActiveDronesCount || dronesUndocking)
                         {
                             droneMustWait[i] = true;
                         }
@@ -918,11 +919,11 @@ namespace IngameScript
                         {
                             droneMustWait[i] = false;
                         }
-                        if (dronesLaunchedStatus && totalDronesMining < maxActiveDronesCount)
+                        if (dronesLaunchedStatus && totalDronesActive < maxActiveDronesCount)
                         {
                             droneMustWait[i] = false;
                         }
-                        if (dronesLaunchedStatus && totalDronesMining >= maxActiveDronesCount || dronesUndocking)
+                        if (dronesLaunchedStatus && totalDronesActive >= maxActiveDronesCount || dronesUndocking)
                         {
                             droneMustWait[i] = true;
                         }
@@ -954,7 +955,7 @@ namespace IngameScript
                     {
                         droneMining[i] = false;
                         droneAssignedCoordinates[i] = false;
-                        gridBoreOccupied[droneGPSListPosition[i]] = false;
+                        gridBoreOccupied[droneGPSListPosition[i]] = true; // cant guarantee this is occupied, might be occupied by another grid and not reported finished yet
                         droneGPSListPosition[i] = -1;
                         gpsGridPositionValue = -1;
                         cd1 = gpsGridPositionValue.ToString();
@@ -970,7 +971,7 @@ namespace IngameScript
                 }
                 if (droneReady[i] && droneTunnelFinished[i] == "False" && droneDocked[i] == "True" && canRun && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !droneMining[i] && !disableRunArgument)
                 {
-                    if (gridBoresCompleted < totalMiningRuns && miningGridValid != false && !droneAssignedCoordinates[i] && droneMustWait[i] == false)
+                    if (gridBoresCompleted < totalMiningRuns && miningGridValid && !droneAssignedCoordinates[i] && !droneMustWait[i])
                     {
 
                         if (gridBoreFinished.Count > 0)
@@ -1064,7 +1065,7 @@ namespace IngameScript
                         {
                             droneMustWait[i] = true;
                         }
-                        else if (totalDronesMining < boresRemaining && gridBoresCompleted < totalMiningRuns || !gridBoreOccupied[droneGPSListPosition[i]] && !gridBoreFinished[droneGPSListPosition[i]] && !droneMining[i])
+                        else if ((totalDronesMining) < boresRemaining && gridBoresCompleted < totalMiningRuns || !gridBoreOccupied[droneGPSListPosition[i]] && !gridBoreFinished[droneGPSListPosition[i]] && !droneMining[i])
                         {
                             droneMustWait[i] = false;
                         }
@@ -1286,7 +1287,7 @@ namespace IngameScript
                     }
                 }
                 
-                if (droneControlSequence[i] >= 8 && droneControlStatus[i].Contains("Dock") && droneMining[i] && droneTunnelFinished[i] == "True")
+                if (droneControlSequence[i] >= 8 && (droneControlStatus[i].Contains("Dock") || droneControlStatus[i].Contains("Exit")) && droneMining[i] && droneTunnelFinished[i] == "True")
                 {
                     if (droneGPSListPosition[i] > -1)
                     {
@@ -2157,7 +2158,7 @@ namespace IngameScript
 
             if (renew_header)
             {
-                droneInformation.Clear().Append($"Mining Drone Status - GMDC {ver}\n");
+                droneInformation.Clear().Append($"Mining Drone Status - GMDC {ver} {icon}\n");
                 renew_header = false;
             }
 
@@ -2194,7 +2195,7 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             gridBoresCompleted = CountTrueValues(gridBoreFinished);
             boresRemaining = totalMiningRuns - gridBoresCompleted;
-            totalDronesMining = CountTrueValues(droneMining);
+            totalDronesActive = CountTrueValues(droneMining);
             total_drones_undocking = CountIntegerValues(droneControlSequence, 2);
 
             DroneStats stats = new DroneStats();
@@ -2224,7 +2225,7 @@ namespace IngameScript
             t_drn_rechg = stats.Recharge; t_drn_unload = stats.Unload; t_drn_mine = stats.Mining;
             t_drn_nav = stats.Nav; t_drn_idle_docked = stats.IdleD;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
-
+            totalDronesMining = totalDronesActive - t_drn_dckg;
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -2779,7 +2780,10 @@ namespace IngameScript
         }
 
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
-        {            
+        {   if(droneGPSListPosition.Count <= 0 || gridBoreFinished.Count <=0 || droneName.Count < 0)
+            {
+                return;
+            }         
             string butter = "";
             string butter2 = "";
             if (droneGPSListPosition[ivl] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl] < gridBoreFinished.Count)
@@ -2842,10 +2846,10 @@ namespace IngameScript
         {
             if (!listHeaderGenerated)
             {
-                displayTextList.Append("Mining Grid Status" + " - GMDC " + ver);
+                displayTextList.Append($"Mining Grid Status - GMDC {ver} {icon}");
                 displayTextList.Append('\n');
                 displayTextList.Append('\n');
-                displayTextList.Append("Remaining bores: " + boresRemaining);
+                displayTextList.Append($"Remaining bores: {boresRemaining} - Current Index: {currentGPSIndex}");
                 displayTextList.Append('\n');
                 listHeaderGenerated = true;
             }
@@ -2873,7 +2877,7 @@ namespace IngameScript
                 if (!gridBoreFinished[i])
                 {
                     displayTextList.Append('\n');
-                    displayTextList.Append($"i: {i}  Mining: {gridBoreOccupied[i].ToString()}  Finished: {gridBoreFinished[i].ToString()} Drone: {drone_namer}");
+                    displayTextList.Append($"Grid Index: {i} - Occuipied: {gridBoreOccupied[i]} - Assigned: {drone_namer}");
 
                 }
                 if (i == gridBoreFinished.Count - 1)
@@ -2998,7 +3002,7 @@ namespace IngameScript
                 spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining}",
+                    Data = $"Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {(totalDronesMining)}",
                     Position = text_position,
                     RotationOrScale = 0.7f,
                     Size = sizer,
@@ -4000,9 +4004,9 @@ namespace IngameScript
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")
                   .AppendLine(dronesLaunchedStatus
-                      ? $"Drones active: {totalDronesMining} - Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
-                      : $"Drones active: {totalDronesMining} - Fault: {totalDronesDamaged}")
-                  .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Idle: {t_drn_idle_docked} Recharge: {t_drn_rechg} Unload: {t_drn_unload}")
+                      ? $"Drones active: {totalDronesActive} - Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
+                      : $"Drones active: {totalDronesActive} - Fault: {totalDronesDamaged}")
+                  .AppendLine($"Docking: {t_drn_dckg} Docked: {t_drn_dck} - Unload: {t_drn_unload} Recharge: {t_drn_rechg} Idle: {t_drn_idle_docked}  ")
                   .AppendLine($"Undocking: {t_drn_udckg} Undocked: {t_drn_udck} - Idle: {t_drn_idle_undocked} Nav: {t_drn_nav} Mining: {t_drn_mine} Exit: {t_drn_exit}")
                   .AppendLine()
                   .AppendLine($"Surface distance: {safe_dstvl}m")
@@ -4014,7 +4018,7 @@ namespace IngameScript
                   .AppendLine($"Status: {screenStatus}")
                   .AppendLine()
                   .AppendLine("Target:")
-                  .AppendLine(miningGPSCoordinates.ToString());
+                  .AppendLine($"{miningGPSCoordinates}");
             if (prospectAlignTargetValid) displayTextMain.AppendLine("Secondary/Asteroid:").AppendLine(alignGPSCoordinates.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(displayTextMain);

@@ -4017,9 +4017,9 @@ namespace IngameScript
                   .AppendLine($"Command: {commandAsk} Reset: {generalReset}")
                   .AppendLine($"Status: {screenStatus}")
                   .AppendLine()
-                  .AppendLine("Target:")
+                  .AppendLine("Target Coordinates:")
                   .AppendLine($"{miningGPSCoordinates}");
-            if (prospectAlignTargetValid) displayTextMain.AppendLine("Secondary/Asteroid:").AppendLine(alignGPSCoordinates.ToString());
+            if (prospectAlignTargetValid) displayTextMain.AppendLine("Align Coordinates:").AppendLine(alignGPSCoordinates.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(displayTextMain);
         }

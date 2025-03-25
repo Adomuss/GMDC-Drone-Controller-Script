@@ -3002,7 +3002,7 @@ namespace IngameScript
                 spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {(totalDronesMining)}",
+                    Data = $"Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
                     Position = text_position,
                     RotationOrScale = 0.7f,
                     Size = sizer,

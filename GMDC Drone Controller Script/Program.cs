@@ -968,6 +968,23 @@ namespace IngameScript
                             droneTransmissionStatus[i] = false;
                         }
                     }
+                    if(droneControlSequence[i] > 0 && droneDocked[i] == "True" && droneControlStatus[i].Contains("Docked") && !droneAssignedCoordinates[i] && droneGPSListPosition[i] > -1 && canRun)
+                    {
+                        droneMining[i] = false;
+                        droneControlSequence[i] = 0; //reset sequence if docked and not assigned
+                        droneGPSListPosition[i] = -1;
+                        gpsGridPositionValue = -1;
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        droneTranmissionOutput[i] = c.ToString();
+                        if (canTransmit && droneTransmissionStatus[i])
+                        {
+                            transmitToDrone();
+                            droneTransmissionStatus[i] = false;
+                        }
+                    }
+
                 }
                 if (droneReady[i] && droneTunnelFinished[i] == "False" && droneDocked[i] == "True" && canRun && !droneAssignedCoordinates[i] && droneControlSequence[i] == 0 && !droneMustWait[i] && !droneMining[i] && !disableRunArgument)
                 {

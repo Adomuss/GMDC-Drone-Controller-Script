@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.405B";
+        string ver = "V0.406B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -3037,7 +3037,8 @@ namespace IngameScript
                     float normY = CentYHome / mag;
 
                     var positionHome = _viewport.Center + screenRadius * new Vector2(normX, normY);
-                    float rotationHome = (float)Math.Atan2(yPlanarHome, xPlanarHome);
+                    //float rotationHome = (float)Math.Atan2(yPlanarHome, xPlanarHome);
+                    float rotationHome = (float)Math.Atan2(CentYHome, CentXHome);
                     var spriteHomeDirection = new MySprite()
                     {
                         Type = SpriteType.TEXTURE,

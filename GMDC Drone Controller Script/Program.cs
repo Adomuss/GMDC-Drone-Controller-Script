@@ -1168,16 +1168,9 @@ namespace IngameScript
                     if (droneGPSListPosition[i] > -1)
                     {
                         gridBoreOccupied[droneGPSListPosition[i]] = false; //trying to do this for mining efficiency - clear occupation when safely exited
-
-                        if (droneTunnelFinished[i] == "True" || gridBoreFinished[droneGPSListPosition[i]])
-                        {
-                            if (gridBoreFinished[droneGPSListPosition[i]])
-                            {
-                                gpsGridPositionValue = -1; //unassign droneGPSListPosition[i] from drone here if finished
-                            }
-                        }
+                              
                     }
-
+                    gpsGridPositionValue = -1; //unassign droneGPSListPosition[i] from drone here if finished mining and in safe position
 
                     droneControlSequence[i] = 13;
                     cd1 = gpsGridPositionValue.ToString();
@@ -2228,6 +2221,10 @@ namespace IngameScript
             t_drn_nav = stats.Nav; t_drn_idle_docked = stats.IdleD;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; t_dn_ok = stats.Ok;
             totalDronesMining = totalDronesActive - t_drn_dckg;
+            if(totalDronesMining < 0)
+            {
+                totalDronesMining = 0;
+            }
             Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 

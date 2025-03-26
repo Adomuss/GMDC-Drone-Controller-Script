@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.404B";
+        string ver = "V0.405B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -3021,7 +3021,7 @@ namespace IngameScript
                     double xPlanar = Vector3D.Dot(relativePoint, xAxis);
                     double yPlanar = Vector3D.Dot(relativePoint, yAxis);
                     var CentX = (float)xPlanar;
-                    var CentY = (float)yPlanar;
+                    var CentY = -(float)yPlanar;
                     string Image;
                     var bore_colour = new Color();
                     var alpha_bytes = 1.0f;
@@ -3076,7 +3076,7 @@ namespace IngameScript
                         double xPlanar = Vector3D.Dot(relativePoint, xAxis);
                         double yPlanar = Vector3D.Dot(relativePoint, yAxis);
                         var CentX = (float)xPlanar;
-                        var CentY = (float)yPlanar;
+                        var CentY = -(float)yPlanar;
                         string Image_drone = "";
                         var bore_colour_drone = new Color();
                         var alpha_val = 1.0f;

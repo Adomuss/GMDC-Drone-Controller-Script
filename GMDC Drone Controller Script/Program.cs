@@ -3014,6 +3014,46 @@ namespace IngameScript
                 Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
                 Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
 
+                //homedirectionsprite calculation
+                // Define the fixed radius (adjust this value as needed, e.g., in pixels)
+                float screenRadius = Math.Min(_viewport.Size.X, _viewport.Size.Y) / 2 * 0.8f; // Example
+                if (remoteControlActual != null)
+                {
+                    Vector3D LocalRCHome = remoteControlActual.GetPosition();
+                    Vector3D relativePointHome = LocalRCHome - centerPoint;
+                    string ImageHome;
+                    ImageHome = "AH_BoreSight";
+                    var home_colour = new Color();
+                    var alpha_bytes_home = 1.0f;
+                    home_colour = Color.Purple;
+                    double xPlanarHome = Vector3D.Dot(relativePointHome, xAxis);
+                    double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
+                    var CentXHome = (float)xPlanarHome * scale_factor_x;
+                    var CentYHome = -(float)yPlanarHome * scale_factor_y;
+                    // Calculate the magnitude of the direction vector
+                    float mag = (float)Math.Sqrt(CentXHome * CentXHome + CentYHome * CentYHome);
+                    // Normalize the direction
+                    float normX = CentXHome / mag;
+                    float normY = CentYHome / mag;
+
+                    var positionHome = _viewport.Center + screenRadius * new Vector2(normX, normY);
+                    float rotationHome = (float)Math.Atan2(yPlanarHome, xPlanarHome);
+                    var spriteHomeDirection = new MySprite()
+                    {
+                        Type = SpriteType.TEXTURE,
+                        Data = ImageHome,
+                        Position = positionHome,
+                        RotationOrScale = rotationHome,
+                        Size = sizer,
+                        Color = home_colour.Alpha(alpha_bytes_home),
+                        Alignment = TextAlignment.CENTER
+                    };
+                    if (mag != 0.0f)
+                    {
+                        sprites.Add(spriteHomeDirection);
+                        spriteCounter++;
+                    }
+                }
                 for (int i = 0; i < gridBorePosition.Count; i++)
                 {
                     sprite_total++;

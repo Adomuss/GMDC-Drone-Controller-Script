@@ -949,6 +949,10 @@ namespace IngameScript
                 {
                     droneReady[i] = false;
                 }
+                if (droneGPSListPosition[i] == -1 && droneAssignedCoordinates[i] && droneDocked[i] == "True" && droneControlStatus[i].Contains("Docked"))
+                {
+                    droneAssignedCoordinates[i] = false;
+                }
                 if (droneGPSListPosition[i] > -1) // attempting to reset droneGPSListPosition here if bore is finished - attempt here
                 {
                     if (droneControlSequence[i] == 0 && droneReady[i] && droneTunnelFinished[i] == "False" && droneControlStatus[i].Contains("Docked") && gridBoreFinished[droneGPSListPosition[i]] && droneMining[i] && droneAssignedCoordinates[i] && canRun)

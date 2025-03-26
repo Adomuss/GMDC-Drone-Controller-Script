@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.407B";
+        string ver = "V0.408B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1450,7 +1450,34 @@ namespace IngameScript
                     displayTextMain.Append('\n');
                     displayTextMain.Append("Mining seq. complete");
                 }
-                
+                if (droneControlSequence[i] == 12 && droneControlStatus[i].Contains("RTB") && droneDocked[i] == "False" && droneTunnelFinished[i] == "True" && !disableRunArgument)
+                {                    
+                    droneAssignedCoordinates[i] = false;
+                    gpsGridPositionValue = -1;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "0";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmitToDrone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
+                if (droneControlSequence[i] == 12 && droneControlStatus[i].Contains("Idle") && droneDocked[i] == "False" && !droneAssignedCoordinates[i] && !disableRunArgument)
+                {                    
+                    gpsGridPositionValue = -1;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "6";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    droneTranmissionOutput[i] = c.ToString();
+                    if (canTransmit && droneTransmissionStatus[i])
+                    {
+                        transmitToDrone();
+                        droneTransmissionStatus[i] = false;
+                    }
+                }
+
                 if (droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "True" && generalReset || droneControlStatus[i].Contains("Docked") && droneDocked[i] == "True" && droneTunnelFinished[i] == "True" && generalReset && !disableRunArgument)
                 {
                     droneControlSequence[i] = 0;

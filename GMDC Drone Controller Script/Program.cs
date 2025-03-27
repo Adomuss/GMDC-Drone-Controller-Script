@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.408B";
+        string ver = "V0.409B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -846,7 +846,7 @@ namespace IngameScript
                 }
 
 
-                if (droneControlStatus[i].Contains("Docked") && droneGPSListPosition[i] == -1 && droneMining[i] && droneControlSequence[i] == 0)
+                if (droneControlStatus[i].Contains("Docked") && droneGPSListPosition[i] == -1 && droneMining[i] && (droneControlSequence[i] == 0 || droneControlSequence[i] == 8))
                 {
                     droneMining[i] = false;
                 }

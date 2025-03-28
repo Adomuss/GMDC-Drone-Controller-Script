@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.409B";
+        string ver = "V0.410B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -2469,6 +2469,8 @@ namespace IngameScript
             if (string.IsNullOrEmpty(remoteControlActual.CustomData))
             {
                 Echo("Prospector job data not found");
+                prospectTargetValid = false;
+                prospectAlignTargetValid = false;
                 return;
             }
             String[] remoteGpsCommand = remoteControlActual.CustomData.Split(':');

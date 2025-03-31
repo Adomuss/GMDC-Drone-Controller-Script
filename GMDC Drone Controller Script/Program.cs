@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.409B";
+        string ver = "V0.410B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -131,6 +131,7 @@ namespace IngameScript
         double safe_dstvl = 0.0;
         bool prospectTargetValid = false;
         bool prospectAlignTargetValid = false;
+        bool customDataAlignTargetValid = false;
         string commandAsk;
         string customData1;
         string customData2;
@@ -489,6 +490,7 @@ namespace IngameScript
             {
                 Storage = null;
                 prospectAlignTargetValid = false;
+                customDataAlignTargetValid = false;
                 GetRemoteControlData();
                 //Echo($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
                 if (prospectAlignTargetValid)
@@ -1125,7 +1127,7 @@ namespace IngameScript
                 cd5 = customData5;
                 cd6 = (drillLength + safe_dstvl).ToString();
                 igd = (ignoreDepth + safe_dstvl + drone_length).ToString();
-                if (prospectAlignTargetValid)
+                if (prospectAlignTargetValid || customDataAlignTargetValid)
                 {
                     xp2 = Math.Round(((droneGPSCoordinates[i].X - miningGPSCoordinates.X) + alignGPSCoordinates.X), 2).ToString();
                     yp2 = Math.Round(((droneGPSCoordinates[i].Y - miningGPSCoordinates.Y) + alignGPSCoordinates.Y), 2).ToString();
@@ -1759,11 +1761,11 @@ namespace IngameScript
                 }
                 Vector3D gravity = remoteControlActual.GetNaturalGravity();
 
-                if (prospectAlignTargetValid)
+                if (prospectAlignTargetValid || customDataAlignTargetValid)
                 {
                     planeNrml = ((miningGPSCoordinates - alignGPSCoordinates));
                 }
-                if (!prospectAlignTargetValid)
+                if (!prospectAlignTargetValid && !customDataAlignTargetValid)
                 {
                     planeNrml = gravity;
                 }
@@ -2015,7 +2017,7 @@ namespace IngameScript
                 canInterfaceCommand = true;
                 interfaceArgument = pbInterfaceActual.CustomData;
                 Echo($"Interface PB: {interfaceTag}");
-                Echo($"Display command: {interfaceArgument} {prospectAlignTargetValid}");
+                Echo($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
             #endregion
             #region interface_command_processing
@@ -2583,7 +2585,7 @@ namespace IngameScript
         {
 
             String[] gpsCommand = Me.CustomData.Split(':');
-
+            customDataAlignTargetValid = false;
             if (gpsCommand.Length < 10)
             {
                 customData1 = "";
@@ -2817,11 +2819,13 @@ namespace IngameScript
                 }
                 if (targetAlignX && targetAlignY && targetAlignZ)
                 {
-                    prospectAlignTargetValid = true;
+                    //prospectAlignTargetValid = true;
+                    customDataAlignTargetValid = true;
                 }
                 else
                 {
                     prospectAlignTargetValid = false;
+                    customDataAlignTargetValid = false;
                 }
             }
             if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
@@ -3412,9 +3416,9 @@ namespace IngameScript
             const string baseFormat = "GPS:{0}:{1}:{2}:{3}:{4}:{5}:{6}:{7}:";
             const string astFormat = "GPS:PAD:{0}:{1}:{2}:#FF75C9F1:";
 
-            c.Clear().EnsureCapacity(prospectAlignTargetValid ? 120 : 80); // ~80 chars base, ~40 more if asteroid
+            c.Clear().EnsureCapacity((prospectAlignTargetValid || customDataAlignTargetValid) ? 120 : 80); // ~80 chars base, ~40 more if asteroid
             c.AppendFormat(baseFormat, cdata_1, xpos, ypos, zpos, cdata_5, cmdo, data_6, idepth);
-            if (prospectAlignTargetValid) c.AppendFormat(astFormat, xpos2, ypos2, zpos2);
+            if (prospectAlignTargetValid || customDataAlignTargetValid) c.AppendFormat(astFormat, xpos2, ypos2, zpos2);
         }
         void transmitToDrone()
         {
@@ -4113,7 +4117,7 @@ namespace IngameScript
                   .AppendLine()
                   .AppendLine("Target Coordinates:")
                   .AppendLine($"{miningGPSCoordinates}");
-            if (prospectAlignTargetValid) displayTextMain.AppendLine("Align Coordinates:").AppendLine(alignGPSCoordinates.ToString());
+            if (prospectAlignTargetValid || customDataAlignTargetValid) displayTextMain.AppendLine("Align Coordinates:").AppendLine(alignGPSCoordinates.ToString());
 
             if (display_tag_main.Count > 0 && sM != null) sM.WriteText(displayTextMain);
         }

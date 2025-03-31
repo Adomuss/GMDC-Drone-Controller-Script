@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.410B";
+        string ver = "V0.412B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -154,6 +154,7 @@ namespace IngameScript
         string customData19;
         string customData20;
         string customData21;
+        string customData22;
         string remoteControlCustomData1 = "";
         string remoteControlCustomData2 = "";
         string remoteControlCustomData3 = "";
@@ -504,7 +505,7 @@ namespace IngameScript
                         targetGPSCoordinates.X, targetGPSCoordinates.Y, targetGPSCoordinates.Z);
                     if (prospectAlignTargetValid)
                     {
-                        miningCoordinatesNew.Append($"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
+                        miningCoordinatesNew.Append($"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:");
                     }
                     Me.CustomData = miningCoordinatesNew.ToString();
                 }
@@ -2609,6 +2610,7 @@ namespace IngameScript
                 customData19 = "";
                 customData20 = "";
                 customData21 = "";
+                customData22 = "";
                 Echo("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
                 return;
             }
@@ -2785,6 +2787,10 @@ namespace IngameScript
                 {
                     customData21 = gpsCommand[21];
                 }
+                if (gpsCommand.Length > 22)
+                {
+                    customData22 = gpsCommand[22];
+                }
 
 
                 if (!double.TryParse(customData18, out alignGPSCoordinates.X))
@@ -2827,11 +2833,16 @@ namespace IngameScript
                     prospectAlignTargetValid = false;
                     customDataAlignTargetValid = false;
                 }
+                if (!double.TryParse(customData22, out safe_dstvl))
+                {
+                    safe_dstvl = 30.0;
+                    customData22 = "";
+                }
             }
             if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
             {
                 string tempbro = Me.CustomData;
-                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:";
+                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";
             }
         }
 

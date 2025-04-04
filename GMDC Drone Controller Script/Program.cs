@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.412B";
+        string ver = "V0.413B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1982,6 +1982,8 @@ namespace IngameScript
                 gpsGridPositionValue = -1;
                 bores_regen = false;
                 gridInitialisationComplete = false;
+                prospectAlignTargetValid = false;
+                customDataAlignTargetValid = false;
             }
             if (canLoading)
             {

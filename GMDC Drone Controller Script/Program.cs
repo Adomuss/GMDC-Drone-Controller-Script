@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.413B";
+        string ver = "V0.414B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -951,6 +951,10 @@ namespace IngameScript
                 if (droneControlStatus[i].Contains("Recharging") || droneControlStatus[i].Contains("Unloading"))
                 {
                     droneReady[i] = false;
+                }
+                if (droneControlStatus[i].Contains("Idle") && droneUndocked[i] == "True" && droneDocked[i] == "False" && boresRemaining == 0 && !droneRecallList[i])
+                {
+                    droneRecallList[i] = true;
                 }
                 if (droneGPSListPosition[i] == -1 && droneAssignedCoordinates[i] && droneDocked[i] == "True" && droneControlStatus[i].Contains("Docked"))
                 {

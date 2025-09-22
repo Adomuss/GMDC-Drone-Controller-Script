@@ -50,7 +50,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.414B";
+        string ver = "V0.415B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -411,6 +411,12 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
+            if (!setupComplete)
+            {
+                Echo("Setup incomplete - exiting");
+                ClearAllNonEmptyLists();
+                return;
+            }
             ProcessInputs(argument);
             ManageCommunications();
             UpdateMiningGrid();
@@ -2005,6 +2011,10 @@ namespace IngameScript
                 Echo("Setup complete!");
             }
             ComponentPresenceCheck();
+            if(!setupComplete)
+            {
+                return;
+            }
         }
 
         private void ProcessInterface()
@@ -3739,6 +3749,7 @@ namespace IngameScript
                     {
                         Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
                         return;
+                        
                     }
                     antennaAll[i].CustomName = $"GMDC Antenna {secondary_tag} {antennaTagName}";
                     antennaTag.Add(antennaAll[i]);
@@ -3882,6 +3893,14 @@ namespace IngameScript
             }
             lightIndicatorActual = lightsTag[0];
             lightIndicatorActual.SetValue("Color", Cred);
+
+            if(interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
+            {
+                Echo($"Interface PB with tag: '{interfaceTag}' not found.");
+                setupComplete = !setupComplete;
+                return;
+            }
+
             if (display_tag_main.Count <= 0 || display_tag_main[0] == null)
             {
                 Echo($"Display with tag '{dp_mn_tag}' not found");

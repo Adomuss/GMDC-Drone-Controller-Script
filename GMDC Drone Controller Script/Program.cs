@@ -15,7 +15,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller 394 refactor
+        // GMDC Drone controller 416 refactor
         // 
 
 
@@ -27,6 +27,7 @@ namespace IngameScript
         //default information
         string drone_tag = "SWRM_D"; //Mining drone group tag
         double drone_length = 2.6;
+        double drone_clear_offset = 6.6; //drill clear mode distance offset
         string secondary = ""; //vessel/rig name (optional)
 
         //display surface indexes
@@ -50,7 +51,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.415B";
+        string ver = "V0.416B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1137,7 +1138,7 @@ namespace IngameScript
                 zp = Math.Round(droneGPSCoordinates[i].Z, 2).ToString();
                 cd5 = customData5;
                 cd6 = (drillLength + safe_dstvl).ToString();
-                igd = (ignoreDepth + safe_dstvl + drone_length).ToString();
+                igd = (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset).ToString();
                 if (prospectAlignTargetValid || customDataAlignTargetValid)
                 {
                     xp2 = Math.Round(((droneGPSCoordinates[i].X - miningGPSCoordinates.X) + alignGPSCoordinates.X), 2).ToString();
@@ -4146,7 +4147,7 @@ namespace IngameScript
                   .AppendLine($"Surface distance: {safe_dstvl}m")
                   .AppendLine($"Drill depth: {drillLength}m ({drillLength + safe_dstvl}m)")
                   .AppendLine($"Req. ignore depth: {ignoreDepth}m (Drone length: {drone_length}m)")
-                  .AppendLine($"Ignore depth: {safe_dstvl + drone_length + ignoreDepth}m (Drill Start: {(drillLength + safe_dstvl) - (ignoreDepth + safe_dstvl + drone_length)}m)")
+                  .AppendLine($"Ignore depth: {safe_dstvl + drone_length - drone_clear_offset + ignoreDepth}m (Drill Start: {(drillLength + safe_dstvl) - (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset)}m)")
                   .AppendLine()
                   .AppendLine($"Command: {commandAsk} Reset: {generalReset}")
                   .AppendLine($"Status: {screenStatus}")

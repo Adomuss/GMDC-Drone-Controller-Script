@@ -1837,7 +1837,7 @@ namespace IngameScript
                 perpendicularVector.Normalize();
                 Vector3D centerPoint = miningGPSCoordinates;
                 //load from storage if present (test required)
-                if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
+                if (string.IsNullOrEmpty(Storage) && string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
                 {
                     //added from init
                     currentGPSIndex = 0;
@@ -2089,7 +2089,7 @@ namespace IngameScript
             #region interface_command_processing
             if (canInterfaceCommand && pbInterfaceActual.CustomData != null)
             {
-                if ((string.IsNullOrEmpty(interfaceArgument) || string.IsNullOrWhiteSpace(interfaceArgument)) && !noInterfaceCommand)
+                if (interfaceArgument == "" && !noInterfaceCommand)
                 {
                     noInterfaceCommand = true;
                 }
@@ -4121,7 +4121,7 @@ namespace IngameScript
         public void ProcessReceivedDroneMessageToDroneLists()
         {
             #region drone_message_data_processing
-            if (!string.IsNullOrEmpty(receivedDroneName) && !string.IsNullOrWhiteSpace(receivedDroneName))
+            if (!string.IsNullOrEmpty(receivedDroneName))
             {
                 found = false;
                 //drone does not exist assume none and add first

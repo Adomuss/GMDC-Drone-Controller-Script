@@ -17,7 +17,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller 416 refactor
+        // GMDC Drone controller 418 refactor
         // 
 
 
@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.417B";
+        string ver = "V0.418B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";

@@ -17,7 +17,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller 418 refactor
+        // GMDC Drone controller 419 refactor
         // 
 
 
@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.418B";
+        string ver = "V0.419B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -380,51 +380,52 @@ namespace IngameScript
         #endregion
         public void Save()
         {
-            _ini.Set("configuration", "runargument", runargument);
-            if (setupComplete)
-            {
-                sb = new StringBuilder();
-                _ini.Clear();
-                _ini.Set("configuration", "runargument", runargument);
-                if (mainCustomDataValid)
-                {
-                    _ini.Set("jobdata", "customdata", Me.CustomData);
-                }
-                else
-                {
-                    _ini.Set("jobdata", "customdata", fail_data);
-                }
-                if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
-                {
-                    for (int i = 0; i < gridBoreFinished.Count; i++)
-                    {
 
-                        if (gridBoreFinished[i])
-                        {
-                            g1 = "1";
-                        }
-                        else
-                        {
-                            g1 = "0";
-                        }
-                        if (gridBoreOccupied[i])
-                        {
-                            g2 = "1";
-                        }
-                        else
-                        {
-                            g2 = "0";
-                        }
-                        px = gridBorePosition[i].X.ToString();
-                        py = gridBorePosition[i].Y.ToString();
-                        pz = gridBorePosition[i].Z.ToString();
-                        sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
+                _ini.Set("configuration", "runargument", runargument);
+                if (setupComplete)
+                {
+                    sb = new StringBuilder();
+                    _ini.Clear();
+                    _ini.Set("configuration", "runargument", runargument);
+                    if (mainCustomDataValid)
+                    {
+                        _ini.Set("jobdata", "customdata", Me.CustomData);
                     }
-                    _ini.Set("jobdata", "gridstatus", sb.ToString());
-                    sb.Clear();
-                    
-                }
-            }
+                    else
+                    {
+                        _ini.Set("jobdata", "customdata", fail_data);
+                    }
+                    if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
+                    {
+                        for (int i = 0; i < gridBoreFinished.Count; i++)
+                        {
+
+                            if (gridBoreFinished[i])
+                            {
+                                g1 = "1";
+                            }
+                            else
+                            {
+                                g1 = "0";
+                            }
+                            if (gridBoreOccupied[i])
+                            {
+                                g2 = "1";
+                            }
+                            else
+                            {
+                                g2 = "0";
+                            }
+                            px = gridBorePosition[i].X.ToString();
+                            py = gridBorePosition[i].Y.ToString();
+                            pz = gridBorePosition[i].Z.ToString();
+                            sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
+                        }
+                        _ini.Set("jobdata", "gridstatus", sb.ToString());
+                        sb.Clear();
+
+                    }
+                }            
             Storage = _ini.ToString();
 
         }
@@ -1837,7 +1838,7 @@ namespace IngameScript
                 perpendicularVector.Normalize();
                 Vector3D centerPoint = miningGPSCoordinates;
                 //load from storage if present (test required)
-                if (string.IsNullOrEmpty(Storage) && string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
+                if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
                 {
                     //added from init
                     currentGPSIndex = 0;
@@ -2274,7 +2275,7 @@ namespace IngameScript
 
             if (renew_header)
             {
-                droneInformation.Clear().Append($"Mining Drone Status {rxChannelDrone} - GMDC {ver} {icon}\n");
+                droneInformation.Clear().Append($"Mining Drone Status [{drone_tag}] - GMDC {ver} {icon}\n");
                 renew_header = false;
             }
 
@@ -3519,30 +3520,33 @@ namespace IngameScript
                 if (setupComplete)
                 {
                     string[] str_data = gridstats.Split(';');
-                    for (int i = 0; i < str_data.Length; i++)
+                    if (str_data.Length > 0)
                     {
-                        if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
-
-                        string[] str_datai = str_data[i].Split(':');
-                        if (str_datai.Length >= 2) // Minimum for bn:bc
+                        for (int i = 0; i < str_data.Length; i++)
                         {
-                            int bn, bc;
-                            bool bnParsed = int.TryParse(str_datai[0], out bn);
-                            bool bcParsed = int.TryParse(str_datai[1], out bc);
+                            if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
 
-                            gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
-                            gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+                            string[] str_datai = str_data[i].Split(':');
+                            if (str_datai.Length >= 2) // Minimum for bn:bc
+                            {
+                                int bn, bc;
+                                bool bnParsed = int.TryParse(str_datai[0], out bn);
+                                bool bcParsed = int.TryParse(str_datai[1], out bc);
 
-                            if (str_datai.Length >= 5) // Full bn:bc:x:y:z
-                            {
-                                double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
-                                double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
-                                double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
-                                gridBorePosition.Add(new Vector3D(x, y, z));
-                            }
-                            else
-                            {
-                                gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                                gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
+                                gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+
+                                if (str_datai.Length >= 5) // Full bn:bc:x:y:z
+                                {
+                                    double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
+                                    double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
+                                    double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
+                                    gridBorePosition.Add(new Vector3D(x, y, z));
+                                }
+                                else
+                                {
+                                    gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                                }
                             }
                         }
                     }

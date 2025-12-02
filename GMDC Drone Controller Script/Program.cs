@@ -2274,7 +2274,7 @@ namespace IngameScript
 
             if (renew_header)
             {
-                droneInformation.Clear().Append($"Mining Drone Status - GMDC {ver} {icon}\n");
+                droneInformation.Clear().Append($"Mining Drone Status {rxChannelDrone} - GMDC {ver} {icon}\n");
                 renew_header = false;
             }
 
@@ -3671,7 +3671,7 @@ namespace IngameScript
             }
             if (dronecontrolleronfigdata.Length >= 1 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[0]))
             {
-                drone_tag = dronecontrolleronfigdata[0].Trim();
+                drone_tag = dronecontrolleronfigdata[0].ToString().Trim();
             }
             else
             {
@@ -3679,7 +3679,7 @@ namespace IngameScript
             }
             if (dronecontrolleronfigdata.Length >= 2 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[1]))
             {
-                secondary = dronecontrolleronfigdata[1].Trim();
+                secondary = dronecontrolleronfigdata[1].ToString().Trim();
             }
             else
             {
@@ -3687,7 +3687,7 @@ namespace IngameScript
             }
             if (dronecontrolleronfigdata.Length >= 3)
             {
-                if (!double.TryParse(dronecontrolleronfigdata[2].Trim(), out drone_length))
+                if (!double.TryParse(dronecontrolleronfigdata[2].ToString().Trim(), out drone_length))
                 {
                     drone_length = 2.6; // Set to default on fail
                 }
@@ -3698,7 +3698,7 @@ namespace IngameScript
             }
             if (dronecontrolleronfigdata.Length >= 4)
             {
-                if (!double.TryParse(dronecontrolleronfigdata[3].Trim(), out drone_clear_offset))
+                if (!double.TryParse(dronecontrolleronfigdata[3].ToString().Trim(), out drone_clear_offset))
                 {
                     drone_clear_offset = 9.0; // Set to default on fail
                 }
@@ -3795,6 +3795,10 @@ namespace IngameScript
             interfaceTag = "[" + drone_tag + " " + IntfS + "]";
             dp_vis_tag = "[" + drone_tag + " " + GrphS + " " + dspy + "]";
             secondary_tag = "[" + secondary + "]";
+            if (secondary == "" || secondary == " " || secondary == null)
+            {
+                secondary_tag = "";
+            }
             rxChannelDrone = drone_tag + " " + replyC;
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;

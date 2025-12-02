@@ -7,6 +7,8 @@ using System.Dynamic;
 using System.Reflection;
 using System.Text;
 using VRage.Game.GUI.TextPanel;
+using VRage.Game.ModAPI.Ingame.Utilities;
+using VRage.Input;
 using VRageMath;
 
 namespace IngameScript
@@ -23,6 +25,7 @@ namespace IngameScript
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
+            manageFirstLoad(Storage, Me.CustomData);
         }
         //default information
         string drone_tag = "SWRM_D"; //Mining drone group tag
@@ -51,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.416B";
+        string ver = "V0.417B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -364,15 +367,33 @@ namespace IngameScript
         bool spriteInsert = false;
         StringBuilder customDataString;
 
+        
+
         private double totalRuntimeMs = 0.0;
         private int runCount = 0;
         private double averageRuntimeMs = 0.0;
+
+        MyIni _ini = new MyIni();
+        string runargument = "";
+        string fail_data = "GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:";
+        
         #endregion
         public void Save()
         {
+            _ini.Set("configuration", "runargument", runargument);
             if (setupComplete)
             {
                 sb = new StringBuilder();
+                _ini.Clear();
+                _ini.Set("configuration", "runargument", runargument);
+                if (mainCustomDataValid)
+                {
+                    _ini.Set("jobdata", "customdata", Me.CustomData);
+                }
+                else
+                {
+                    _ini.Set("jobdata", "customdata", fail_data);
+                }
                 if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
                 {
                     for (int i = 0; i < gridBoreFinished.Count; i++)
@@ -399,17 +420,46 @@ namespace IngameScript
                         pz = gridBorePosition[i].Z.ToString();
                         sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
                     }
-                    Storage = sb.ToString();
+                    _ini.Set("jobdata", "gridstatus", sb.ToString());
                     sb.Clear();
+                    
                 }
             }
+            Storage = _ini.ToString();
+
         }
 
+        public void manageFirstLoad(string input, string datacommandinput)
+        {
+            if (!string.IsNullOrWhiteSpace(input) && !string.IsNullOrEmpty(input))
+            {
+                GetStoredData(input);
+                ParseAndApplyArguments(runargument);
+                Echo("Configuration loaded from Storage.");
+            }
+            else
+            {
+                ParseAndApplyArguments(runargument);
+                Echo("No Storage data found, configuration loaded from arguments or defaults.");
+            }
 
+        }
         public void Main(string argument, UpdateType updateSource)
         {
             //Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
+
+            if (!string.IsNullOrEmpty(argument) && !string.IsNullOrWhiteSpace(argument))
+            {
+                // --- Argument takes precedence for setup and override ---
+                runargument = argument;
+                ParseAndApplyArguments(argument);
+
+                // Force a full setup if arguments changed
+                setupComplete = false;
+            }
+
+
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
             if (!setupComplete)
@@ -461,7 +511,7 @@ namespace IngameScript
                 return;
             }
             Echo($"GMDC {ver} Running {icon}");
-            Echo($"Channel: {drone_tag}");
+            Echo($"Channel: {drone_tag.Replace("[","[[").Replace("]","]]")}");
             Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -706,7 +756,7 @@ namespace IngameScript
         {
             if (lightIndicatorActual == null || lightsTag[0] == null)
             {
-                Echo($"Indicator light missing {lightsTagName} - early exit");
+                Echo($"Indicator light missing {lightsTagName.Replace("[","[[").Replace("]","]]")} - early exit");
                 return;
             }
             if (canTransmit && !readyFlag || commandAsk == "Init")
@@ -1729,7 +1779,7 @@ namespace IngameScript
         {
             if (pbInterfaceActual == null || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB not found {interfaceTag}");
+                Echo($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]","]]")}");
             }
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
@@ -1768,7 +1818,7 @@ namespace IngameScript
 
                 if (remoteControlTag[0] == null || remoteControlActual == null)
                 {
-                    Echo($"Remote control {antennaTagName} not present - early exit");
+                    Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present - early exit");
                     return;
                 }
                 Vector3D gravity = remoteControlActual.GetNaturalGravity();
@@ -1787,12 +1837,12 @@ namespace IngameScript
                 perpendicularVector.Normalize();
                 Vector3D centerPoint = miningGPSCoordinates;
                 //load from storage if present (test required)
-                if (Storage != null && Storage != "" && !gridCreated && bores_regen && !gridInitialisationComplete)
+                if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
                 {
                     //added from init
                     currentGPSIndex = 0;
                     realGPSIndex = currentGPSIndex;
-                    GetStoredData();
+                    GetStoredData(Storage);
                     Echo("Grid positions restored");
                     canLoading = true;
                     Storage = null;
@@ -1952,9 +2002,8 @@ namespace IngameScript
         }
 
         private void ValidateCustomData()
-        {
-            #region check_custom_data_validation
-            if (!string.IsNullOrEmpty(Me.CustomData))
+        {            
+            if (!string.IsNullOrEmpty(Me.CustomData) && !string.IsNullOrWhiteSpace(Me.CustomData))
             {
                 mainCustomDataValid = true;
             }
@@ -1969,8 +2018,7 @@ namespace IngameScript
             if (mainCustomDataValid)
             {
                 GetCustomDataJobCommand();
-            }
-            #endregion
+            }            
         }
 
         private void InitializeMiningGrid()
@@ -2034,14 +2082,14 @@ namespace IngameScript
                 }
                 canInterfaceCommand = true;
                 interfaceArgument = pbInterfaceActual.CustomData;
-                Echo($"Interface PB: {interfaceTag}");
+                Echo($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                 Echo($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
             #endregion
             #region interface_command_processing
             if (canInterfaceCommand && pbInterfaceActual.CustomData != null)
             {
-                if (interfaceArgument == "" && !noInterfaceCommand)
+                if ((string.IsNullOrEmpty(interfaceArgument) || string.IsNullOrWhiteSpace(interfaceArgument)) && !noInterfaceCommand)
                 {
                     noInterfaceCommand = true;
                 }
@@ -3396,7 +3444,7 @@ namespace IngameScript
         }
 
 
-        #region drone_status_verification
+
         int CountTrueValues(List<bool> list)
         {
             int truCnt = 0;
@@ -3436,7 +3484,7 @@ namespace IngameScript
             }
             return trueCount;
         }
-        #endregion
+
 
 
         public void droneCommandBuilder(string cdata_1, string xpos, string ypos, string zpos, string cdata_5, string cmdo, string data_6, string idepth, string xpos2, string ypos2, string zpos2)
@@ -3452,35 +3500,50 @@ namespace IngameScript
         {
             IGC.SendBroadcastMessage(tx_chan, droneTranmissionOutput[di], TransmissionDistance.TransmissionDistanceMax);
         }
-        void GetStoredData()
+        void GetStoredData(string input)
         {
-            if (!string.IsNullOrEmpty(Storage)) // Check null or empty
+            if (!string.IsNullOrEmpty(input) && !string.IsNullOrWhiteSpace(input)) // Check null or empty
             {
-                string[] str_data = Storage.Split(';');
-                for (int i = 0; i < str_data.Length; i++)
+                var str = "";
+                string gridstats = "";
+                _ini.Clear();
+                if (_ini.TryParse(input))
+                {                    
+                    str = _ini.Get("configuration", "runargument").ToString().Trim();
+                    runargument = str;
+                    str = _ini.Get("jobdata", "customdata").ToString().Trim();
+                    Me.CustomData = str;
+                    str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
+                    gridstats = str;
+                }
+                if (setupComplete)
                 {
-                    if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
-
-                    string[] str_datai = str_data[i].Split(':');
-                    if (str_datai.Length >= 2) // Minimum for bn:bc
+                    string[] str_data = gridstats.Split(';');
+                    for (int i = 0; i < str_data.Length; i++)
                     {
-                        int bn, bc;
-                        bool bnParsed = int.TryParse(str_datai[0], out bn);
-                        bool bcParsed = int.TryParse(str_datai[1], out bc);
+                        if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
 
-                        gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
-                        gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+                        string[] str_datai = str_data[i].Split(':');
+                        if (str_datai.Length >= 2) // Minimum for bn:bc
+                        {
+                            int bn, bc;
+                            bool bnParsed = int.TryParse(str_datai[0], out bn);
+                            bool bcParsed = int.TryParse(str_datai[1], out bc);
 
-                        if (str_datai.Length >= 5) // Full bn:bc:x:y:z
-                        {
-                            double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
-                            double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
-                            double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
-                            gridBorePosition.Add(new Vector3D(x, y, z));
-                        }
-                        else
-                        {
-                            gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                            gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
+                            gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+
+                            if (str_datai.Length >= 5) // Full bn:bc:x:y:z
+                            {
+                                double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
+                                double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
+                                double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
+                                gridBorePosition.Add(new Vector3D(x, y, z));
+                            }
+                            else
+                            {
+                                gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                            }
                         }
                     }
                 }
@@ -3584,6 +3647,67 @@ namespace IngameScript
             runicon(stateshift);
         }
 
+        private void ParseAndApplyArguments(string input)
+        {
+            // --- Step 1: Handle Empty Input (Using the simpler IsNullOrWhiteSpace check) ---
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                Echo("No arguments provided, using defaults.");
+                drone_tag = "UnassignedMiningDronesA";
+                drone_length = 2.6;
+                drone_clear_offset = 9.0; //drill clear mode distance offset
+                secondary = ""; //vessel/rig name (optional)
+                return;
+            }
+
+            string[] dronecontrolleronfigdata = input.Split(',');
+
+            // Check if the split array is unexpectedly empty (though covered by the initial check)
+            if (dronecontrolleronfigdata.Length == 0)
+            {
+                Echo("No arguments provided, using defaults.");
+                // Use a consistent set of defaults or return immediately.
+                return;
+            }
+            if (dronecontrolleronfigdata.Length >= 1 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[0]))
+            {
+                drone_tag = dronecontrolleronfigdata[0].Trim();
+            }
+            else
+            {
+                drone_tag = "UnassignedMiningDronesC"; // Default C if argument is missing or empty
+            }
+            if (dronecontrolleronfigdata.Length >= 2 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[1]))
+            {
+                secondary = dronecontrolleronfigdata[1].Trim();
+            }
+            else
+            {
+                secondary = ""; // Default C if argument is missing or empty
+            }
+            if (dronecontrolleronfigdata.Length >= 3)
+            {
+                if (!double.TryParse(dronecontrolleronfigdata[2].Trim(), out drone_length))
+                {
+                    drone_length = 2.6; // Set to default on fail
+                }
+            }
+            else
+            {
+                drone_length = 2.6; // Default if argument is missing
+            }
+            if (dronecontrolleronfigdata.Length >= 4)
+            {
+                if (!double.TryParse(dronecontrolleronfigdata[3].Trim(), out drone_clear_offset))
+                {
+                    drone_clear_offset = 9.0; // Set to default on fail
+                }
+            }
+            else
+            {
+                drone_clear_offset = 9.0; // Default if argument is missing
+            }
+        }
         public void drone_custom_data_check(string custominfo, int index)
         {
             Echo("Checking for drone config information..");
@@ -3638,7 +3762,7 @@ namespace IngameScript
             {
                 antennaAll[index].CustomData = $"{drone_tag}:{secondary}:";
             }
-            Echo($"Drone info:{drone_tag}");
+            Echo($"Drone info:{drone_tag.Replace("[","[[").Replace("]","]]")}");
             antennaTagName = "[" + drone_tag + " " + comms + "]";
             lightsTagName = "[" + drone_tag + " " + comms + "]";
             dp_mn_tag = "[" + drone_tag + " " + MainS + " " + dspy + "]";
@@ -3655,7 +3779,7 @@ namespace IngameScript
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;
             txDronePingChannel = "[" + drone_tag + "]" + " " + pingMessage;
-            Me.CustomName = $"GMDC Programmable Block {secondary_tag} {antennaTagName}";
+            
         }
 
         public void SetupSystem()
@@ -3745,8 +3869,8 @@ namespace IngameScript
                 if (antennaAll[i].CustomName.Contains(antennaTagName) || antennaAll[i].CustomName.Contains(comms))
                 {
                     string checker = antennaAll[i].CustomData;
-                    drone_custom_data_check(checker, i);
-                    if (drone_tag == "" || drone_tag == null)
+                    //drone_custom_data_check(checker, i);
+                    if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
                     {
                         Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
                         return;
@@ -3757,6 +3881,7 @@ namespace IngameScript
                 }
             }
             antennaAll.Clear();
+            Me.CustomName = $"GMDC Programmable Block {secondary_tag} {antennaTagName}";
             gts.GetBlocksOfType<IMyRemoteControl>(remoteControlAll, b => b.CubeGrid == Me.CubeGrid);
             for (int i = 0; i < remoteControlAll.Count; i++)
             {
@@ -3872,14 +3997,14 @@ namespace IngameScript
             #region presence_check
             if (antennaTag.Count <= 0 || antennaTag[0] == null)
             {
-                Echo($"Antenna with tag: '{antennaTagName}' not found.");
+                Echo($"Antenna with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
             antennaActual = antennaTag[0];
             if (remoteControlTag.Count <= 0 || remoteControlTag[0] == null)
             {
-                Echo($"remote control with tag: '{antennaTagName}' not found.");
+                Echo($"remote control with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -3888,7 +4013,7 @@ namespace IngameScript
 
             if (lightsTag.Count <= 0 || lightsTag[0] == null)
             {
-                Echo($"Indicator light with tag: '{lightsTagName}' not found.");
+                Echo($"Indicator light with tag: '{lightsTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -3897,14 +4022,14 @@ namespace IngameScript
 
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB with tag: '{interfaceTag}' not found.");
+                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
 
             if (display_tag_main.Count <= 0 || display_tag_main[0] == null)
             {
-                Echo($"Display with tag '{dp_mn_tag}' not found");
+                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_main.Count > 0 && display_tag_main[0] != null)
             {
@@ -3918,11 +4043,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                Echo($"Panel:'{srfM}' on '{dp_mn_tag}' not found");
+                Echo($"Panel:'{srfM}' on '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count <= 0 || display_tag_list[0] == null)
             {
-                Echo($"Display with tag '{dp_mn_tag}' not found");
+                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count > 0 && display_tag_list[0] != null)
             {
@@ -3936,11 +4061,11 @@ namespace IngameScript
             }
             if (sL == null)
             {
-                Echo($"Panel:'{srfL}' on '{dp_lst_tag}' not found");
+                Echo($"Panel:'{srfL}' on '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_drone.Count <= 0 || display_tag_drone[0] == null)
             {
-                Echo($"Display with tag '{dp_lst_tag}' not found");
+                Echo($"Display with tag '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
 
 
@@ -3957,11 +4082,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                Echo($"Panel:'{srfD}' on '{dp_drn_tag}' not found");
+                Echo($"Panel:'{srfD}' on '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB with tag: '{interfaceTag}' not found.");
+                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
             }
 
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
@@ -3979,11 +4104,11 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                Echo($"Panel:'{srfV}' on '{dp_vis_tag}' not found");
+                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                Echo($"Display with tag '{dp_vis_tag}' not found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             #endregion
@@ -3992,7 +4117,7 @@ namespace IngameScript
         public void ProcessReceivedDroneMessageToDroneLists()
         {
             #region drone_message_data_processing
-            if (!string.IsNullOrEmpty(receivedDroneName))
+            if (!string.IsNullOrEmpty(receivedDroneName) && !string.IsNullOrWhiteSpace(receivedDroneName))
             {
                 found = false;
                 //drone does not exist assume none and add first
@@ -4134,7 +4259,7 @@ namespace IngameScript
         void update_display()  // Extracted from drone_processing
         {
             displayTextMain.Clear().EnsureCapacity(512); // ~400-600 chars typical
-            displayTextMain.AppendLine($"GMDC {ver} Running {icon}")
+            displayTextMain.AppendLine($"GMDC {ver} {drone_tag} Running {icon}")
                   .AppendLine($"------------------------------")
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")

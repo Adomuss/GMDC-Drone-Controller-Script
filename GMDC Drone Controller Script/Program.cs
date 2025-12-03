@@ -28,6 +28,7 @@ namespace IngameScript
             Echo("Step1");
             manageFirstLoad(Storage, Me.CustomData);
             Echo("Step2");
+            firstload = true;
         }
         //default information
         string drone_tag = "SWRM_D"; //Mining drone group tag
@@ -380,7 +381,8 @@ namespace IngameScript
 
         MyIni _ini = new MyIni();
         MyIni _antennaStore = new MyIni();
-        string runargument = "";        
+        string runargument = "";
+        bool firstload = false;
         
         #endregion
         public void Save()
@@ -388,7 +390,8 @@ namespace IngameScript
             if (setupComplete)
                 {
                     sb = new StringBuilder();                    
-                    _ini.Set("configuration", "runargument", runargument);   
+                    _ini.Set("configuration", "runargument", runargument);
+                    _ini.Set("configuration", "ship grid tag", secondary_tag);
                     if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
                     {
                         for (int i = 0; i < gridBoreFinished.Count; i++)
@@ -427,23 +430,24 @@ namespace IngameScript
 
         public void AntennaSaveData (IMyRadioAntenna block)
         {
-            _antennaStore.Clear();
+            //_antennaStore.Clear();
             _antennaStore.Set("Configuration","drone group tag", drone_tag);
             _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
             block.CustomData = _antennaStore.ToString();
             _antennaStore.Clear();
         }
         public void manageFirstLoad(string input, string datacommandinput)
-        {
-            if (!string.IsNullOrWhiteSpace(input) && !string.IsNullOrEmpty(input))
+        {            
+            if (!string.IsNullOrWhiteSpace(Storage) && !string.IsNullOrEmpty(Storage))
             {
-                GetStoredData(input);
+                GetStoredData(Storage);
                 Echo("Running first parse");
                 ParseAndApplyArguments(runargument);
                 Echo("Configuration loaded from Storage.");
             }
             else
             {
+                GetStoredData(Storage);
                 ParseAndApplyArguments(runargument);
                 Echo("No Storage data found, configuration loaded from arguments or defaults.");
             }
@@ -454,11 +458,12 @@ namespace IngameScript
             //Echo("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
 
-            if (!string.IsNullOrEmpty(argument) && !string.IsNullOrWhiteSpace(argument))
+            if (!string.IsNullOrEmpty(argument) && !string.IsNullOrWhiteSpace(argument) && !firstload)
             {
                 // --- Argument takes precedence for setup and override ---
                 runargument = argument;
                 ParseAndApplyArguments(argument);
+                Save();
                 i_init = true;
                 // Force a full setup if arguments changed
                 setupComplete = false;
@@ -468,6 +473,7 @@ namespace IngameScript
 
             UpdateRuntimeMetrics(updateSource);
             InitializeSystem();
+            firstload = false;
             if (!setupComplete)
             {
                 Echo("Setup incomplete - exiting");
@@ -3526,13 +3532,15 @@ namespace IngameScript
             {
                 var str = "";
                 string gridstats = "";
-                _ini.Clear();
                 if (_ini.TryParse(input))
                 {                    
                     str = _ini.Get("configuration", "runargument").ToString().Trim();
                     runargument = str;
+                    str = _ini.Get("configuration", "ship grid tag").ToString();
+                    secondary = str;
                     str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
                     gridstats = str;
+                    
 
                 }
                 Echo("Loading grid data");
@@ -3667,17 +3675,17 @@ namespace IngameScript
             runicon(stateshift);
         }
 
-        private void ParseAndApplyArguments(string input)
+        public void ParseAndApplyArguments(string input)
         {
             // --- Step 1: Handle Empty Input (Using the simpler IsNullOrWhiteSpace check) ---
             if (string.IsNullOrWhiteSpace(input))
             {
-                Echo("No arguments provided, using defaults.");
-                drone_tag = "SWRM_D";
-                drone_length = 2.6;
-                drone_clear_offset = 9.0; //drill clear mode distance offset
-                secondary = ""; //vessel/rig name (optional)
-                return;
+                    Echo("No arguments provided, using defaults.");
+                    drone_tag = "SWRM_D";
+                    drone_length = 2.6;
+                    drone_clear_offset = 9.0; //drill clear mode distance offset
+                    secondary = ""; //vessel/rig name (optional)
+                    return;               
             }
 
             string[] dronecontrolleronfigdata = input.Split(',');
@@ -3699,11 +3707,7 @@ namespace IngameScript
             }
             if (dronecontrolleronfigdata.Length >= 2 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[1]))
             {
-                secondary = dronecontrolleronfigdata[1].ToString().Trim();
-            }
-            else
-            {
-                secondary = ""; // Default C if argument is missing or empty
+                secondary = dronecontrolleronfigdata[1].ToString();
             }
             if (dronecontrolleronfigdata.Length >= 3)
             {
@@ -3791,10 +3795,6 @@ namespace IngameScript
             dp_vis_tag = "[" + drone_tag + " " + GrphS + " " + dspy + "]";
             interfaceTag = "[" + drone_tag + " " + IntfS + "]";
             secondary_tag = "[" + secondary + "]";
-            if (secondary == "" || secondary == " " || secondary == null)
-            {
-                secondary_tag = "";
-            }
             rxChannelDrone = drone_tag + " " + replyC;
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;
@@ -3816,10 +3816,6 @@ namespace IngameScript
             interfaceTag = "[" + drone_tag + " " + IntfS + "]";
             dp_vis_tag = "[" + drone_tag + " " + GrphS + " " + dspy + "]";
             secondary_tag = "[" + secondary + "]";
-            if (secondary == "" || secondary == " " || secondary == null)
-            {
-                secondary_tag = "";
-            }
             rxChannelDrone = drone_tag + " " + replyC;
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;

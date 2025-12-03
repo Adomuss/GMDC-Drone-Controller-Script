@@ -17,7 +17,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller 420 refactor
+        // GMDC Drone controller 500B refactor
         // 
 
 
@@ -56,7 +56,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.420B";
+        string ver = "V0.500B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -376,6 +376,7 @@ namespace IngameScript
         private double averageRuntimeMs = 0.0;
 
         MyIni _ini = new MyIni();
+        MyIni _antennaStore = new MyIni();
         string runargument = "";        
         
         #endregion
@@ -421,6 +422,14 @@ namespace IngameScript
 
         }
 
+        public void AntennaSaveData (IMyRadioAntenna block)
+        {
+            _antennaStore.Clear();
+            _antennaStore.Set("Configuration","drone group tag", drone_tag);
+            _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
+            block.CustomData = _antennaStore.ToString();
+            _antennaStore.Clear();
+        }
         public void manageFirstLoad(string input, string datacommandinput)
         {
             if (!string.IsNullOrWhiteSpace(input) && !string.IsNullOrEmpty(input))
@@ -504,9 +513,10 @@ namespace IngameScript
                 ClearAllNonEmptyLists();
                 return;
             }
+            AntennaSaveData(antennaActual);
             Echo($"GMDC {ver} Running {icon}");
             Echo($"Channel: {drone_tag.Replace("[","[[").Replace("]","]]")}");
-            Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void ProcessInputs(string argument)
@@ -515,7 +525,7 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             ProcessInterface();
             HandleCommands(blank);
-            Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void ManageCommunications()
@@ -524,7 +534,7 @@ namespace IngameScript
             listenDrones = IGC.RegisterBroadcastListener(rxChannelDrone);
             listenProspector = IGC.RegisterBroadcastListener(rxChannelProspector);
             ProcessMessages();
-            Echo($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void UpdateMiningGrid()
@@ -567,7 +577,7 @@ namespace IngameScript
             GetCustomDataJobCommand();
             ProcessJobGrid();
             UpdateActiveDroneLimits();
-            Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void HandleDroneOperations()
@@ -584,7 +594,7 @@ namespace IngameScript
             }
             DroneResetStatusCounter();
             LightStatusManagement();
-            Echo($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void RenderDisplays()
@@ -593,7 +603,7 @@ namespace IngameScript
             DroneRenderCall();
             ListRenderCall();
             SpriteRenderCall();
-            Echo($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void UpdateStatus()
@@ -601,7 +611,7 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             TimeCounterReset();
             LocalStatusUpdate(Runtime.LastRunTimeMs);
-            Echo($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void LocalStatusUpdate(double _Runtime)
@@ -690,7 +700,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        Echo($"Frame reset - spritecount {spriteCounter}");
+                        //Echo($"Frame reset - spritecount {spriteCounter}");
                         var frame = sV.DrawFrame();
                         DrawSprites(ref frame);
                         frame.Dispose();
@@ -1971,7 +1981,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        Echo($"Remote control {remoteControlTag} not present");
+                        Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                         return;
                     }
                     prospectorMessagesBuffer.RemoveAt(0);
@@ -2074,7 +2084,7 @@ namespace IngameScript
                 }
                 else
                 {
-                    Echo($"Interface programmable block not present {interfaceTag}");
+                    Echo($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                     return;
                 }
                 canInterfaceCommand = true;
@@ -2278,7 +2288,7 @@ namespace IngameScript
             int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
             if (dronesPerDisplay < droneName.Count)
             {
-                Echo($"Insufficient displays '{dp_drn_tag}': {dronesPerDisplay} < {droneName.Count}");
+                Echo($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneName.Count}");
                 return;
             }
 
@@ -2296,7 +2306,7 @@ namespace IngameScript
                     renew_header = true;
                 }
             }
-            Echo($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
         }
         private struct DroneStats
         {
@@ -2343,7 +2353,7 @@ namespace IngameScript
             {
                 totalDronesMining = 0;
             }
-            Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private int[] boreQueueCounts = new int[0]; // Static reuse
@@ -2379,7 +2389,7 @@ namespace IngameScript
                     if (gridBoreOccupied[l] && boreQueueCounts[l] == 0)
                         gridBoreOccupied[l] = false;
             }
-            Echo($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
+            //Echo($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         public void updateDisplay(int i)
@@ -3976,16 +3986,16 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                Echo($"Panel:'{srfV}' on '{dp_vis_tag}' not found");
+                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                Echo($"Display with tag '{dp_vis_tag}' not found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
             {
-                Echo($"Display with tag '{dp_vis_tag}' found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' found");
                 _viewport = new RectangleF((sV.TextureSize - sV.SurfaceSize) / 2f, sV.SurfaceSize);
                 Visport_OK = true;
             }

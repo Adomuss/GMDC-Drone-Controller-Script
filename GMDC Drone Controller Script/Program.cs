@@ -63,7 +63,7 @@ namespace IngameScript
         string IntfS = "Interface";
         string LstS = "List";
         string dspy = "Display";
-        string GrphS = "Visual";
+        string GrphS = "Visual";    
         bool coreOutGrid = false;
         int clbs = 44;
         double bclu = 30.0;
@@ -112,7 +112,9 @@ namespace IngameScript
         string tx_recall_channel = "";
         string droneTXRecallChannel = "";
         string txDronePingChannel = "";
+        string txDroneSyncChannel = "";
         string pingMessage = "ping";
+        string syncMessage = "";
         bool dronesPinged = false;
         string antennaTagName = "";
         string lightsTagName = "";
@@ -281,6 +283,7 @@ namespace IngameScript
         string screenStatus = "Idle";
         string replyC = "reply";
         string prospC = "prospector";
+        string syncC = "sync";
         string commandRecall = "recall";
         string commandOperate = "operate";
         bool mustUndockCommand = false;
@@ -1998,9 +2001,19 @@ namespace IngameScript
             //manage drone ping communications
             if (antennaActual != null && antennaTag[0] != null)
             {
+                string syncMessageOut = "";
                 if (droneName.Count == 0 && !dronesPinged || droneName.Count > 0 && !dronesPinged)
                 {
                     IGC.SendBroadcastMessage(txDronePingChannel, pingMessage, TransmissionDistance.TransmissionDistanceMax);
+                    if(!string.IsNullOrEmpty(syncMessage) && !string.IsNullOrWhiteSpace(syncMessage))
+                    {
+                        syncMessageOut = syncMessage;
+                    }
+                    else
+                    {
+                        syncMessageOut = "";
+                    }
+                    IGC.SendBroadcastMessage(txDroneSyncChannel, syncMessageOut, TransmissionDistance.TransmissionDistanceMax);
                     dronesPinged = true;
                     dronePingTimerCount = 0;
                 }
@@ -3786,7 +3799,8 @@ namespace IngameScript
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;
             txDronePingChannel = "[" + drone_tag + "]" + " " + pingMessage;
-            
+            txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
+            syncMessage = secondary;
         }
 
         public void SetupSystem()
@@ -3810,6 +3824,8 @@ namespace IngameScript
             rxChannelProspector = drone_tag + " " + prospC;
             tx_recall_channel = drone_tag + " " + commandRecall;
             txDronePingChannel = "[" + drone_tag + "]" + " " + pingMessage;
+            txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
+            syncMessage = secondary;
             drone_location = new List<Vector3D>();
             droneName = new List<string>();
             droneDamageState = new List<string>();

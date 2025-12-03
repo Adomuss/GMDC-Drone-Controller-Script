@@ -25,7 +25,9 @@ namespace IngameScript
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
+            Echo("Step1");
             manageFirstLoad(Storage, Me.CustomData);
+            Echo("Step2");
         }
         //default information
         string drone_tag = "SWRM_D"; //Mining drone group tag
@@ -374,27 +376,15 @@ namespace IngameScript
         private double averageRuntimeMs = 0.0;
 
         MyIni _ini = new MyIni();
-        string runargument = "";
-        string fail_data = "GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:";
+        string runargument = "";        
         
         #endregion
         public void Save()
-        {
-
-                _ini.Set("configuration", "runargument", runargument);
-                if (setupComplete)
+        {            
+            if (setupComplete)
                 {
-                    sb = new StringBuilder();
-                    _ini.Clear();
-                    _ini.Set("configuration", "runargument", runargument);
-                    if (mainCustomDataValid)
-                    {
-                        _ini.Set("jobdata", "customdata", Me.CustomData);
-                    }
-                    else
-                    {
-                        _ini.Set("jobdata", "customdata", fail_data);
-                    }
+                    sb = new StringBuilder();                    
+                    _ini.Set("configuration", "runargument", runargument);   
                     if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
                     {
                         for (int i = 0; i < gridBoreFinished.Count; i++)
@@ -422,11 +412,12 @@ namespace IngameScript
                             sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
                         }
                         _ini.Set("jobdata", "gridstatus", sb.ToString());
-                        sb.Clear();
 
+                        Storage = _ini.ToString();
+                        sb.Clear();
                     }
-                }            
-            Storage = _ini.ToString();
+                }
+            
 
         }
 
@@ -435,6 +426,7 @@ namespace IngameScript
             if (!string.IsNullOrWhiteSpace(input) && !string.IsNullOrEmpty(input))
             {
                 GetStoredData(input);
+                Echo("Running first parse");
                 ParseAndApplyArguments(runargument);
                 Echo("Configuration loaded from Storage.");
             }
@@ -455,10 +447,11 @@ namespace IngameScript
                 // --- Argument takes precedence for setup and override ---
                 runargument = argument;
                 ParseAndApplyArguments(argument);
-
+                i_init = true;
                 // Force a full setup if arguments changed
                 setupComplete = false;
             }
+
 
 
             UpdateRuntimeMetrics(updateSource);
@@ -518,9 +511,10 @@ namespace IngameScript
 
         private void ProcessInputs(string argument)
         {
+            string blank = "";
             int startInstructions = Runtime.CurrentInstructionCount;
             ProcessInterface();
-            HandleCommands(argument);
+            HandleCommands(blank);
             Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -1838,6 +1832,7 @@ namespace IngameScript
                 perpendicularVector.Normalize();
                 Vector3D centerPoint = miningGPSCoordinates;
                 //load from storage if present (test required)
+
                 if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
                 {
                     //added from init
@@ -1981,6 +1976,7 @@ namespace IngameScript
                     }
                     prospectorMessagesBuffer.RemoveAt(0);
                     gridCreated = false;
+                    i_init = true;
                 }
             }
             #endregion
@@ -2533,7 +2529,7 @@ namespace IngameScript
         {
             if (remoteControlActual == null || remoteControlTag[0] == null)
             {
-                Echo($"Remote Control {antennaTagName} not present");
+                Echo($"Remote Control {antennaTagName.Replace("[","[[").Replace("]","]]")} not present");
                 return;
             }
             if (string.IsNullOrEmpty(remoteControlActual.CustomData))
@@ -2914,7 +2910,7 @@ namespace IngameScript
 
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
-            if (droneGPSListPosition.Count <= 0 || gridBoreFinished.Count <= 0 || droneName.Count < 0)
+            if (droneName.Count <= 0)
             {
                 return;
             }
@@ -3512,41 +3508,38 @@ namespace IngameScript
                 {                    
                     str = _ini.Get("configuration", "runargument").ToString().Trim();
                     runargument = str;
-                    str = _ini.Get("jobdata", "customdata").ToString().Trim();
-                    Me.CustomData = str;
                     str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
                     gridstats = str;
+
                 }
+                Echo("Loading grid data");
                 if (setupComplete)
                 {
                     string[] str_data = gridstats.Split(';');
-                    if (str_data.Length > 0)
+                    for (int i = 0; i < str_data.Length; i++)
                     {
-                        for (int i = 0; i < str_data.Length; i++)
+                        if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
+
+                        string[] str_datai = str_data[i].Split(':');
+                        if (str_datai.Length >= 2) // Minimum for bn:bc
                         {
-                            if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
+                            int bn, bc;
+                            bool bnParsed = int.TryParse(str_datai[0], out bn);
+                            bool bcParsed = int.TryParse(str_datai[1], out bc);
 
-                            string[] str_datai = str_data[i].Split(':');
-                            if (str_datai.Length >= 2) // Minimum for bn:bc
+                            gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
+                            gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+
+                            if (str_datai.Length >= 5) // Full bn:bc:x:y:z
                             {
-                                int bn, bc;
-                                bool bnParsed = int.TryParse(str_datai[0], out bn);
-                                bool bcParsed = int.TryParse(str_datai[1], out bc);
-
-                                gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
-                                gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
-
-                                if (str_datai.Length >= 5) // Full bn:bc:x:y:z
-                                {
-                                    double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
-                                    double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
-                                    double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
-                                    gridBorePosition.Add(new Vector3D(x, y, z));
-                                }
-                                else
-                                {
-                                    gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
-                                }
+                                double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
+                                double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
+                                double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
+                                gridBorePosition.Add(new Vector3D(x, y, z));
+                            }
+                            else
+                            {
+                                gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
                             }
                         }
                     }
@@ -3657,7 +3650,7 @@ namespace IngameScript
             if (string.IsNullOrWhiteSpace(input))
             {
                 Echo("No arguments provided, using defaults.");
-                drone_tag = "UnassignedMiningDronesA";
+                drone_tag = "SWRM_D";
                 drone_length = 2.6;
                 drone_clear_offset = 9.0; //drill clear mode distance offset
                 secondary = ""; //vessel/rig name (optional)
@@ -3679,7 +3672,7 @@ namespace IngameScript
             }
             else
             {
-                drone_tag = "UnassignedMiningDronesC"; // Default C if argument is missing or empty
+                drone_tag = "SWRM_D"; // Default C if argument is missing or empty
             }
             if (dronecontrolleronfigdata.Length >= 2 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[1]))
             {

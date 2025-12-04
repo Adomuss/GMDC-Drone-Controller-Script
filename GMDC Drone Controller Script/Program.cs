@@ -2300,7 +2300,7 @@ namespace IngameScript
 
             if (renew_header)
             {
-                droneInformation.Clear().Append($"Mining Drone Status [{drone_tag}] - GMDC {ver} {icon}\n");
+                droneInformation.Clear().Append($"Mining Drone Status {secondary_tag} [{drone_tag}] - GMDC {ver} {icon}\n");
                 renew_header = false;
             }
 
@@ -3005,7 +3005,7 @@ namespace IngameScript
         {
             if (!listHeaderGenerated)
             {
-                displayTextList.Append($"Mining Grid Status - GMDC {ver} {icon}");
+                displayTextList.Append($"{secondary_tag} Mining Grid Status - GMDC {ver} {icon}");
                 displayTextList.Append('\n');
                 displayTextList.Append('\n');
                 displayTextList.Append($"Remaining bores: {boresRemaining} - Current Index: {currentGPSIndex}");
@@ -3148,7 +3148,7 @@ namespace IngameScript
                 var spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"--- Mining Grid Status ---",
+                    Data = $"--- {secondary_tag} Mining Grid  Status ---",
                     Position = text_position,
                     RotationOrScale = 1.0f,
                     Size = sizer,
@@ -4282,7 +4282,7 @@ namespace IngameScript
         void update_display()  // Extracted from drone_processing
         {
             displayTextMain.Clear().EnsureCapacity(512); // ~400-600 chars typical
-            displayTextMain.AppendLine($"GMDC {ver} {drone_tag} Running {icon}")
+            displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] Running {icon}")
                   .AppendLine($"------------------------------")
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")

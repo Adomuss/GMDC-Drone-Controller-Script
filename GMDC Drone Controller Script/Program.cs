@@ -57,7 +57,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.500B";
+        string ver = "V0.501B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -389,7 +389,8 @@ namespace IngameScript
         {            
             if (setupComplete)
                 {
-                    sb = new StringBuilder();                    
+                    sb = new StringBuilder();
+                    _ini.Clear();
                     _ini.Set("configuration", "runargument", runargument);
                     _ini.Set("configuration", "ship grid tag", secondary_tag);
                     if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
@@ -430,7 +431,7 @@ namespace IngameScript
 
         public void AntennaSaveData (IMyRadioAntenna block)
         {
-            //_antennaStore.Clear();
+            _antennaStore.Clear();
             _antennaStore.Set("Configuration","drone group tag", drone_tag);
             _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
             block.CustomData = _antennaStore.ToString();

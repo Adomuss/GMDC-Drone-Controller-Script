@@ -24,10 +24,8 @@ namespace IngameScript
         #region mdk preserve
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update10;
-            Echo("Step1");
-            manageFirstLoad(Storage, Me.CustomData);
-            Echo("Step2");
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;            
+            manageFirstLoad(Storage, Me.CustomData);            
             firstload = true;
         }
         //default information
@@ -57,7 +55,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.501B";
+        string ver = "V0.502B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -423,6 +421,7 @@ namespace IngameScript
 
                         Storage = _ini.ToString();
                         sb.Clear();
+                        _ini.Clear();
                     }
                 }
             

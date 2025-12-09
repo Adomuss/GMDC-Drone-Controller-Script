@@ -55,7 +55,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.502B";
+        string ver = "V0.504B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -379,6 +379,11 @@ namespace IngameScript
 
         MyIni _ini = new MyIni();
         MyIni _antennaStore = new MyIni();
+
+        MyIni _droneIni = new MyIni();
+        MyIni _prospectorIni = new MyIni();
+        MyIni _jobIni = new MyIni();
+
         string runargument = "";
         bool firstload = false;
         
@@ -1939,66 +1944,88 @@ namespace IngameScript
             #endregion
         }
 
-        private void ProcessMessages()
+        void ProcessMessages()
         {
-            #region check_drone_messages
-            //manage recieved communications
-            if (antennaActual != null && antennaTag[0] != null)
-            {
-                if (listenDrones.HasPendingMessage)
-                {
-                    MyIGCMessage droneMessageNew = listenDrones.AcceptMessage();
-                    droneMessagesBuffer.Add(droneMessageNew);
-                }
-                //process drone message list here
-                if (droneMessagesBuffer.Count < droneName.Count)
-                {
-                    droneMessageReceived = true;
-                }
-                if (droneMessagesBuffer.Count > 0)
-                {
-                    //pull first message in the list if valid
-                    droneDataInput = droneMessagesBuffer[0].Data.ToString();
-                    ProcessDroneMessageData(droneDataInput);
-                    ProcessReceivedDroneMessageToDroneLists();
-                }
-                if (droneMessagesBuffer.Count > droneName.Count)
-                {
-                    droneMessageReceived = false;
-                }
-                #endregion
-                #region check_prospector_messages
-                //process drone message list here
-                if (listenProspector.HasPendingMessage)
-                {
-                    MyIGCMessage propsectorMessageNew = listenProspector.AcceptMessage();
-                    prospectorMessagesBuffer.Add(propsectorMessageNew);
+            if (antennaActual == null) return;
 
-                }
-                //process prospector message list here
-                if (prospectorMessagesBuffer.Count <= 0)
-                {
-                    prospectorMessageReceived = false;
-                }
-                if (prospectorMessagesBuffer.Count > 0)
-                {
-                    prospectorMessageReceived = true;
-                    prospectorDataInput = prospectorMessagesBuffer[0].Data.ToString();
-                    if (remoteControlActual != null && remoteControlTag[0] != null)
-                    {
-                        remoteControlActual.CustomData = prospectorDataInput;
-                    }
-                    else
-                    {
-                        Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
-                        return;
-                    }
-                    prospectorMessagesBuffer.RemoveAt(0);
-                    gridCreated = false;
-                    i_init = true;
-                }
+            // Drones
+            while (listenDrones.HasPendingMessage)
+                droneMessagesBuffer.Add(listenDrones.AcceptMessage());
+
+            if (droneMessagesBuffer.Count > 0)
+            {
+                droneMessageReceived = true;
+                string msg = droneMessagesBuffer[0].Data.ToString();
+
+                _droneIni.Clear();
+                if (_droneIni.TryParse(msg) && _droneIni.ContainsSection("GMDSDroneData"))
+                    ProcessDroneMessageIni(msg);
+                else
+                    ProcessDroneMessageData(msg); // legacy fallback
+
+                ProcessReceivedDroneMessageToDroneLists();
+                droneMessagesBuffer.RemoveAt(0);
             }
-            #endregion
+            else droneMessageReceived = false;
+
+            // Prospector
+            while (listenProspector.HasPendingMessage)
+                prospectorMessagesBuffer.Add(listenProspector.AcceptMessage());
+
+            if (prospectorMessagesBuffer.Count > 0)
+            {
+                prospectorMessageReceived = true;
+                string msg = prospectorMessagesBuffer[0].Data.ToString();
+
+                if (remoteControlActual != null)
+                {
+                    _prospectorIni.Clear();
+                    if (_prospectorIni.TryParse(msg) && _prospectorIni.ContainsSection("ProspectorJob"))
+                        remoteControlActual.CustomData = msg; // clean INI
+                    else
+                        remoteControlActual.CustomData = msg; // old colon fallback
+                }
+
+                prospectorMessagesBuffer.RemoveAt(0);
+                gridCreated = false;
+                i_init = true;
+            }
+            else prospectorMessageReceived = false;
+        }
+
+        void ProcessDroneMessageIni(string input)
+        {
+            // Already parsed in ProcessMessages — just read
+            receivedDroneName = _droneIni.Get("GMDSDroneData", "DroneName").ToString();
+            if (!receivedDroneName.Contains(drone_tag)) { receivedDroneName = ""; return; }
+
+            receivedDroneDamageStatus = _droneIni.Get("GMDSDroneData", "DamageStatus").ToString("OK");
+            receivedDroneStatus = _droneIni.Get("GMDSDroneData", "Status").ToString("Idle");
+            receivedDroneDocked = _droneIni.Get("GMDSDroneData", "Docked").ToString("false");
+            receivedDroneUndocked = _droneIni.Get("GMDSDroneData", "Undocked").ToString("false");
+            rc_auto_pilot_enabled = _droneIni.Get("GMDSDroneData", "Autopilot").ToString("false");
+
+            rc_locx = _droneIni.Get("GMDSDroneData", "X").ToString("0");
+            rc_locy = _droneIni.Get("GMDSDroneData", "Y").ToString("0");
+            rc_locz = _droneIni.Get("GMDSDroneData", "Z").ToString("0");
+
+            rc_dn_drl_dpth = _droneIni.Get("GMDSDroneData", "DepthSet").ToString("100");
+            rc_dn_drl_crnt = _droneIni.Get("GMDSDroneData", "DistanceCurrent").ToString("0");
+            rc_dn_drl_strt = _droneIni.Get("GMDSDroneData", "DistanceRemaining").ToString("100");
+
+            rc_dn_chg = _droneIni.Get("GMDSDroneData", "Battery").ToString("0");
+            rc_dn_gas = _droneIni.Get("GMDSDroneData", "Hydrogen").ToString("0");
+            rc_dn_str = _droneIni.Get("GMDSDroneData", "Cargo").ToString("0");
+
+            rc_dn_gps_lst = _droneIni.Get("GMDSDroneData", "GPSIndex").ToString("-1");
+            rc_dn_cargo_full = _droneIni.Get("GMDSDroneData", "CargoFull").ToString("false");
+            rc_dn_rchg_req = _droneIni.Get("GMDSDroneData", "Recharge").ToString("false");
+            recievedDroneAutdock = _droneIni.Get("GMDSDroneData", "AutoDock").ToString("false");
+            recievedDroneDockingReady = _droneIni.Get("GMDSDroneData", "Ready").ToString("false");
+            receivedDroneTunnelFinished = _droneIni.Get("GMDSDroneData", "TunnelComplete").ToString("false");
+
+            int.TryParse(rc_dn_gps_lst, out recieved_drone_list_position);
+            double.TryParse(rc_dn_chg, out rc_d_cn);
         }
 
         private void PingDrones()
@@ -2556,6 +2583,33 @@ namespace IngameScript
 
         void GetRemoteControlData()
         {
+            if (remoteControlActual == null) { prospectTargetValid = prospectAlignTargetValid = false; return; }
+            if (string.IsNullOrWhiteSpace(remoteControlActual.CustomData)) { prospectTargetValid = false; return; }
+
+            _prospectorIni.Clear();
+            if (_prospectorIni.TryParse(remoteControlActual.CustomData) && _prospectorIni.ContainsSection("ProspectorJob"))
+            {
+                targetGPSCoordinates.X = _prospectorIni.Get("ProspectorJob", "X").ToDouble(0);
+                targetGPSCoordinates.Y = _prospectorIni.Get("ProspectorJob", "Y").ToDouble(0);
+                targetGPSCoordinates.Z = _prospectorIni.Get("ProspectorJob", "Z").ToDouble(0);
+                prospectTargetValid = true;
+
+                bool align = _prospectorIni.Get("Alignment", "Enabled").ToBoolean(false);
+                if (align)
+                {
+                    alignGPSCoordinates.X = _prospectorIni.Get("Alignment", "X").ToDouble(0);
+                    alignGPSCoordinates.Y = _prospectorIni.Get("Alignment", "Y").ToDouble(0);
+                    alignGPSCoordinates.Z = _prospectorIni.Get("Alignment", "Z").ToDouble(0);
+                    safe_dstvl = _prospectorIni.Get("Alignment", "SafeDistance").ToDouble(30.0);
+                    prospectAlignTargetValid = true;
+                }
+                else prospectAlignTargetValid = false;
+            }
+            else GetRemoteControlData_ColonLegacy(); // old fallback
+        }
+
+        void GetRemoteControlData_ColonLegacy()
+        {
             if (remoteControlActual == null || remoteControlTag[0] == null)
             {
                 Echo($"Remote Control {antennaTagName.Replace("[","[[").Replace("]","]]")} not present");
@@ -2674,6 +2728,40 @@ namespace IngameScript
         }
 
         void GetCustomDataJobCommand()
+        {
+            _jobIni.Clear();
+            if (_jobIni.TryParse(Me.CustomData) && _jobIni.ContainsSection("GMDSJob"))
+            {
+                miningGPSCoordinates.X = _jobIni.Get("GMDSJob", "X").ToDouble(0);
+                miningGPSCoordinates.Y = _jobIni.Get("GMDSJob", "Y").ToDouble(0);
+                miningGPSCoordinates.Z = _jobIni.Get("GMDSJob", "Z").ToDouble(0);
+                miningCoordsValid = miningGPSCoordinates.LengthSquared() > 1;
+
+                drillLength = _jobIni.Get("GMDSJob", "Depth").ToDouble(100);
+                gridSize = _jobIni.Get("GMDSJob", "GridSize").ToDouble(0);
+                numPointsX = _jobIni.Get("GMDSJob", "PointsX").ToInt32(1);
+                numPointsY = _jobIni.Get("GMDSJob", "PointsY").ToInt32(1);
+                ignoreDepth = _jobIni.Get("GMDSJob", "IgnoreDepth").ToDouble(0);
+                dronesLaunchedStatus = _jobIni.Get("GMDSJob", "DronesLaunched").ToBoolean(false);
+                dronesInFlightFactor = _jobIni.Get("GMDSJob", "FlightFactor").ToInt32(1);
+                dronesActiveHardLimit = _jobIni.Get("GMDSJob", "HardLimit").ToInt32(6);
+                skipBoresNumber = _jobIni.Get("GMDSJob", "SkipBores").ToInt32(0);
+                coreOutGrid = _jobIni.Get("GMDSJob", "CoreOutGrid").ToBoolean(false);
+                safe_dstvl = _jobIni.Get("GMDSJob", "SafeDistance").ToDouble(30.0);
+
+                bool align = _jobIni.Get("Alignment", "Enabled").ToBoolean(false);
+                if (align)
+                {
+                    alignGPSCoordinates.X = _jobIni.Get("Alignment", "X").ToDouble(0);
+                    alignGPSCoordinates.Y = _jobIni.Get("Alignment", "Y").ToDouble(0);
+                    alignGPSCoordinates.Z = _jobIni.Get("Alignment", "Z").ToDouble(0);
+                    customDataAlignTargetValid = true;
+                }
+                else customDataAlignTargetValid = false;
+            }
+            else GetCustomDataJobCommand_ColonLegacy(); // old fallback
+        }
+        void GetCustomDataJobCommand_ColonLegacy()
         {
 
             String[] gpsCommand = Me.CustomData.Split(':');

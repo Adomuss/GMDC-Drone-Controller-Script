@@ -1948,25 +1948,36 @@ namespace IngameScript
         {
             if (antennaActual == null) return;
 
-            // Drones
-            while (listenDrones.HasPendingMessage)
-                droneMessagesBuffer.Add(listenDrones.AcceptMessage());
+            // ───── DRONES ─────
+            if (listenDrones.HasPendingMessage)
+            {
+                var msg = listenDrones.AcceptMessage();
+                droneMessagesBuffer.Add(msg);
+            }
 
             if (droneMessagesBuffer.Count > 0)
             {
                 droneMessageReceived = true;
-                string msg = droneMessagesBuffer[0].Data.ToString();
+
+                string raw = droneMessagesBuffer[0].Data.ToString();
 
                 _droneIni.Clear();
-                if (_droneIni.TryParse(msg) && _droneIni.ContainsSection("GMDSDroneData"))
-                    ProcessDroneMessageIni(msg);
+                if (_droneIni.TryParse(raw) && _droneIni.ContainsSection("GMDSDroneData"))
+                {
+                    ProcessDroneMessageIni(raw);           // new INI drones
+                }
                 else
-                    ProcessDroneMessageData(msg); // legacy fallback
+                {
+                    ProcessDroneMessageData(raw);          // ← old drones — works perfectly
+                }
 
                 ProcessReceivedDroneMessageToDroneLists();
-                droneMessagesBuffer.RemoveAt(0);
+                droneMessagesBuffer.RemoveAt(0);  // only one per tick — exactly like before
             }
-            else droneMessageReceived = false;
+            else
+            {
+                droneMessageReceived = false;
+            }
 
             // Prospector
             while (listenProspector.HasPendingMessage)

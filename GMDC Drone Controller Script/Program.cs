@@ -24,8 +24,8 @@ namespace IngameScript
         #region mdk preserve
         public Program()
         {
-            Runtime.UpdateFrequency = UpdateFrequency.Update10;            
-            manageFirstLoad(Storage, Me.CustomData);            
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
+            manageFirstLoad(Storage, Me.CustomData);
             firstload = true;
         }
         //default information
@@ -55,14 +55,14 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.504B";
+        string ver = "V0.502B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
         string IntfS = "Interface";
         string LstS = "List";
         string dspy = "Display";
-        string GrphS = "Visual";    
+        string GrphS = "Visual";
         bool coreOutGrid = false;
         int clbs = 44;
         double bclu = 30.0;
@@ -371,7 +371,7 @@ namespace IngameScript
         bool spriteInsert = false;
         StringBuilder customDataString;
 
-        
+
 
         private double totalRuntimeMs = 0.0;
         private int runCount = 0;
@@ -379,70 +379,65 @@ namespace IngameScript
 
         MyIni _ini = new MyIni();
         MyIni _antennaStore = new MyIni();
-
-        MyIni _droneIni = new MyIni();
-        MyIni _prospectorIni = new MyIni();
-        MyIni _jobIni = new MyIni();
-
         string runargument = "";
         bool firstload = false;
-        
+
         #endregion
         public void Save()
-        {            
+        {
             if (setupComplete)
+            {
+                sb = new StringBuilder();
+                _ini.Clear();
+                _ini.Set("configuration", "runargument", runargument);
+                _ini.Set("configuration", "ship grid tag", secondary_tag);
+                if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
                 {
-                    sb = new StringBuilder();
-                    _ini.Clear();
-                    _ini.Set("configuration", "runargument", runargument);
-                    _ini.Set("configuration", "ship grid tag", secondary_tag);
-                    if (gridBoreFinished.Count > 0 && gridBoreOccupied.Count > 0)
+                    for (int i = 0; i < gridBoreFinished.Count; i++)
                     {
-                        for (int i = 0; i < gridBoreFinished.Count; i++)
+
+                        if (gridBoreFinished[i])
                         {
-
-                            if (gridBoreFinished[i])
-                            {
-                                g1 = "1";
-                            }
-                            else
-                            {
-                                g1 = "0";
-                            }
-                            if (gridBoreOccupied[i])
-                            {
-                                g2 = "1";
-                            }
-                            else
-                            {
-                                g2 = "0";
-                            }
-                            px = gridBorePosition[i].X.ToString();
-                            py = gridBorePosition[i].Y.ToString();
-                            pz = gridBorePosition[i].Z.ToString();
-                            sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
+                            g1 = "1";
                         }
-                        _ini.Set("jobdata", "gridstatus", sb.ToString());
-
-                        Storage = _ini.ToString();
-                        sb.Clear();
-                        _ini.Clear();
+                        else
+                        {
+                            g1 = "0";
+                        }
+                        if (gridBoreOccupied[i])
+                        {
+                            g2 = "1";
+                        }
+                        else
+                        {
+                            g2 = "0";
+                        }
+                        px = gridBorePosition[i].X.ToString();
+                        py = gridBorePosition[i].Y.ToString();
+                        pz = gridBorePosition[i].Z.ToString();
+                        sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
                     }
+                    _ini.Set("jobdata", "gridstatus", sb.ToString());
+
+                    Storage = _ini.ToString();
+                    sb.Clear();
+                    _ini.Clear();
                 }
-            
+            }
+
 
         }
 
-        public void AntennaSaveData (IMyRadioAntenna block)
+        public void AntennaSaveData(IMyRadioAntenna block)
         {
             _antennaStore.Clear();
-            _antennaStore.Set("Configuration","drone group tag", drone_tag);
+            _antennaStore.Set("Configuration", "drone group tag", drone_tag);
             _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
             block.CustomData = _antennaStore.ToString();
             _antennaStore.Clear();
         }
         public void manageFirstLoad(string input, string datacommandinput)
-        {            
+        {
             if (!string.IsNullOrWhiteSpace(Storage) && !string.IsNullOrEmpty(Storage))
             {
                 GetStoredData(Storage);
@@ -529,7 +524,7 @@ namespace IngameScript
             }
             AntennaSaveData(antennaActual);
             Echo($"GMDC {ver} Running {icon}");
-            Echo($"Channel: {drone_tag.Replace("[","[[").Replace("]","]]")}");
+            Echo($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")}");
             //Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -775,7 +770,7 @@ namespace IngameScript
         {
             if (lightIndicatorActual == null || lightsTag[0] == null)
             {
-                Echo($"Indicator light missing {lightsTagName.Replace("[","[[").Replace("]","]]")} - early exit");
+                Echo($"Indicator light missing {lightsTagName.Replace("[", "[[").Replace("]", "]]")} - early exit");
                 return;
             }
             if (canTransmit && !readyFlag || commandAsk == "Init")
@@ -1798,7 +1793,7 @@ namespace IngameScript
         {
             if (pbInterfaceActual == null || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]","]]")}");
+                Echo($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
             }
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
@@ -1944,99 +1939,66 @@ namespace IngameScript
             #endregion
         }
 
-        void ProcessMessages()
+        private void ProcessMessages()
         {
-            if (antennaActual == null) return;
-
-            // ───── DRONES ─────
-            if (listenDrones.HasPendingMessage)
+            #region check_drone_messages
+            //manage recieved communications
+            if (antennaActual != null && antennaTag[0] != null)
             {
-                var msg = listenDrones.AcceptMessage();
-                droneMessagesBuffer.Add(msg);
-            }
-
-            if (droneMessagesBuffer.Count > 0)
-            {
-                droneMessageReceived = true;
-
-                string raw = droneMessagesBuffer[0].Data.ToString();
-
-                _droneIni.Clear();
-                if (_droneIni.TryParse(raw) && _droneIni.ContainsSection("GMDSDroneData"))
+                if (listenDrones.HasPendingMessage)
                 {
-                    ProcessDroneMessageIni(raw);           // new INI drones
+                    MyIGCMessage droneMessageNew = listenDrones.AcceptMessage();
+                    droneMessagesBuffer.Add(droneMessageNew);
                 }
-                else
+                //process drone message list here
+                if (droneMessagesBuffer.Count < droneName.Count)
                 {
-                    ProcessDroneMessageData(raw);          // ← old drones — works perfectly
+                    droneMessageReceived = true;
                 }
-
-                ProcessReceivedDroneMessageToDroneLists();
-                droneMessagesBuffer.RemoveAt(0);  // only one per tick — exactly like before
-            }
-            else
-            {
-                droneMessageReceived = false;
-            }
-
-            // Prospector
-            while (listenProspector.HasPendingMessage)
-                prospectorMessagesBuffer.Add(listenProspector.AcceptMessage());
-
-            if (prospectorMessagesBuffer.Count > 0)
-            {
-                prospectorMessageReceived = true;
-                string msg = prospectorMessagesBuffer[0].Data.ToString();
-
-                if (remoteControlActual != null)
+                if (droneMessagesBuffer.Count > 0)
                 {
-                    _prospectorIni.Clear();
-                    if (_prospectorIni.TryParse(msg) && _prospectorIni.ContainsSection("ProspectorJob"))
-                        remoteControlActual.CustomData = msg; // clean INI
+                    //pull first message in the list if valid
+                    droneDataInput = droneMessagesBuffer[0].Data.ToString();
+                    ProcessDroneMessageData(droneDataInput);
+                    ProcessReceivedDroneMessageToDroneLists();
+                }
+                if (droneMessagesBuffer.Count > droneName.Count)
+                {
+                    droneMessageReceived = false;
+                }
+                #endregion
+                #region check_prospector_messages
+                //process drone message list here
+                if (listenProspector.HasPendingMessage)
+                {
+                    MyIGCMessage propsectorMessageNew = listenProspector.AcceptMessage();
+                    prospectorMessagesBuffer.Add(propsectorMessageNew);
+
+                }
+                //process prospector message list here
+                if (prospectorMessagesBuffer.Count <= 0)
+                {
+                    prospectorMessageReceived = false;
+                }
+                if (prospectorMessagesBuffer.Count > 0)
+                {
+                    prospectorMessageReceived = true;
+                    prospectorDataInput = prospectorMessagesBuffer[0].Data.ToString();
+                    if (remoteControlActual != null && remoteControlTag[0] != null)
+                    {
+                        remoteControlActual.CustomData = prospectorDataInput;
+                    }
                     else
-                        remoteControlActual.CustomData = msg; // old colon fallback
+                    {
+                        Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
+                        return;
+                    }
+                    prospectorMessagesBuffer.RemoveAt(0);
+                    gridCreated = false;
+                    i_init = true;
                 }
-
-                prospectorMessagesBuffer.RemoveAt(0);
-                gridCreated = false;
-                i_init = true;
             }
-            else prospectorMessageReceived = false;
-        }
-
-        void ProcessDroneMessageIni(string input)
-        {
-            // Already parsed in ProcessMessages — just read
-            receivedDroneName = _droneIni.Get("GMDSDroneData", "DroneName").ToString();
-            if (!receivedDroneName.Contains(drone_tag)) { receivedDroneName = ""; return; }
-
-            receivedDroneDamageStatus = _droneIni.Get("GMDSDroneData", "DamageStatus").ToString("OK");
-            receivedDroneStatus = _droneIni.Get("GMDSDroneData", "Status").ToString("Idle");
-            receivedDroneDocked = _droneIni.Get("GMDSDroneData", "Docked").ToString("false");
-            receivedDroneUndocked = _droneIni.Get("GMDSDroneData", "Undocked").ToString("false");
-            rc_auto_pilot_enabled = _droneIni.Get("GMDSDroneData", "Autopilot").ToString("false");
-
-            rc_locx = _droneIni.Get("GMDSDroneData", "X").ToString("0");
-            rc_locy = _droneIni.Get("GMDSDroneData", "Y").ToString("0");
-            rc_locz = _droneIni.Get("GMDSDroneData", "Z").ToString("0");
-
-            rc_dn_drl_dpth = _droneIni.Get("GMDSDroneData", "DepthSet").ToString("100");
-            rc_dn_drl_crnt = _droneIni.Get("GMDSDroneData", "DistanceCurrent").ToString("0");
-            rc_dn_drl_strt = _droneIni.Get("GMDSDroneData", "DistanceRemaining").ToString("100");
-
-            rc_dn_chg = _droneIni.Get("GMDSDroneData", "Battery").ToString("0");
-            rc_dn_gas = _droneIni.Get("GMDSDroneData", "Hydrogen").ToString("0");
-            rc_dn_str = _droneIni.Get("GMDSDroneData", "Cargo").ToString("0");
-
-            rc_dn_gps_lst = _droneIni.Get("GMDSDroneData", "GPSIndex").ToString("-1");
-            rc_dn_cargo_full = _droneIni.Get("GMDSDroneData", "CargoFull").ToString("false");
-            rc_dn_rchg_req = _droneIni.Get("GMDSDroneData", "Recharge").ToString("false");
-            recievedDroneAutdock = _droneIni.Get("GMDSDroneData", "AutoDock").ToString("false");
-            recievedDroneDockingReady = _droneIni.Get("GMDSDroneData", "Ready").ToString("false");
-            receivedDroneTunnelFinished = _droneIni.Get("GMDSDroneData", "TunnelComplete").ToString("false");
-
-            int.TryParse(rc_dn_gps_lst, out recieved_drone_list_position);
-            double.TryParse(rc_dn_chg, out rc_d_cn);
+            #endregion
         }
 
         private void PingDrones()
@@ -2049,7 +2011,7 @@ namespace IngameScript
                 if (droneName.Count == 0 && !dronesPinged || droneName.Count > 0 && !dronesPinged)
                 {
                     IGC.SendBroadcastMessage(txDronePingChannel, pingMessage, TransmissionDistance.TransmissionDistanceMax);
-                    if(!string.IsNullOrEmpty(syncMessage) && !string.IsNullOrWhiteSpace(syncMessage))
+                    if (!string.IsNullOrEmpty(syncMessage) && !string.IsNullOrWhiteSpace(syncMessage))
                     {
                         syncMessageOut = syncMessage;
                     }
@@ -2066,7 +2028,7 @@ namespace IngameScript
         }
 
         private void ValidateCustomData()
-        {            
+        {
             if (!string.IsNullOrEmpty(Me.CustomData) && !string.IsNullOrWhiteSpace(Me.CustomData))
             {
                 mainCustomDataValid = true;
@@ -2082,7 +2044,7 @@ namespace IngameScript
             if (mainCustomDataValid)
             {
                 GetCustomDataJobCommand();
-            }            
+            }
         }
 
         private void InitializeMiningGrid()
@@ -2594,36 +2556,9 @@ namespace IngameScript
 
         void GetRemoteControlData()
         {
-            if (remoteControlActual == null) { prospectTargetValid = prospectAlignTargetValid = false; return; }
-            if (string.IsNullOrWhiteSpace(remoteControlActual.CustomData)) { prospectTargetValid = false; return; }
-
-            _prospectorIni.Clear();
-            if (_prospectorIni.TryParse(remoteControlActual.CustomData) && _prospectorIni.ContainsSection("ProspectorJob"))
-            {
-                targetGPSCoordinates.X = _prospectorIni.Get("ProspectorJob", "X").ToDouble(0);
-                targetGPSCoordinates.Y = _prospectorIni.Get("ProspectorJob", "Y").ToDouble(0);
-                targetGPSCoordinates.Z = _prospectorIni.Get("ProspectorJob", "Z").ToDouble(0);
-                prospectTargetValid = true;
-
-                bool align = _prospectorIni.Get("Alignment", "Enabled").ToBoolean(false);
-                if (align)
-                {
-                    alignGPSCoordinates.X = _prospectorIni.Get("Alignment", "X").ToDouble(0);
-                    alignGPSCoordinates.Y = _prospectorIni.Get("Alignment", "Y").ToDouble(0);
-                    alignGPSCoordinates.Z = _prospectorIni.Get("Alignment", "Z").ToDouble(0);
-                    safe_dstvl = _prospectorIni.Get("Alignment", "SafeDistance").ToDouble(30.0);
-                    prospectAlignTargetValid = true;
-                }
-                else prospectAlignTargetValid = false;
-            }
-            else GetRemoteControlData_ColonLegacy(); // old fallback
-        }
-
-        void GetRemoteControlData_ColonLegacy()
-        {
             if (remoteControlActual == null || remoteControlTag[0] == null)
             {
-                Echo($"Remote Control {antennaTagName.Replace("[","[[").Replace("]","]]")} not present");
+                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                 return;
             }
             if (string.IsNullOrEmpty(remoteControlActual.CustomData))
@@ -2739,40 +2674,6 @@ namespace IngameScript
         }
 
         void GetCustomDataJobCommand()
-        {
-            _jobIni.Clear();
-            if (_jobIni.TryParse(Me.CustomData) && _jobIni.ContainsSection("GMDSJob"))
-            {
-                miningGPSCoordinates.X = _jobIni.Get("GMDSJob", "X").ToDouble(0);
-                miningGPSCoordinates.Y = _jobIni.Get("GMDSJob", "Y").ToDouble(0);
-                miningGPSCoordinates.Z = _jobIni.Get("GMDSJob", "Z").ToDouble(0);
-                miningCoordsValid = miningGPSCoordinates.LengthSquared() > 1;
-
-                drillLength = _jobIni.Get("GMDSJob", "Depth").ToDouble(100);
-                gridSize = _jobIni.Get("GMDSJob", "GridSize").ToDouble(0);
-                numPointsX = _jobIni.Get("GMDSJob", "PointsX").ToInt32(1);
-                numPointsY = _jobIni.Get("GMDSJob", "PointsY").ToInt32(1);
-                ignoreDepth = _jobIni.Get("GMDSJob", "IgnoreDepth").ToDouble(0);
-                dronesLaunchedStatus = _jobIni.Get("GMDSJob", "DronesLaunched").ToBoolean(false);
-                dronesInFlightFactor = _jobIni.Get("GMDSJob", "FlightFactor").ToInt32(1);
-                dronesActiveHardLimit = _jobIni.Get("GMDSJob", "HardLimit").ToInt32(6);
-                skipBoresNumber = _jobIni.Get("GMDSJob", "SkipBores").ToInt32(0);
-                coreOutGrid = _jobIni.Get("GMDSJob", "CoreOutGrid").ToBoolean(false);
-                safe_dstvl = _jobIni.Get("GMDSJob", "SafeDistance").ToDouble(30.0);
-
-                bool align = _jobIni.Get("Alignment", "Enabled").ToBoolean(false);
-                if (align)
-                {
-                    alignGPSCoordinates.X = _jobIni.Get("Alignment", "X").ToDouble(0);
-                    alignGPSCoordinates.Y = _jobIni.Get("Alignment", "Y").ToDouble(0);
-                    alignGPSCoordinates.Z = _jobIni.Get("Alignment", "Z").ToDouble(0);
-                    customDataAlignTargetValid = true;
-                }
-                else customDataAlignTargetValid = false;
-            }
-            else GetCustomDataJobCommand_ColonLegacy(); // old fallback
-        }
-        void GetCustomDataJobCommand_ColonLegacy()
         {
 
             String[] gpsCommand = Me.CustomData.Split(':');
@@ -3632,14 +3533,14 @@ namespace IngameScript
                 var str = "";
                 string gridstats = "";
                 if (_ini.TryParse(input))
-                {                    
+                {
                     str = _ini.Get("configuration", "runargument").ToString().Trim();
                     runargument = str;
                     str = _ini.Get("configuration", "ship grid tag").ToString();
                     secondary = str;
                     str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
                     gridstats = str;
-                    
+
 
                 }
                 Echo("Loading grid data");
@@ -3779,12 +3680,12 @@ namespace IngameScript
             // --- Step 1: Handle Empty Input (Using the simpler IsNullOrWhiteSpace check) ---
             if (string.IsNullOrWhiteSpace(input))
             {
-                    Echo("No arguments provided, using defaults.");
-                    drone_tag = "SWRM_D";
-                    drone_length = 2.6;
-                    drone_clear_offset = 9.0; //drill clear mode distance offset
-                    secondary = ""; //vessel/rig name (optional)
-                    return;               
+                Echo("No arguments provided, using defaults.");
+                drone_tag = "SWRM_D";
+                drone_length = 2.6;
+                drone_clear_offset = 9.0; //drill clear mode distance offset
+                secondary = ""; //vessel/rig name (optional)
+                return;
             }
 
             string[] dronecontrolleronfigdata = input.Split(',');
@@ -3885,7 +3786,7 @@ namespace IngameScript
             {
                 antennaAll[index].CustomData = $"{drone_tag}:{secondary}:";
             }
-            Echo($"Drone info:{drone_tag.Replace("[","[[").Replace("]","]]")}");
+            Echo($"Drone info:{drone_tag.Replace("[", "[[").Replace("]", "]]")}");
             antennaTagName = "[" + drone_tag + " " + comms + "]";
             lightsTagName = "[" + drone_tag + " " + comms + "]";
             dp_mn_tag = "[" + drone_tag + " " + MainS + " " + dspy + "]";

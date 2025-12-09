@@ -3,9 +3,11 @@ using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Dynamic;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Input;
@@ -17,7 +19,7 @@ namespace IngameScript
     {
         // R e a d m e
         // -----------
-        // GMDC Drone controller 500B refactor
+        // GMDC Drone controller 504B refactor
         // 
 
 
@@ -55,7 +57,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.502B";
+        string ver = "V0.504B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -381,6 +383,12 @@ namespace IngameScript
         MyIni _antennaStore = new MyIni();
         string runargument = "";
         bool firstload = false;
+        MyIni _customDataStore = new MyIni();
+        string jobdata = "";
+        string rcjobdata = "";
+        string jobinfo = "Jobinfo";
+        string gmdccategory = "GMDCJobData";
+        string rcjobinfo = "Jobinfo";
 
         #endregion
         public void Save()
@@ -552,7 +560,7 @@ namespace IngameScript
             InitializeMiningGrid();
             ValidateCustomData();
             PingDrones();
-            GetRemoteControlData();
+            GetRemoteControlData(remoteControlActual.CustomData,remoteControlActual);
             //Echo($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
             if (prospectAlignTargetValid)
             {
@@ -563,7 +571,7 @@ namespace IngameScript
                 Storage = null;
                 prospectAlignTargetValid = false;
                 customDataAlignTargetValid = false;
-                GetRemoteControlData();
+                GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
                 //Echo($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
                 if (prospectAlignTargetValid)
                 {
@@ -578,12 +586,13 @@ namespace IngameScript
                     {
                         miningCoordinatesNew.Append($"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:");
                     }
-                    Me.CustomData = miningCoordinatesNew.ToString();
+                    StoreRawInput(miningCoordinatesNew.ToString(),Me, gmdccategory, jobinfo);
+                    //Me.CustomData = miningCoordinatesNew.ToString();
                 }
                 prospectorMessageReceived = false;
                 gridCreated = false;
             }
-            GetCustomDataJobCommand();
+            GetCustomDataJobCommand(Me.CustomData, Me);
             ProcessJobGrid();
             UpdateActiveDroneLimits();
             //Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -1986,7 +1995,8 @@ namespace IngameScript
                     prospectorDataInput = prospectorMessagesBuffer[0].Data.ToString();
                     if (remoteControlActual != null && remoteControlTag[0] != null)
                     {
-                        remoteControlActual.CustomData = prospectorDataInput;
+                        StoreRawInput(prospectorDataInput,remoteControlActual, gmdccategory,jobinfo);
+                        //remoteControlActual.CustomData = prospectorDataInput;
                     }
                     else
                     {
@@ -2039,14 +2049,36 @@ namespace IngameScript
                 mainCustomDataValid = false;
                 miningCoordinatesNew.Clear();
                 miningCoordinatesNew.Append($"GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:");
-                Me.CustomData = miningCoordinatesNew.ToString();
+                InvalidJobDataWrite(Me, miningCoordinatesNew.ToString() );
             }
             if (mainCustomDataValid)
             {
-                GetCustomDataJobCommand();
+                //FetchJobData(Me.CustomData);
+                GetCustomDataJobCommand(Me.CustomData, Me);
+                
+
             }
         }
-
+        void InvalidJobDataWrite(IMyTerminalBlock block, string input)
+        {
+            _customDataStore.Clear();
+            _customDataStore.Set(gmdccategory, jobinfo, input);            
+            _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:0:0:0:#FF75C9F1:");
+            _customDataStore.Set(gmdccategory, "AlignGPS", "");
+            _customDataStore.Set(gmdccategory, "BoreSeparation", "10.0");
+            _customDataStore.Set(gmdccategory, "GridXBores", "1");
+            _customDataStore.Set(gmdccategory, "GridYBores", "1");
+            _customDataStore.Set(gmdccategory, "SkipBores", "0");
+            _customDataStore.Set(gmdccategory, "SafeAlignDistance", "5.0");
+            _customDataStore.Set(gmdccategory, "DrillDepth", "5.0");
+            _customDataStore.Set(gmdccategory, "IgnoreDepth", "0.0");
+            _customDataStore.Set(gmdccategory, "LimitDronesInFlight", "False");
+            _customDataStore.Set(gmdccategory, "DronesFlightHardLimit","10");
+            _customDataStore.Set(gmdccategory, "DronesFlightFactor", "1");
+            _customDataStore.Set(gmdccategory, "CoreOutFunction", "False");
+            block.CustomData = _customDataStore.ToString();
+            _customDataStore.Clear();
+        }
         private void InitializeMiningGrid()
         {
             #region initialise_mining_grid_loading
@@ -2554,20 +2586,39 @@ namespace IngameScript
             }
         }
 
-        void GetRemoteControlData()
+        void GetRemoteControlData(string input, IMyTerminalBlock block)
         {
-            if (remoteControlActual == null || remoteControlTag[0] == null)
+            if (block == null || remoteControlTag[0] == null)
             {
                 Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                 return;
             }
-            if (string.IsNullOrEmpty(remoteControlActual.CustomData))
+            if (string.IsNullOrEmpty(block.CustomData) || string.IsNullOrWhiteSpace(block.CustomData))
             {
                 Echo("Prospector job data not found");
                 return;
             }
-            String[] remoteGpsCommand = remoteControlActual.CustomData.Split(':');
+            // Checks if the block has CustomData AND if it's NOT already INI-formatted data
+            if (!string.IsNullOrEmpty(block.CustomData) && !block.CustomData.Contains("[GMDCJobData]"))
+            {
+                String[] remoteGpsCommandtest = block.CustomData.Split(':');
 
+                if (remoteGpsCommandtest.Length > 0)
+                {
+                    StoreRawInput(block.CustomData, block, gmdccategory, rcjobinfo);
+                    
+                }
+                return;
+
+            }
+            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrEmpty(input))
+            {
+                return;
+            }
+
+            FetchRCJobData(remoteControlActual.CustomData);
+            String[] remoteGpsCommand = rcjobdata.Split(':');
+            
             if (remoteGpsCommand.Length < 6)
             {
                 remoteControlCustomData1 = "";
@@ -2670,13 +2721,109 @@ namespace IngameScript
                 {
                     prospectAlignTargetValid = true;
                 }
+                
+                StoreRCJobData(remoteControlActual, rcjobdata);
             }
         }
 
-        void GetCustomDataJobCommand()
+        void FetchRCJobData(string input)
         {
+            _customDataStore.Clear();
+            if (_customDataStore.TryParse(input))
+            {
+                var str = "";
+                str = _customDataStore.Get(gmdccategory, rcjobinfo).ToString().Trim();
+                rcjobdata = str;
+                str = _customDataStore.Get(gmdccategory, "TargetGPS").ToString().Trim();
+                String[] vectorsplit = str.Split(':');
+                if (vectorsplit.Length >= 5)
+                {
+                    if (!double.TryParse(vectorsplit[2], out targetGPSCoordinates.X))
+                    {
+                        targetGPSCoordinates.X = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[3], out targetGPSCoordinates.Y))
+                    {
+                        targetGPSCoordinates.Y = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[4], out targetGPSCoordinates.Z))
+                    {
+                        targetGPSCoordinates.Z = 0.0;
+                    }
+                }
+                else
+                {
+                    targetGPSCoordinates.X = 0.0;
+                    targetGPSCoordinates.Y = 0.0;
+                    targetGPSCoordinates.Z = 0.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "AlignGPS").ToString().Trim();
+                String[] vectorsplita = str.Split(':');
+                if (vectorsplita.Length >= 5)
+                {
+                    if (!double.TryParse(vectorsplit[2], out alignGPSCoordinates.X))
+                    {
+                        alignGPSCoordinates.X = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[3], out alignGPSCoordinates.Y))
+                    {
+                        alignGPSCoordinates.Y = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[4], out alignGPSCoordinates.Z))
+                    {
+                        alignGPSCoordinates.Z = 0.0;
+                    }
+                }
+                else
+                {
+                    alignGPSCoordinates.X = 0.0;
+                    alignGPSCoordinates.Y = 0.0;
+                    alignGPSCoordinates.Z = 0.0;
+                }
 
-            String[] gpsCommand = Me.CustomData.Split(':');
+                str = _customDataStore.Get(gmdccategory, "SafeAlignDistance").ToString().Trim();
+                if (!double.TryParse(str, out safe_dstvl))
+                {
+                    safe_dstvl = 30.0;
+                }
+            }
+            _customDataStore.Clear();
+        }
+        void StoreRCJobData(IMyTerminalBlock block, string input)
+        {
+            _customDataStore.Clear();            
+            _customDataStore.Set(gmdccategory, rcjobinfo, input);
+            _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:{targetGPSCoordinates.X}:{targetGPSCoordinates.Y}:{targetGPSCoordinates.Z}:#FF75C9F1:");
+            _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
+            _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
+            block.CustomData = _customDataStore.ToString();
+            _customDataStore.Clear();
+        }
+
+
+        void GetCustomDataJobCommand(string input, IMyTerminalBlock block)
+        {
+            // Checks if the block has CustomData AND if it's NOT already INI-formatted data
+            if (!string.IsNullOrEmpty(block.CustomData) && !block.CustomData.Contains(gmdccategory))
+            {
+                String[] gpsCommandtest = block.CustomData.Split(':');
+
+                if (gpsCommandtest.Length > 0)
+                {
+                    StoreRawInput(block.CustomData, block,gmdccategory,jobinfo);
+                }
+                Echo("Dataconversion");
+                return;
+               
+            }
+            if (string.IsNullOrWhiteSpace(block.CustomData) || string.IsNullOrEmpty(block.CustomData))
+            {
+                Echo("Datablank");
+                return;
+            }
+            FetchJobData(block.CustomData);
+            String[] gpsCommand = jobdata.Split(':');
+
             customDataAlignTargetValid = false;
             if (gpsCommand.Length < 10)
             {
@@ -2929,14 +3076,152 @@ namespace IngameScript
                     safe_dstvl = 30.0;
                     customData22 = "";
                 }
+                StoreJobData(block, jobdata);
             }
+            
             if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
             {
-                string tempbro = Me.CustomData;
-                Me.CustomData = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";
+                
+                
+                string tempbro = jobdata;
+                string updater = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";
+                StoreJobData(block, updater);
             }
-        }
 
+        }
+        void FetchJobData(string input)
+        {
+            _customDataStore.Clear();
+            if (_customDataStore.TryParse(input))
+            {
+                var str = "";
+                str = _customDataStore.Get(gmdccategory, jobinfo).ToString().Trim();
+                jobdata = str;
+                str = _customDataStore.Get(gmdccategory, "TargetGPS").ToString().Trim();
+                String[] vectorsplit = str.Split(':');
+                if (vectorsplit.Length >= 5)
+                {
+                    if (!double.TryParse(vectorsplit[2], out targetGPSCoordinates.X))
+                    {
+                        targetGPSCoordinates.X = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[3], out targetGPSCoordinates.Y))
+                    {
+                        targetGPSCoordinates.Y = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[4], out targetGPSCoordinates.Z))
+                    {
+                        targetGPSCoordinates.Z = 0.0;
+                    }
+                }
+                else
+                {
+                    targetGPSCoordinates.X = 0.0;
+                    targetGPSCoordinates.Y = 0.0;
+                    targetGPSCoordinates.Z = 0.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "AlignGPS").ToString().Trim();
+                String[] vectorsplita = str.Split(':');
+                if (vectorsplita.Length >= 5)
+                {
+                    if (!double.TryParse(vectorsplit[2], out alignGPSCoordinates.X))
+                    {
+                        alignGPSCoordinates.X = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[3], out alignGPSCoordinates.Y))
+                    {
+                        alignGPSCoordinates.Y = 0.0;
+                    }
+                    if (!double.TryParse(vectorsplit[4], out alignGPSCoordinates.Z))
+                    {
+                        alignGPSCoordinates.Z = 0.0;
+                    }
+                }
+                else
+                {
+                    alignGPSCoordinates.X = 0.0;
+                    alignGPSCoordinates.Y = 0.0;
+                    alignGPSCoordinates.Z = 0.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "BoreSeparation").ToString().Trim();
+                if (!double.TryParse(str, out gridSize))
+                {
+                    gridSize = 10.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "GridXBores").ToString().Trim();
+                if (!int.TryParse(str, out numPointsX))
+                {
+                    numPointsX = 1;
+                }
+                str = _customDataStore.Get(gmdccategory, "GridYBores").ToString().Trim();
+                if (!int.TryParse(str, out numPointsY))
+                {
+                    numPointsY = 1;
+                }
+                str = _customDataStore.Get(gmdccategory, "SkipBores").ToString().Trim();
+                if (!int.TryParse(str, out skipBoresNumber))
+                {
+                    skipBoresNumber = 0;
+                }
+                str = _customDataStore.Get(gmdccategory, "SafeAlignDistance").ToString().Trim();
+                if (!double.TryParse(str, out safe_dstvl))
+                {
+                    safe_dstvl = 30.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "DrillDepth").ToString().Trim();
+                if (!double.TryParse(str, out drillLength))
+                {
+                    drillLength = 30.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "IgnoreDepth").ToString().Trim();
+                if (!double.TryParse(str, out ignoreDepth))
+                {
+                    ignoreDepth = 0.0;
+                }
+                str = _customDataStore.Get(gmdccategory, "LimitDronesInFlight").ToString().Trim();
+                if (!bool.TryParse(str, out dronesLaunchedStatus))
+                {
+                    dronesLaunchedStatus = false;
+                }
+                str = _customDataStore.Get(gmdccategory, "DronesFlightHardLimit").ToString().Trim();
+                if (!int.TryParse(str, out dronesActiveHardLimit))
+                {
+                    dronesActiveHardLimit = 10;
+                }
+                str = _customDataStore.Get(gmdccategory, "DronesFlightFactor").ToString().Trim();
+                if (!int.TryParse(str, out dronesInFlightFactor))
+                {
+                    dronesInFlightFactor = 1;
+                }
+                str = _customDataStore.Get(gmdccategory, "CoreOutFunction").ToString().Trim();
+                if (!bool.TryParse(str, out coreOutGrid))
+                {
+                    coreOutGrid = false;
+                }                
+            }
+            _customDataStore.Clear();
+        }
+        void StoreJobData(IMyTerminalBlock block, string input)
+        {
+            _customDataStore.Clear(); 
+            _customDataStore.Set(gmdccategory, jobinfo, input);
+            _customDataStore.Set(gmdccategory, "TargetGPS",$"GPS:PDT:{miningGPSCoordinates.X}:{miningGPSCoordinates.Y}:{miningGPSCoordinates.Z}:#FF75C9F1:");
+            _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
+            _customDataStore.Set(gmdccategory, "BoreSeparation", gridSize);
+            _customDataStore.Set(gmdccategory, "GridXBores", numPointsX);
+            _customDataStore.Set(gmdccategory, "GridYBores", numPointsY);
+            _customDataStore.Set(gmdccategory, "SkipBores", skipBoresNumber);
+            _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
+            _customDataStore.Set(gmdccategory, "DrillDepth", drillLength);
+            _customDataStore.Set(gmdccategory, "IgnoreDepth", ignoreDepth);            
+            _customDataStore.Set(gmdccategory, "LimitDronesInFlight", dronesLaunchedStatus);
+            _customDataStore.Set(gmdccategory, "DronesFlightHardLimit", dronesActiveHardLimit);
+            _customDataStore.Set(gmdccategory, "DronesFlightFactor", dronesInFlightFactor);
+            _customDataStore.Set(gmdccategory, "CoreOutFunction", coreOutGrid);            
+
+            block.CustomData = _customDataStore.ToString();
+            _customDataStore.Clear();
+        }
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
             if (droneName.Count <= 0)
@@ -4382,7 +4667,18 @@ namespace IngameScript
             }
         }
         //program end
+        public void StoreRawInput(string inputString, IMyTerminalBlock block, string INI_SECTION = "GMDCJobData", string INI_KEY = "Jobinfo")
+        {
+            var iniBuilder = new MyIni();
+            // 1. Correct MyIni.Set() usage: (Section, Key, Value)
+            iniBuilder.Set(INI_SECTION, INI_KEY, inputString);
+
+            // Save to the Programmable Block's CustomData
+            block.CustomData = iniBuilder.ToString();
+            Echo($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
+        }
 
     }
+
 }
 

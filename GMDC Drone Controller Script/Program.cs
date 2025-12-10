@@ -2068,7 +2068,7 @@ namespace IngameScript
         {
             _customDataStore.Clear();
             _customDataStore.Set(gmdccategory, jobinfo, input);            
-            _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:---:0:0:0:#FF75C9F1:");
+            /*_customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:---:0:0:0:#FF75C9F1:");
             _customDataStore.Set(gmdccategory, "AlignGPS", "");
             _customDataStore.Set(gmdccategory, "BoreSeparation", "10.0");
             _customDataStore.Set(gmdccategory, "GridXBores", "1");
@@ -2080,7 +2080,7 @@ namespace IngameScript
             _customDataStore.Set(gmdccategory, "LimitDronesInFlight", "False");
             _customDataStore.Set(gmdccategory, "DronesFlightHardLimit","10");
             _customDataStore.Set(gmdccategory, "DronesFlightFactor", "1");
-            _customDataStore.Set(gmdccategory, "CoreOutFunction", "False");
+            _customDataStore.Set(gmdccategory, "CoreOutFunction", "False"); */
             block.CustomData = _customDataStore.ToString();
             _customDataStore.Clear();
         }

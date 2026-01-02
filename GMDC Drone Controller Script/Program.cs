@@ -57,7 +57,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.504B";
+        string ver = "V0.506B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -372,7 +372,7 @@ namespace IngameScript
         int spriteCounter = 0;
         bool spriteInsert = false;
         StringBuilder customDataString;
-
+        string _oldCustomData = "";
 
 
         private double totalRuntimeMs = 0.0;
@@ -560,6 +560,7 @@ namespace IngameScript
         private void UpdateMiningGrid()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
+            
             InitializeMiningGrid();
             ValidateCustomData();
             PingDrones();
@@ -2044,7 +2045,9 @@ namespace IngameScript
 
         private void ValidateCustomData()
         {
-            if (!string.IsNullOrEmpty(Me.CustomData) && !string.IsNullOrWhiteSpace(Me.CustomData))
+            string _currentCustomData = Me.CustomData;
+
+            if (!string.IsNullOrEmpty(_currentCustomData) && !string.IsNullOrWhiteSpace(_currentCustomData))
             {
                 mainCustomDataValid = true;
             }
@@ -2052,14 +2055,21 @@ namespace IngameScript
             {
                 Echo($"Job custom data invalid - initialising job data");
                 mainCustomDataValid = false;
-                miningCoordinatesNew.Clear();
-                miningCoordinatesNew.Append($"GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:False");
-                InvalidJobDataWrite(Me, miningCoordinatesNew.ToString() );
+                if (_currentCustomData != "GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:False")
+                {
+                    miningCoordinatesNew.Clear();
+                    miningCoordinatesNew.Append($"GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:False");
+                    InvalidJobDataWrite(Me, miningCoordinatesNew.ToString());
+                }
             }
             if (mainCustomDataValid)
             {
                 //FetchJobData(Me.CustomData);
-                GetCustomDataJobCommand(Me.CustomData, Me);
+                if (_currentCustomData != _oldCustomData)
+                {
+                    GetCustomDataJobCommand(Me.CustomData, Me);
+                    _oldCustomData = Me.CustomData;
+                }
                 
 
             }

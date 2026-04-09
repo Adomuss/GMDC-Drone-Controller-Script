@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Dynamic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -57,7 +58,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.506B";
+        string ver = "V0.507B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -206,9 +207,7 @@ namespace IngameScript
         int boresRemaining;
         bool faultLightOutput = false;
         int faultCounter = 0;
-        private IEnumerator<bool> gridCoroutine;
-        private IEnumerator<bool> listCoroutine;
-        private IEnumerator<bool> visCoroutine;
+        private IEnumerator<bool> gridCoroutine, listCoroutine, visCoroutine;
         IMyRadioAntenna antennaActual;
         IMyLightingBlock lightIndicatorActual;
         IMyRemoteControl remoteControlActual;
@@ -306,23 +305,12 @@ namespace IngameScript
         bool noInterfaceCommand = false;
         string interfaceArgument;
         //decimal dps_r_d = 0.0m;
-        List<IMyRemoteControl> remoteControlAll;
-        List<IMyRemoteControl> remoteControlTag;
-        List<IMyRadioAntenna> antennaAll;
-        List<IMyRadioAntenna> antennaTag;
-        List<IMyLightingBlock> lightsAll;
-        List<IMyLightingBlock> lightsTag;
-        List<IMyTerminalBlock> display_all;
-        List<IMyTerminalBlock> display_tag_main;
-        List<IMyTerminalBlock> display_tag_list;
-        List<IMyTerminalBlock> display_tag_drone;
-        List<IMyTerminalBlock> display_tag_vis;
-        List<IMyProgrammableBlock> programblockAll;
-        List<IMyProgrammableBlock> interfacePBTag;
-        IMyTextSurface sD;
-        IMyTextSurface sM;
-        IMyTextSurface sL;
-        IMyTextSurface sV;
+        List<IMyRemoteControl> remoteControlAll, remoteControlTag;       
+        List<IMyRadioAntenna> antennaAll, antennaTag;        
+        List<IMyLightingBlock> lightsAll, lightsTag;        
+        List<IMyTerminalBlock> display_all, display_tag_main, display_tag_list, display_tag_drone, display_tag_vis;
+        List<IMyProgrammableBlock> programblockAll, interfacePBTag;
+        IMyTextSurface sD, sM, sL, sV;
         RectangleF _viewport;
         StringBuilder sb;
         int totalDronesDamaged = 0;
@@ -359,10 +347,8 @@ namespace IngameScript
         string secondary_tag = "";
         double game_tick_length = 16.666;
 
-        IMyBroadcastListener listenDrones;
-        IMyBroadcastListener listenProspector;
-        List<MyIGCMessage> droneMessagesBuffer;
-        List<MyIGCMessage> prospectorMessagesBuffer;
+        IMyBroadcastListener listenDrones, listenProspector;
+        List<MyIGCMessage> droneMessagesBuffer, prospectorMessagesBuffer;        
         bool prospectorMessageReceived = false;
         bool droneMessageConfirmed = false;
         int receivedDroneNameIndex = -1;
@@ -371,7 +357,7 @@ namespace IngameScript
         List<MySprite> sprites;
         int spriteCounter = 0;
         bool spriteInsert = false;
-        StringBuilder customDataString;
+        StringBuilder customDataString, _statusBuffer;
         string _oldCustomData = "";
 
 
@@ -2732,6 +2718,86 @@ namespace IngameScript
 
         void GetRemoteControlData(string input, IMyTerminalBlock block)
         {
+            // 1. Early exits and caching
+            if (block == null || remoteControlTag[0] == null)
+            {
+                // Only run Replace if we actually need to Echo (saves instructions)
+                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
+                return;
+            }
+
+            string rawData = block.CustomData; // Cache once
+
+            if (string.IsNullOrWhiteSpace(rawData))
+            {
+                Echo("Prospector job data not found");
+                return;
+            }
+
+            // 2. Initial Tag Check
+            if (!rawData.Contains("[GMDCJobData]"))
+            {
+                // Don't split unless we have to
+                if (rawData.Length > 0)
+                {
+                    StoreRawInput(rawData, block, gmdccategory, rcjobinfo);
+                }
+                return;
+            }
+
+            // Reuse the previous logic for input validation
+            if (string.IsNullOrWhiteSpace(input)) return;
+
+            FetchRCJobData(rawData);
+            string[] remoteGpsCommand = rcjobdata.Split(':');
+            int len = remoteGpsCommand.Length;
+
+            // 3. Reset State
+            prospectTargetValid = false;
+
+            if (len < 6)
+            {
+                ClearRCCustomData1_6(1, 6); // Helper to clear variables in bulk
+                return;
+            }
+
+            // 4. Primary Target Parsing
+            // Using the ParseDouble helper we created earlier
+            targetGPSCoordinates.X = ParseDouble(remoteGpsCommand, 2, 0.0);
+            targetGPSCoordinates.Y = ParseDouble(remoteGpsCommand, 3, 0.0);
+            targetGPSCoordinates.Z = ParseDouble(remoteGpsCommand, 4, 0.0);
+            safe_dstvl = ParseDouble(remoteGpsCommand, 6, 0.0);
+
+            // If we have valid X coordinate, assume target is valid (common SE shortcut)
+            prospectTargetValid = (targetGPSCoordinates.X != 0);
+
+            // Bulk assign the strings if they are needed elsewhere
+            UpdateRCHistoryStrings1_6(remoteGpsCommand, 1, 6);
+
+            // 5. Alignment Target Parsing
+            if (len > 7 && !prospectAlignTargetValid)
+            {
+                if (len < 11)
+                {
+                    ClearRCCustomData7_12(7, 12);
+                    prospectAlignTargetValid = false;
+                }
+                else
+                {
+                    alignGPSCoordinates.X = ParseDouble(remoteGpsCommand, 9, 0.0);
+                    alignGPSCoordinates.Y = ParseDouble(remoteGpsCommand, 10, 0.0);
+                    alignGPSCoordinates.Z = ParseDouble(remoteGpsCommand, 11, 0.0);
+
+                    // Validation check
+                    prospectAlignTargetValid = (alignGPSCoordinates.X != 0 || alignGPSCoordinates.Y != 0);
+
+                    UpdateRCHistoryStrings7_12(remoteGpsCommand, 7, 12);
+                    StoreRCJobData(remoteControlActual, rcjobdata);
+                }
+            }
+        }
+        void GetRemoteControlDataOld(string input, IMyTerminalBlock block)
+        {
             if (block == null || remoteControlTag[0] == null)
             {
                 Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
@@ -2946,6 +3012,88 @@ namespace IngameScript
 
 
         void GetCustomDataJobCommand(string input, IMyTerminalBlock block)
+        {
+            // 1. Cache CustomData once to avoid multiple API calls
+            string rawData = block.CustomData;
+
+            if (string.IsNullOrWhiteSpace(rawData))
+            {
+                Echo("Datablank");
+                return;
+            }
+
+            // 2. Initial format check - avoids splitting if not needed
+            if (!rawData.Contains(gmdccategory))
+            {
+                string[] testSplit = rawData.Split(':');
+                if (testSplit.Length > 0)
+                {
+                    StoreRawInput(rawData, block, gmdccategory, jobinfo);
+                }
+                Echo("Dataconversion");
+                return;
+            }
+
+            FetchJobData(rawData);
+            string[] gpsCommand = jobdata.Split(':');
+            int len = gpsCommand.Length;
+
+            if (len < 10)
+            {
+                // Use a loop or clear method to reset variables instead of 22 lines of code
+                ClearCustomDataVariables();
+                Echo("Data format invalid - GPS:name:x:y:z...");
+                return;
+            }
+
+            // 3. Batch processing using the helpers
+            miningGPSCoordinates.X = ParseDouble(gpsCommand, 2, 0.0);
+            miningGPSCoordinates.Y = ParseDouble(gpsCommand, 3, 0.0);
+            miningGPSCoordinates.Z = ParseDouble(gpsCommand, 4, 0.0);
+
+            // Set validation flag based on coordinate success
+            miningCoordsValid = (miningGPSCoordinates.X != 0 || miningGPSCoordinates.Y != 0 || miningGPSCoordinates.Z != 0);
+
+            drillLength = ParseDouble(gpsCommand, 6, 1.0);
+            gridSize = ParseDouble(gpsCommand, 7, 0.0);
+            numPointsX = ParseInt(gpsCommand, 8, 0);
+            numPointsY = ParseInt(gpsCommand, 9, 0);
+            ignoreDepth = ParseDouble(gpsCommand, 10, 0.0);
+
+            bool.TryParse(gpsCommand.ElementAtOrDefault(11), out dronesLaunchedStatus);
+            dronesInFlightFactor = ParseInt(gpsCommand, 12, 1);
+            dronesActiveHardLimit = ParseInt(gpsCommand, 13, 6);
+            skipBoresNumber = ParseInt(gpsCommand, 14, 0);
+            bool.TryParse(gpsCommand.ElementAtOrDefault(15), out coreOutGrid);
+
+            // 4. Alignment Logic
+            customDataAlignTargetValid = false;
+            if (len > 22)
+            {
+                alignGPSCoordinates.X = ParseDouble(gpsCommand, 18, 0.0);
+                alignGPSCoordinates.Y = ParseDouble(gpsCommand, 19, 0.0);
+                alignGPSCoordinates.Z = ParseDouble(gpsCommand, 20, 0.0);
+                safe_dstvl = ParseDouble(gpsCommand, 22, 30.0);
+
+                customDataAlignTargetValid = (alignGPSCoordinates.X != 0);
+            }
+
+            // 5. Optimized Update - Use StringBuilder instead of + concatenation
+            if (prospectAlignTargetValid && len > 16 && len < 18)
+            {
+                _statusBuffer.Clear();
+                _statusBuffer.Append(jobdata)
+                             .Append("GPS:TGT:")
+                             .Append(alignGPSCoordinates.X).Append(":")
+                             .Append(alignGPSCoordinates.Y).Append(":")
+                             .Append(alignGPSCoordinates.Z).Append(":#F77668:")
+                             .Append(safe_dstvl).Append(":");
+
+                StoreRawInput(_statusBuffer.ToString(), block, gmdccategory, jobinfo);
+            }
+        }
+
+        void GetCustomDataJobCommandOld(string input, IMyTerminalBlock block)
         {
             // Checks if the block has CustomData AND if it's NOT already INI-formatted data
             if (!string.IsNullOrEmpty(block.CustomData) && !block.CustomData.Contains(gmdccategory))
@@ -4305,6 +4453,7 @@ namespace IngameScript
             c = new StringBuilder();
             jxt = new StringBuilder();
             customDataString = new StringBuilder();
+            _statusBuffer = new StringBuilder();
             for (int i = 0; i < 12; i++)
             {
                 cl.Add("");
@@ -4822,6 +4971,86 @@ namespace IngameScript
             Echo($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
         }
 
+
+        double ParseDouble(string[] data, int index, double defaultValue)
+        {
+            double result;
+            if (index < data.Length && double.TryParse(data[index], out result)) return result;
+            return defaultValue;
+        }
+
+        int ParseInt(string[] data, int index, int defaultValue)
+        {
+            int result;
+            if (index < data.Length && int.TryParse(data[index], out result)) return result;
+            return defaultValue;
+        }
+
+        void ClearCustomDataVariables()
+        {
+            customData1 = "";
+            customData2 = "";
+            customData3 = "";
+            customData4 = "";
+            customData5 = "";
+            customData6 = "";
+            customData7 = "";
+            customData8 = "";
+            customData9 = "";
+            customData10 = "";
+            customData11 = "";
+            customData12 = "";
+            customData13 = "";
+            customData14 = "";
+            customData15 = "";
+            customData16 = "";
+            customData17 = "";
+            customData18 = "";
+            customData19 = "";
+            customData20 = "";
+            customData21 = "";
+            customData22 = "";
+        }
+
+        void ClearRCCustomData1_6(int start, int end)
+        {
+            remoteControlCustomData1 = "";
+            remoteControlCustomData2 = "";
+            remoteControlCustomData3 = "";
+            remoteControlCustomData4 = "";
+            remoteControlCustomData5 = "";
+            remoteControlCustomData6 = "";
+        }
+
+        void ClearRCCustomData7_12(int start, int end)
+        {
+            remoteControlCustomData7 = "";
+            remoteControlCustomData8 = "";
+            remoteControlCustomData9 = "";
+            remoteControlCustomData10 = "";
+            remoteControlCustomData11 = "";
+            remoteControlCustomData12 = "";
+        }
+
+        void UpdateRCHistoryStrings1_6(string[] remoteGpsCommand, int start, int end)
+        {
+            remoteControlCustomData1 = remoteGpsCommand[1];
+            remoteControlCustomData2 = remoteGpsCommand[2];
+            remoteControlCustomData3 = remoteGpsCommand[3];
+            remoteControlCustomData4 = remoteGpsCommand[4];
+            remoteControlCustomData5 = remoteGpsCommand[5];
+            remoteControlCustomData6 = remoteGpsCommand[6];
+        }
+
+        void UpdateRCHistoryStrings7_12(string[] remoteGpsCommand, int start, int end)
+        {
+            remoteControlCustomData7 = remoteGpsCommand[7];
+            remoteControlCustomData8 = remoteGpsCommand[8];
+            remoteControlCustomData9 = remoteGpsCommand[9];
+            remoteControlCustomData10 = remoteGpsCommand[10];
+            remoteControlCustomData11 = remoteGpsCommand[11];
+            remoteControlCustomData12 = remoteGpsCommand[12];
+        }
     }
 
 }

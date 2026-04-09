@@ -58,7 +58,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.507B";
+        string ver = "V0.508B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -144,38 +144,38 @@ namespace IngameScript
         bool customDataAlignTargetValid = false;
         string commandAsk;
         //string customData1;
-        string customData2;
-        string customData3;
-        string customData4;
+        //string customData2;
+        //string customData3;
+        //string customData4;
         string customData5;
-        string customData6;
+        //string customData6;
         string customData7;
         string customData8;
         string customData9;
-        string customData10;
-        string customData11;
-        string customData12;
-        string customData13;
-        string customData14;
-        string customData15;
+        //string customData10;
+        //string customData11;
+        //string customData12;
+        //string customData13;
+        //string customData14;
+        //string customData15;
         //string customData16;
         //string customData17;
-        string customData18;
-        string customData19;
-        string customData20;
+        //string customData18;
+        //string customData19;
+        //string customData20;
         //string customData21;
-        string customData22;
+        //string customData22;
         //string remoteControlCustomData1 = "";
-        string remoteControlCustomData2 = "";
-        string remoteControlCustomData3 = "";
-        string remoteControlCustomData4 = "";
+        //string remoteControlCustomData2 = "";
+        //string remoteControlCustomData3 = "";
+        //string remoteControlCustomData4 = "";
         //string remoteControlCustomData5 = "";
-        string remoteControlCustomData6 = "";
+        //string remoteControlCustomData6 = "";
         //string remoteControlCustomData7 = "";
         //string remoteControlCustomData8 = "";
-        string remoteControlCustomData9 = "";
-        string remoteControlCustomData10 = "";
-        string remoteControlCustomData11 = "";
+        //string remoteControlCustomData9 = "";
+        //string remoteControlCustomData10 = "";
+        //string remoteControlCustomData11 = "";
        // string remoteControlCustomData12 = "";
 
         string cd1 = "";
@@ -342,8 +342,8 @@ namespace IngameScript
         double percent_grid = 0.0;
         string icon = "";
         int stateshift = 0;
-        string temp_id_name;
-        string temp_id_name_2;
+        //string temp_id_name;
+        //string temp_id_name_2;
         string secondary_tag = "";
         double game_tick_length = 16.666;
 
@@ -370,15 +370,15 @@ namespace IngameScript
         string runargument = "";
         bool firstload = false;
         MyIni _customDataStore = new MyIni();
-        MyIni _commsData = new MyIni();
+        //MyIni _commsData = new MyIni();
         string jobdata = "";
         string rcjobdata = "";
         string jobinfo = "Jobinfo";
         string gmdccategory = "GMDCJobData";
-        string gmdpcategory = "GMDPJobData";
+        //string gmdpcategory = "GMDPJobData";
         string rcjobinfo = "Jobinfo";
-        string prospectmain = "maindata";
-        string prospecttarget = "aligndata";
+        //string prospectmain = "maindata";
+       // string prospecttarget = "aligndata";
         #endregion
         public void Save()
         {
@@ -2587,135 +2587,7 @@ namespace IngameScript
             }
         }
 
-        
-        void GetRemoteControlData_Broken(string input, IMyTerminalBlock block)
-        {
-            if (block == null || remoteControlTag[0] == null)
-            {
-                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
-                return;
-            }
-            if (string.IsNullOrEmpty(block.CustomData) || string.IsNullOrWhiteSpace(block.CustomData))
-            {
-                Echo("Prospector job data not found");
-                return;
-            }
-            _commsData.Clear();
-            if (_commsData.TryParse(block.CustomData))
-            {
-                var str = "";
-                str = _commsData.Get(gmdpcategory, prospectmain).ToString().Trim();
-                if (!string.IsNullOrEmpty(str) && !string.IsNullOrWhiteSpace(str))
-                {
-                    String[] remoteGpsCommand = str.Split(':');
-
-                    if (remoteGpsCommand.Length < 6)
-                    {
-                        //remoteControlCustomData1 = "";
-                        remoteControlCustomData2 = "";
-                        remoteControlCustomData3 = "";
-                        remoteControlCustomData4 = "";
-                        //remoteControlCustomData5 = "";
-                        remoteControlCustomData6 = "";
-
-                        prospectTargetValid = false;
-                        return;
-                    }
-                    if (remoteGpsCommand.Length > 6)
-                    {
-
-                        //target_gps_coords = new Vector3D(Double.Parse(remoteGpsCommand[2]), Double.Parse(remoteGpsCommand[3]), Double.Parse(remoteGpsCommand[4]));
-                        prospectTargetValid = true;
-                        //remoteControlCustomData1 = remoteGpsCommand[1];
-                        remoteControlCustomData2 = remoteGpsCommand[2];
-                        remoteControlCustomData3 = remoteGpsCommand[3];
-                        remoteControlCustomData4 = remoteGpsCommand[4];
-                        //remoteControlCustomData5 = remoteGpsCommand[5];
-                        remoteControlCustomData6 = remoteGpsCommand[6];
-                        if (!double.TryParse(remoteControlCustomData2, out targetGPSCoordinates.X))
-                        {
-                            targetGPSCoordinates.X = 0.0;
-                            remoteControlCustomData2 = "";
-                        }
-                        if (!double.TryParse(remoteControlCustomData3, out targetGPSCoordinates.Y))
-                        {
-                            targetGPSCoordinates.Y = 0.0;
-                            remoteControlCustomData3 = "";
-                        }
-                        if (!double.TryParse(remoteControlCustomData4, out targetGPSCoordinates.Z))
-                        {
-                            targetGPSCoordinates.Z = 0.0;
-                            remoteControlCustomData4 = "";
-                        }
-                        //5 is colour data
-                        if (!double.TryParse(remoteControlCustomData6, out safe_dstvl))
-                        {
-                            safe_dstvl = 0.0;
-                        }
-
-                    }
-                }
-                str = _commsData.Get(gmdpcategory, prospecttarget).ToString().Trim();
-                if (!string.IsNullOrEmpty(str) && !string.IsNullOrWhiteSpace(str))
-                {
-                    String[] remoteGpsCommand = str.Split(':');
-                    if (remoteGpsCommand.Length > 5 && !prospectAlignTargetValid)
-                    {
-                        bool AlignX = false;
-                        bool AlignY = false;
-                        bool AlignZ = false;
-
-                        //remoteControlCustomData7 = remoteGpsCommand[0];
-                        //remoteControlCustomData8 = remoteGpsCommand[1];
-                        remoteControlCustomData9 = remoteGpsCommand[2];
-                        remoteControlCustomData10 = remoteGpsCommand[3];
-                        remoteControlCustomData11 = remoteGpsCommand[4];
-                        //remoteControlCustomData12 = remoteGpsCommand[5];
-                        if (!double.TryParse(remoteControlCustomData9, out alignGPSCoordinates.X))
-                        {
-                            alignGPSCoordinates.X = 0.0;
-                            remoteControlCustomData9 = "";
-                            AlignX = false;
-                        }
-                        else
-                        {
-                            AlignX = true;
-                        }
-                        if (!double.TryParse(remoteControlCustomData10, out alignGPSCoordinates.Y))
-                        {
-                            alignGPSCoordinates.Y = 0.0;
-                            remoteControlCustomData10 = "";
-                            AlignY = false;
-                        }
-                        else
-                        {
-                            AlignY = true;
-                        }
-                        if (!double.TryParse(remoteControlCustomData11, out alignGPSCoordinates.Z))
-                        {
-                            alignGPSCoordinates.Z = 0.0;
-                            remoteControlCustomData11 = "";
-                            AlignZ = false;
-                        }
-                        else
-                        {
-                            AlignZ = true;
-                        }
-                        if (AlignX && AlignY && AlignZ)
-                        {
-                            prospectAlignTargetValid = true;
-                        }
-                    }
-                }
-                _commsData.Clear();
-            }
-            else
-            {
-                //GetRemoteControlData_Legacy(input, block);
-            }
-
-
-        }
+       
         
         public void GetRemoteControlData(string input, IMyTerminalBlock block)
         {
@@ -2797,147 +2669,7 @@ namespace IngameScript
                 }
             }
         }
-        
-        void GetRemoteControlDataOld(string input, IMyTerminalBlock block)
-        {
-            if (block == null || remoteControlTag[0] == null)
-            {
-                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
-                return;
-            }
-            if (string.IsNullOrEmpty(block.CustomData) || string.IsNullOrWhiteSpace(block.CustomData))
-            {
-                Echo("Prospector job data not found");
-                return;
-            }
-            // Checks if the block has CustomData AND if it's NOT already INI-formatted data
-            if (!string.IsNullOrEmpty(block.CustomData) && !block.CustomData.Contains("[GMDCJobData]"))
-            {
-                String[] remoteGpsCommandtest = block.CustomData.Split(':');
 
-                if (remoteGpsCommandtest.Length > 0)
-                {
-                    StoreRawInput(block.CustomData, block, gmdccategory, rcjobinfo);
-
-                }
-                return;
-
-            }
-            if (string.IsNullOrWhiteSpace(input) || string.IsNullOrEmpty(input))
-            {
-                return;
-            }
-
-            FetchRCJobData(remoteControlActual.CustomData);
-            String[] remoteGpsCommand = rcjobdata.Split(':');
-
-            if (remoteGpsCommand.Length < 6)
-            {
-                //remoteControlCustomData1 = "";
-                remoteControlCustomData2 = "";
-                remoteControlCustomData3 = "";
-                remoteControlCustomData4 = "";
-                //remoteControlCustomData5 = "";
-                remoteControlCustomData6 = "";
-
-                prospectTargetValid = false;
-                return;
-            }
-            if (remoteGpsCommand.Length > 6)
-            {
-
-                //target_gps_coords = new Vector3D(Double.Parse(remoteGpsCommand[2]), Double.Parse(remoteGpsCommand[3]), Double.Parse(remoteGpsCommand[4]));
-                prospectTargetValid = true;
-                //remoteControlCustomData1 = remoteGpsCommand[1];
-                remoteControlCustomData2 = remoteGpsCommand[2];
-                remoteControlCustomData3 = remoteGpsCommand[3];
-                remoteControlCustomData4 = remoteGpsCommand[4];
-                //remoteControlCustomData5 = remoteGpsCommand[5];
-                remoteControlCustomData6 = remoteGpsCommand[6];
-                if (!double.TryParse(remoteControlCustomData2, out targetGPSCoordinates.X))
-                {
-                    targetGPSCoordinates.X = 0.0;
-                    remoteControlCustomData2 = "";
-                }
-                if (!double.TryParse(remoteControlCustomData3, out targetGPSCoordinates.Y))
-                {
-                    targetGPSCoordinates.Y = 0.0;
-                    remoteControlCustomData3 = "";
-                }
-                if (!double.TryParse(remoteControlCustomData4, out targetGPSCoordinates.Z))
-                {
-                    targetGPSCoordinates.Z = 0.0;
-                    remoteControlCustomData4 = "";
-                }
-                //5 is colour data
-                if (!double.TryParse(remoteControlCustomData6, out safe_dstvl))
-                {
-                    safe_dstvl = 0.0;
-                }
-
-            }
-            if (remoteGpsCommand.Length < 11 && remoteGpsCommand.Length > 7 && !prospectAlignTargetValid)
-            {
-                //remoteControlCustomData7 = "";
-                //remoteControlCustomData8 = "";
-                remoteControlCustomData9 = "";
-                remoteControlCustomData10 = "";
-                remoteControlCustomData11 = "";
-                //remoteControlCustomData12 = "";
-                prospectAlignTargetValid = false;
-                return;
-            }
-            if (remoteGpsCommand.Length > 7 && !prospectAlignTargetValid)
-            {
-                bool AlignX = false;
-                bool AlignY = false;
-                bool AlignZ = false;
-
-                //remoteControlCustomData7 = remoteGpsCommand[7];
-                //remoteControlCustomData8 = remoteGpsCommand[8];
-                remoteControlCustomData9 = remoteGpsCommand[9];
-                remoteControlCustomData10 = remoteGpsCommand[10];
-                remoteControlCustomData11 = remoteGpsCommand[11];
-                //remoteControlCustomData12 = remoteGpsCommand[12];
-                if (!double.TryParse(remoteControlCustomData9, out alignGPSCoordinates.X))
-                {
-                    alignGPSCoordinates.X = 0.0;
-                    remoteControlCustomData9 = "";
-                    AlignX = false;
-                }
-                else
-                {
-                    AlignX = true;
-                }
-                if (!double.TryParse(remoteControlCustomData10, out alignGPSCoordinates.Y))
-                {
-                    alignGPSCoordinates.Y = 0.0;
-                    remoteControlCustomData10 = "";
-                    AlignY = false;
-                }
-                else
-                {
-                    AlignY = true;
-                }
-                if (!double.TryParse(remoteControlCustomData11, out alignGPSCoordinates.Z))
-                {
-                    alignGPSCoordinates.Z = 0.0;
-                    remoteControlCustomData11 = "";
-                    AlignZ = false;
-                }
-                else
-                {
-                    AlignZ = true;
-                }
-                if (AlignX && AlignY && AlignZ)
-                {
-                    prospectAlignTargetValid = true;
-                }
-
-                StoreRCJobData(remoteControlActual, rcjobdata);
-            }
-        }
-        
         void FetchRCJobData(string input)
         {
             _customDataStore.Clear();
@@ -3052,7 +2784,7 @@ namespace IngameScript
             miningGPSCoordinates.X = ParseDouble(gpsCommand, 2, 0.0);
             miningGPSCoordinates.Y = ParseDouble(gpsCommand, 3, 0.0);
             miningGPSCoordinates.Z = ParseDouble(gpsCommand, 4, 0.0);
-
+            customData5 = gpsCommand[5];
             // Set validation flag based on coordinate success
             miningCoordsValid = (miningGPSCoordinates.X != 0 || miningGPSCoordinates.Y != 0 || miningGPSCoordinates.Z != 0);
 
@@ -3094,297 +2826,7 @@ namespace IngameScript
                 StoreRawInput(_statusBuffer.ToString(), block, gmdccategory, jobinfo);
             }
         }
-
-        
-        void GetCustomDataJobCommandOld(string input, IMyTerminalBlock block)
-        {
-            // Checks if the block has CustomData AND if it's NOT already INI-formatted data
-            if (!string.IsNullOrEmpty(block.CustomData) && !block.CustomData.Contains(gmdccategory))
-            {
-                String[] gpsCommandtest = block.CustomData.ToString().Split(':');
-
-                if (gpsCommandtest.Length > 0)
-                {
-                    StoreRawInput(block.CustomData, block, gmdccategory, jobinfo);
-                }
-                Echo("Dataconversion");
-                return;
-
-            }
-            if (string.IsNullOrWhiteSpace(block.CustomData.ToString()) || string.IsNullOrEmpty(block.CustomData.ToString()))
-            {
-                Echo("Datablank");
-                return;
-            }
-            FetchJobData(block.CustomData.ToString());
-            String[] gpsCommand = jobdata.Split(':');
-
-            customDataAlignTargetValid = false;
-            if (gpsCommand.Length < 10)
-            {
-                //customData1 = "";
-                customData2 = "";
-                customData3 = "";
-                customData4 = "";
-                customData5 = "";
-                customData6 = "";
-                customData7 = "";
-                customData8 = "";
-                customData9 = "";
-                customData10 = "";
-                customData11 = "";
-                customData12 = "";
-                customData13 = "";
-                customData14 = "";
-                customData15 = "";
-                //customData16 = "";
-                //customData17 = "";
-                customData18 = "";
-                customData19 = "";
-                customData20 = "";
-                //customData21 = "";
-                customData22 = "";
-                Echo("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
-                return;
-            }
-            if (gpsCommand.Length > 4)
-            {
-                bool mAlignX;
-                bool mAlignY;
-                bool mAlignZ;
-                //customData1 = gpsCommand[1];
-                customData2 = gpsCommand[2];
-                customData3 = gpsCommand[3];
-                customData4 = gpsCommand[4];
-                customData5 = gpsCommand[5];
-                if (!double.TryParse(customData2, out miningGPSCoordinates.X))
-                {
-                    miningGPSCoordinates.X = 0.0;
-                    customData2 = "";
-                    mAlignX = false;
-                }
-                else
-                {
-                    mAlignX = true;
-                }
-                if (!double.TryParse(customData3, out miningGPSCoordinates.Y))
-                {
-                    miningGPSCoordinates.Y = 0.0;
-                    customData3 = "";
-                    mAlignY = false;
-                }
-                else
-                {
-                    mAlignY = true;
-                }
-                if (!double.TryParse(customData4, out miningGPSCoordinates.Z))
-                {
-                    miningGPSCoordinates.Z = 0.0;
-                    customData4 = "";
-                    mAlignZ = false;
-                }
-                else
-                {
-                    mAlignZ = true;
-                }
-                if (mAlignX && mAlignY && mAlignZ)
-                {
-                    miningCoordsValid = true;
-                }
-                else
-                {
-                    miningCoordsValid = false;
-                }
-
-            }
-            //5 should be colour data
-            if (gpsCommand.Length > 6)
-            {
-                customData6 = gpsCommand[6];
-                if (!Double.TryParse(customData6, out drillLength))
-                {
-                    drillLength = 1.0;
-                    customData6 = "";
-                }
-            }
-            if (gpsCommand.Length > 7)
-            {
-                customData7 = gpsCommand[7];
-                if (!Double.TryParse(customData7, out gridSize))
-                {
-                    gridSize = 0.0;
-                    customData7 = "";
-                }
-            }
-            if (gpsCommand.Length > 8)
-            {
-                customData8 = gpsCommand[8];
-                if (!int.TryParse(customData8, out numPointsX))
-                {
-                    numPointsX = 0;
-                    customData8 = "";
-                }
-            }
-            if (gpsCommand.Length > 9)
-            {
-                customData9 = gpsCommand[9];
-
-                if (!int.TryParse(customData9, out numPointsY))
-                {
-                    numPointsY = 0;
-                    customData9 = "";
-                }
-            }
-            if (gpsCommand.Length > 10)
-            {
-                customData10 = gpsCommand[10];
-                if (!Double.TryParse(customData10, out ignoreDepth))
-                {
-                    ignoreDepth = 0.0;
-                    customData10 = "";
-                }
-            }
-            if (gpsCommand.Length > 11)
-            {
-                customData11 = gpsCommand[11];
-                if (!bool.TryParse(customData11, out dronesLaunchedStatus))
-                {
-                    dronesLaunchedStatus = false;
-                    customData11 = "";
-                }
-            }
-            if (gpsCommand.Length > 12)
-            {
-                customData12 = gpsCommand[12];
-                if (!int.TryParse(customData12, out dronesInFlightFactor))
-                {
-                    dronesInFlightFactor = 1;
-                    customData12 = "";
-                }
-            }
-            if (gpsCommand.Length > 13)
-            {
-                customData13 = gpsCommand[13];
-                if (!int.TryParse(customData13, out dronesActiveHardLimit))
-                {
-                    dronesActiveHardLimit = 6;
-                    customData13 = "";
-                }
-            }
-            if (gpsCommand.Length > 14)
-            {
-                customData14 = gpsCommand[14];
-                if (!int.TryParse(customData14, out skipBoresNumber))
-                {
-                    skipBoresNumber = 0;
-                    customData14 = "";
-                }
-            }
-            if (gpsCommand.Length > 15)
-            {
-                customData15 = gpsCommand[15];
-                if (!bool.TryParse(customData15, out coreOutGrid))
-                {
-                    coreOutGrid = false;
-                    customData15 = "";
-                }
-            }
-
-            if (gpsCommand.Length > 16 && !prospectAlignTargetValid)
-            {
-                Echo($"gpsCommandLen:{gpsCommand.Length}");
-                bool targetAlignX;
-                bool targetAlignY;
-                bool targetAlignZ;
-                if (gpsCommand.Length > 16)
-                {
-                    //customData16 = gpsCommand[16];
-                }
-                if (gpsCommand.Length > 17)
-                {
-                    //customData17 = gpsCommand[17];
-                }
-                if (gpsCommand.Length > 18)
-                {
-                    customData18 = gpsCommand[18];
-                }
-                if (gpsCommand.Length > 19)
-                {
-                    customData19 = gpsCommand[19];
-                }
-                if (gpsCommand.Length > 20)
-                {
-                    customData20 = gpsCommand[20];
-                }
-                if (gpsCommand.Length > 21)
-                {
-                    //customData21 = gpsCommand[21];
-                }
-                if (gpsCommand.Length > 22)
-                {
-                    customData22 = gpsCommand[22];
-                }
-
-
-                if (!double.TryParse(customData18, out alignGPSCoordinates.X))
-                {
-                    alignGPSCoordinates.X = 0.0;
-                    customData18 = "";
-                    targetAlignX = false;
-                }
-                else
-                {
-                    targetAlignX = true;
-                }
-                if (!double.TryParse(customData19, out alignGPSCoordinates.Y))
-                {
-                    alignGPSCoordinates.Y = 0.0;
-                    customData19 = "";
-                    targetAlignY = false;
-                }
-                else
-                {
-                    targetAlignY = true;
-                }
-                if (!double.TryParse(customData20, out alignGPSCoordinates.Z))
-                {
-                    alignGPSCoordinates.Z = 0.0;
-                    customData20 = "";
-                    targetAlignZ = false;
-                }
-                else
-                {
-                    targetAlignZ = true;
-                }
-                if (targetAlignX && targetAlignY && targetAlignZ)
-                {
-                    //prospectAlignTargetValid = true;
-                    customDataAlignTargetValid = true;
-                }
-                else
-                {
-                    prospectAlignTargetValid = false;
-                    customDataAlignTargetValid = false;
-                }
-                if (!double.TryParse(customData22, out safe_dstvl))
-                {
-                    safe_dstvl = 30.0;
-                    customData22 = "";
-                }
-            }
-
-            if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
-            {
-
-
-                string tempbro = jobdata;
-                string updater = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";
-                StoreRawInput(updater, block, gmdccategory, jobinfo);
-                //StoreJobData(block, updater);
-            }
-
-        }
-        
+ 
         void FetchJobData(string input)
         {
             _customDataStore.Clear();
@@ -3497,27 +2939,7 @@ namespace IngameScript
             }
             _customDataStore.Clear();
         }
-        void StoreJobData(IMyTerminalBlock block, string input)
-        {
-            _customDataStore.Clear();
-            _customDataStore.Set(gmdccategory, jobinfo, input);
-            _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:{miningGPSCoordinates.X}:{miningGPSCoordinates.Y}:{miningGPSCoordinates.Z}:#FF75C9F1:");
-            _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
-            _customDataStore.Set(gmdccategory, "BoreSeparation", gridSize);
-            _customDataStore.Set(gmdccategory, "GridXBores", numPointsX);
-            _customDataStore.Set(gmdccategory, "GridYBores", numPointsY);
-            _customDataStore.Set(gmdccategory, "SkipBores", skipBoresNumber);
-            _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
-            _customDataStore.Set(gmdccategory, "DrillDepth", drillLength);
-            _customDataStore.Set(gmdccategory, "IgnoreDepth", ignoreDepth);
-            _customDataStore.Set(gmdccategory, "LimitDronesInFlight", dronesLaunchedStatus);
-            _customDataStore.Set(gmdccategory, "DronesFlightHardLimit", dronesActiveHardLimit);
-            _customDataStore.Set(gmdccategory, "DronesFlightFactor", dronesInFlightFactor);
-            _customDataStore.Set(gmdccategory, "CoreOutFunction", coreOutGrid);
 
-            block.CustomData = _customDataStore.ToString();
-            _customDataStore.Clear();
-        }
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
             if (droneName.Count <= 0)
@@ -4323,43 +3745,42 @@ namespace IngameScript
             {
                 if (temp_id[0] != null)
                 {
-                    temp_id_name = temp_id[0];
-                    drone_tag = temp_id_name;
-                    if (temp_id_name == "" || temp_id_name == null)
+                    //temp_id_name = temp_id[0];
+                    drone_tag = temp_id[0];
+                    if (temp_id[0] == "" || temp_id[0] == null)
                     {
-                        temp_id_name = drone_tag;
                         Echo($"Resorting to default scout tag {drone_tag}");
                     }
                 }
             }
             else
             {
-                temp_id_name = drone_tag;
+                //temp_id_name = drone_tag;
                 Echo($"Resorting to default ID#.{drone_tag}");
             }
             if (temp_id.Length > 1)
             {
                 if (temp_id[1] != null)
                 {
-                    temp_id_name_2 = temp_id[1];
-                    secondary = temp_id_name_2;
-                    if (temp_id_name_2 == null)
+                    //temp_id_name_2 = temp_id[1];
+                    secondary = temp_id[1];
+                    if (temp_id[1] == null)
                     {
-                        temp_id_name_2 = secondary;
+                        //temp_id_name_2 = secondary;
                         Echo($"Resorting to default scout tag {secondary}");
                     }
                 }
             }
             else
             {
-                temp_id_name_2 = secondary;
-                Echo($"Resorting to default ID#.{drone_tag}");
+                //temp_id_name_2 = secondary;
+                Echo($"Resorting to default ID#.{secondary}");
             }
             if (temp_id.Length == 0)
             {
-                temp_id_name = drone_tag;
-                temp_id_name_2 = secondary;
-                Echo($"Resorting to default config {temp_id_name} {temp_id_name_2}.");
+                //temp_id_name = drone_tag;
+               // temp_id_name_2 = secondary;
+                Echo($"Resorting to default config {drone_tag} {secondary}.");
             }
 
 
@@ -4993,66 +4414,66 @@ namespace IngameScript
         public void ClearCustomDataVariables()
         {
             //customData1 = "";
-            customData2 = "";
-            customData3 = "";
-            customData4 = "";
+            //customData2 = "";
+            //customData3 = "";
+           // customData4 = "";
             customData5 = "";
-            customData6 = "";
+           // customData6 = "";
             customData7 = "";
             customData8 = "";
             customData9 = "";
-            customData10 = "";
-            customData11 = "";
-            customData12 = "";
-            customData13 = "";
-            customData14 = "";
-            customData15 = "";
+          //  customData10 = "";
+          //  customData11 = "";
+          //  customData12 = "";
+          //  customData13 = "";
+         //   customData14 = "";
+         //  customData15 = "";
             //customData16 = "";
             //customData17 = "";
-            customData18 = "";
-            customData19 = "";
-            customData20 = "";
+            //customData18 = "";
+            //customData19 = "";
+            //customData20 = "";
             //customData21 = "";
-            customData22 = "";
+            //customData22 = "";
         }
 
         public void ClearRCCustomData1_6(int start, int end)
         {
             //remoteControlCustomData1 = "";
-            remoteControlCustomData2 = "";
-            remoteControlCustomData3 = "";
-            remoteControlCustomData4 = "";
+            //remoteControlCustomData2 = "";
+            //remoteControlCustomData3 = "";
+            //remoteControlCustomData4 = "";
             //remoteControlCustomData5 = "";
-            remoteControlCustomData6 = "";
+            //remoteControlCustomData6 = "";
         }
 
         public void ClearRCCustomData7_12(int start, int end)
         {
             //remoteControlCustomData7 = "";
             //remoteControlCustomData8 = "";
-            remoteControlCustomData9 = "";
-            remoteControlCustomData10 = "";
-            remoteControlCustomData11 = "";
+            //remoteControlCustomData9 = "";
+            //remoteControlCustomData10 = "";
+            //remoteControlCustomData11 = "";
             //remoteControlCustomData12 = "";
         }
 
         public void UpdateRCHistoryStrings1_6(string[] remoteGpsCommand, int start, int end)
         {
             //remoteControlCustomData1 = remoteGpsCommand[1];
-            remoteControlCustomData2 = remoteGpsCommand[2];
-            remoteControlCustomData3 = remoteGpsCommand[3];
-            remoteControlCustomData4 = remoteGpsCommand[4];
+            //remoteControlCustomData2 = remoteGpsCommand[2];
+            //remoteControlCustomData3 = remoteGpsCommand[3];
+            //remoteControlCustomData4 = remoteGpsCommand[4];
             //remoteControlCustomData5 = remoteGpsCommand[5];
-            remoteControlCustomData6 = remoteGpsCommand[6];
+            //remoteControlCustomData6 = remoteGpsCommand[6];
         }
 
         public void UpdateRCHistoryStrings7_12(string[] remoteGpsCommand, int start, int end)
         {
             //remoteControlCustomData7 = remoteGpsCommand[7];
             //remoteControlCustomData8 = remoteGpsCommand[8];
-            remoteControlCustomData9 = remoteGpsCommand[9];
-            remoteControlCustomData10 = remoteGpsCommand[10];
-            remoteControlCustomData11 = remoteGpsCommand[11];
+            //remoteControlCustomData9 = remoteGpsCommand[9];
+            //remoteControlCustomData10 = remoteGpsCommand[10];
+            //remoteControlCustomData11 = remoteGpsCommand[11];
             //remoteControlCustomData12 = remoteGpsCommand[12];
         }
     }

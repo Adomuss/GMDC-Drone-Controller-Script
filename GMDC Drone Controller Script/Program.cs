@@ -48,7 +48,7 @@ namespace IngameScript
 
         //Drone Comms
         int droneCommunicationsProcessingDelay = 1;
-        int droneCommunicationsPingDelay = 18;
+        int droneCommunicationsPingDelay = 30;
 
         #endregion
 
@@ -58,7 +58,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.508B";
+        string ver = "V0.509B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -342,6 +342,7 @@ namespace IngameScript
         double percent_grid = 0.0;
         string icon = "";
         int stateshift = 0;
+        int updaterate = 10;
         //string temp_id_name;
         //string temp_id_name_2;
         string secondary_tag = "";
@@ -639,13 +640,14 @@ namespace IngameScript
 
         private void TimeCounterReset()
         {
+
             timeCounter++;
-            if (timeCounter >= droneCommunicationsProcessingDelay)
+            if (timeCounter >= ((droneCommunicationsProcessingDelay )))
             {
                 timeDelayed = true;
             }
             dronePingTimerCount++;
-            if (dronePingTimerCount >= droneCommunicationsPingDelay)
+            if (dronePingTimerCount >= ((droneCommunicationsPingDelay)))
             {
                 dronesPinged = false;
             }
@@ -653,7 +655,7 @@ namespace IngameScript
             {
                 undockTimer++;
             }
-            if (undockTimer > droneUndockDelayTime)
+            if (undockTimer > ((droneUndockDelayTime )))
             {
                 dronesUndocking = false;
             }
@@ -3727,6 +3729,54 @@ namespace IngameScript
             else
             {
                 drone_clear_offset = 9.0; // Default if argument is missing
+            }
+            if (dronecontrolleronfigdata.Length >= 5)
+            {
+                if (!int.TryParse(dronecontrolleronfigdata[4].ToString().Trim(), out droneCommunicationsPingDelay))
+                {
+                    droneCommunicationsPingDelay = 30; // Set to default on fail
+                }
+            }
+            else
+            {
+                droneCommunicationsPingDelay = 30; // Default if argument is missing
+            }
+            if (dronecontrolleronfigdata.Length >= 6)
+            {
+                if (!int.TryParse(dronecontrolleronfigdata[5].ToString().Trim(), out updaterate))
+                {
+                    updaterate = 10; // Set to default on fail
+                }
+            }
+            else
+            {
+                updaterate = 10; // Default if argument is missing
+            }
+            //Manage Runtime Updaterate
+            if (updaterate == 1 && Runtime.UpdateFrequency != UpdateFrequency.Update1)
+            {
+                Runtime.UpdateFrequency = UpdateFrequency.Update1;
+                droneCommunicationsPingDelay = droneCommunicationsPingDelay * 10;
+                if (droneCommunicationsPingDelay < 1)
+                {
+                    droneCommunicationsPingDelay = 1;
+                }
+            }
+            else if (updaterate == 100 && Runtime.UpdateFrequency != UpdateFrequency.Update100)
+            {
+                Runtime.UpdateFrequency = UpdateFrequency.Update100;
+                droneCommunicationsPingDelay = droneCommunicationsPingDelay / 10;
+                if(droneCommunicationsPingDelay < 1)
+                {
+                    droneCommunicationsPingDelay = 1;
+                }
+            }
+            else
+            {
+                if (Runtime.UpdateFrequency != UpdateFrequency.Update10)
+                {
+                    Runtime.UpdateFrequency = UpdateFrequency.Update10;
+                }
             }
         }
         public void drone_custom_data_check(string custominfo, int index)

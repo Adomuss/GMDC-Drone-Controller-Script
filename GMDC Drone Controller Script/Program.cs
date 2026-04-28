@@ -3003,7 +3003,7 @@ namespace IngameScript
         IEnumerator<bool> GenListDisplay()
         {
             int batchcount = 0;
-            int batchcountlimit = 4;
+            int batchcountlimit = 1;
             if (!listHeaderGenerated)
             {
                 displayTextList.Append($"{secondary_tag} Mining Grid Status - GMDC {ver} {icon}");
@@ -3061,7 +3061,7 @@ namespace IngameScript
             //initgridcount++;
             //List<Vector3D> grdPositins = new List<Vector3D>();
             int batchcount = 0;
-            int batchcountlimit = 4;
+            int batchcountlimit = 1;
             int gridcount_inner = 0;
             int gridcount_outer = 0;
             int gridcount = 0;

@@ -3002,6 +3002,8 @@ namespace IngameScript
 
         IEnumerator<bool> GenListDisplay()
         {
+            int batchcount = 0;
+            int batchcountlimit = 4;
             if (!listHeaderGenerated)
             {
                 displayTextList.Append($"{secondary_tag} Mining Grid Status - GMDC {ver} {icon}");
@@ -3043,7 +3045,12 @@ namespace IngameScript
                     listGeneratorFinished = true;
                 }
                 percent_list = ((double)i / (double)gridBoreFinished.Count) * 100;
-                yield return false;
+                batchcount++;
+                if (batchcount >= batchcountlimit)
+                {
+                    batchcount = 0;
+                    yield return false;
+                }
             }
             yield return true;
         }
@@ -3053,7 +3060,8 @@ namespace IngameScript
             //debugcount++;
             //initgridcount++;
             //List<Vector3D> grdPositins = new List<Vector3D>();
-
+            int batchcount = 0;
+            int batchcountlimit = 4;
             int gridcount_inner = 0;
             int gridcount_outer = 0;
             int gridcount = 0;
@@ -3075,7 +3083,12 @@ namespace IngameScript
                     gridBoreOccupied.Add(false);
                     gridBoreFinished.Add(false);
                 }
-                yield return false;
+                batchcount++;
+                if (batchcount >= batchcountlimit)
+                {
+                    batchcount = 0;
+                    yield return false;
+                }
             }
             if (coreout)
             {
@@ -3103,7 +3116,12 @@ namespace IngameScript
                             gridBoreOccupied.Add(false);
                             gridBoreFinished.Add(false);
                         }
-                        yield return false;
+                        batchcount++;
+                        if (batchcount >= batchcountlimit)
+                        {
+                            batchcount = 0;
+                            yield return false;
+                        }
                     }
                 }
             }
@@ -3124,6 +3142,8 @@ namespace IngameScript
         IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             //sprites.Clear();
+            int batchcount = 0;
+            int batchcountlimit = 1;
             int sprite_total = 0;
             int drone_total = 0;
 
@@ -3245,7 +3265,12 @@ namespace IngameScript
                     sprites.Add(sprite);
                     percent_list_vis = (((double)i + (double)1) / ((double)gridBorePosition.Count)) * 100;
                     spriteCounter++;
-                    yield return false;
+                    batchcount++;
+                    if (batchcount >= batchcountlimit)
+                    {
+                        batchcount = 0;
+                        yield return false;
+                    }
                 }
 
                 if (droneName.Count > 0)
@@ -3403,7 +3428,12 @@ namespace IngameScript
                         sprites.Add(sprite_name);
                         percent_list_drones = ((double)drone_total / (double)droneName.Count) * 100;
                         spriteCounter++;
-                        yield return false;
+                        batchcount++;
+                        if (batchcount >= batchcountlimit)
+                        {
+                            batchcount = 0;
+                            yield return false;
+                        }
                     }
                 }
                 if (droneName.Count == 0)

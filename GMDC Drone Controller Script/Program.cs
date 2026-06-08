@@ -57,7 +57,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.507B";
+        string ver = "V0.515B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -343,7 +343,7 @@ namespace IngameScript
         double bz = 0.0;
         int initialisedGridCount = 0;
         bool gridInitialisationComplete = false;
-        int debugcount = 0;
+        //int debugcount = 0;
         bool bores_regen;
         bool listGeneratorFinished = false;
         bool listHeaderGenerated = false;
@@ -354,8 +354,8 @@ namespace IngameScript
         double percent_grid = 0.0;
         string icon = "";
         int stateshift = 0;
-        string temp_id_name;
-        string temp_id_name_2;
+        //string temp_id_name;
+        //string temp_id_name_2;
         string secondary_tag = "";
         double game_tick_length = 16.666;
 
@@ -395,6 +395,7 @@ namespace IngameScript
      //   string prospecttarget = "aligndata";
         string _cachedCustomData = "";
         int _frameCounter = 0;
+        StringBuilder sbtexttemp = new StringBuilder();
         #endregion
         public void Save()
         {
@@ -454,21 +455,21 @@ namespace IngameScript
             if (!string.IsNullOrWhiteSpace(Storage) && !string.IsNullOrEmpty(Storage))
             {
                 GetStoredData(Storage);
-                Echo("Running first parse");
+                sbtexttemp.AppendLine("Running first parse");
                 ParseAndApplyArguments(runargument);
-                Echo("Configuration loaded from Storage.");
+                sbtexttemp.AppendLine("Configuration loaded from Storage.");
             }
             else
             {
                 GetStoredData(Storage);
                 ParseAndApplyArguments(runargument);
-                Echo("No Storage data found, configuration loaded from arguments or defaults.");
+                sbtexttemp.AppendLine("No Storage data found, configuration loaded from arguments or defaults.");
             }
 
         }
         public void Main(string argument, UpdateType updateSource)
         {
-            //Echo("Running Modular Main - v1");
+            //sbtexttemp.AppendLine("Running Modular Main - v1");
             int startInstructions = Runtime.CurrentInstructionCount;
             _frameCounter++;
             if (!string.IsNullOrEmpty(argument) && !string.IsNullOrWhiteSpace(argument) && !firstload)
@@ -489,7 +490,7 @@ namespace IngameScript
             firstload = false;
             if (!setupComplete)
             {
-                Echo("Setup incomplete - exiting");
+                sbtexttemp.AppendLine("Setup incomplete - exiting");
                 ClearAllNonEmptyLists();
                 return;
             }
@@ -499,7 +500,10 @@ namespace IngameScript
             HandleDroneOperations();
             RenderDisplays();
             UpdateStatus();
-            Echo($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
+            Echo(sbtexttemp.ToString());
+            sbtexttemp.Clear();
+            sbtexttemp.AppendLine($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
+            
         }
 
         private void UpdateRuntimeMetrics(UpdateType updateSource)
@@ -514,7 +518,7 @@ namespace IngameScript
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
-            //Echo($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"UpdateRuntimeMetrics: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void InitializeSystem()
@@ -526,19 +530,19 @@ namespace IngameScript
 
                 SetupSystem();
                 setupComplete = true;
-                Echo("Setup complete!");
+                sbtexttemp.AppendLine("Setup complete!");
             }
             CheckSystemSetupStatus();
             if (!setupComplete)
             {
-                Echo("Setup incomplete - exiting");
+                sbtexttemp.AppendLine("Setup incomplete - exiting");
                 ClearAllNonEmptyLists();
                 return;
             }
             AntennaSaveData(antennaActual);
-            Echo($"GMDC {ver} Running {icon}");
-            Echo($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")}");
-            //Echo($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
+            sbtexttemp.AppendLine($"GMDC {ver} Running {icon}");
+            sbtexttemp.AppendLine($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")}");
+            //sbtexttemp.AppendLine($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void ProcessInputs(string argument)
@@ -547,7 +551,7 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
             ProcessInterface();
             HandleCommands(blank);
-            //Echo($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void ManageCommunications()
@@ -555,7 +559,7 @@ namespace IngameScript
             int startInstructions = Runtime.CurrentInstructionCount;
 
             ProcessMessages();
-            //Echo($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"ManageCommunications: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void UpdateMiningGrid()
@@ -566,7 +570,7 @@ namespace IngameScript
             ValidateCustomData();
             PingDrones();
             GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
-            //Echo($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
+            //sbtexttemp.AppendLine($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
             if (prospectAlignTargetValid)
             {
 
@@ -579,14 +583,14 @@ namespace IngameScript
                 prospectAlignTargetValid = false;
                 customDataAlignTargetValid = false;
                 GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
-                //Echo($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
+                //sbtexttemp.AppendLine($"Post-Prospect: valid={prospectTargetValid}, {prospectAlignTargetValid}, coords={targetGPSCoordinates}");
                 if (prospectAlignTargetValid)
                 {
-                    Echo($"Post-Prospect: Main PB: {miningCoordsValid} Align coords=:{alignGPSCoordinates}");
+                    sbtexttemp.AppendLine($"Post-Prospect: Main PB: {miningCoordsValid} Align coords=:{alignGPSCoordinates}");
                 }
                 if (prospectTargetValid)
                 {
-                    Echo($"Formatting CustomData with: {targetGPSCoordinates.X}, {targetGPSCoordinates.Y}, {targetGPSCoordinates.Z}");
+                    sbtexttemp.AppendLine($"Formatting CustomData with: {targetGPSCoordinates.X}, {targetGPSCoordinates.Y}, {targetGPSCoordinates.Z}");
                     miningCoordinatesNew.Clear().AppendFormat("GPS:PDT:{0:0.##}:{1:0.##}:{2:0.##}:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:False:",
                         targetGPSCoordinates.X, targetGPSCoordinates.Y, targetGPSCoordinates.Z);
                     if (prospectAlignTargetValid)
@@ -602,7 +606,7 @@ namespace IngameScript
             GetCustomDataJobCommand(Me.CustomData, Me);
             ProcessJobGrid();
             UpdateActiveDroneLimits();
-            //Echo($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void HandleDroneOperations()
@@ -619,7 +623,7 @@ namespace IngameScript
             }
             DroneResetStatusCounter();
             LightStatusManagement();
-            //Echo($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"HandleDroneOperations: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void RenderDisplays()
@@ -628,7 +632,7 @@ namespace IngameScript
             DroneRenderCall();
             ListRenderCall();
             SpriteRenderCall();
-            //Echo($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void UpdateStatus()
@@ -643,19 +647,19 @@ namespace IngameScript
             {
                 _frameCounter = 0;
             }
-            //Echo($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"UpdateStatus: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private void LocalStatusUpdate(double _Runtime)
         {
-            Echo($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0, 3)}% ({Math.Round(_Runtime, 3)}ms) S#:{spriteCounter} {spriteInsert}");
-            Echo($"Drones #: {droneName.Count}");
-            Echo($"Drone comms buffer: {droneMessagesBuffer.Count} OK: {droneMessageReceived}");
-            Echo($"Cycles since last broadcast: {timeCounter} ({Math.Round((((double)droneCommunicationsProcessingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) {timeDelayed}");
-            Echo($"Cycles since last ping: {dronePingTimerCount} ({Math.Round((((double)droneCommunicationsPingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
-            Echo($"Undock cycle timer: {undockTimer} ({Math.Round((((double)undockTimer * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) ({Math.Round((((double)undock_delay_limit * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
-            Echo($"Drones Undocking: {dronesUndocking} {total_drones_undocking}");
-            Echo($"Prospect comms buffer: {prospectorMessagesBuffer.Count}");
+            sbtexttemp.AppendLine($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0, 3)}% ({Math.Round(_Runtime, 3)}ms) S#:{spriteCounter} {spriteInsert}");
+            sbtexttemp.AppendLine($"Drones #: {droneName.Count}");
+            sbtexttemp.AppendLine($"Drone comms buffer: {droneMessagesBuffer.Count} OK: {droneMessageReceived}");
+            sbtexttemp.AppendLine($"Cycles since last broadcast: {timeCounter} ({Math.Round((((double)droneCommunicationsProcessingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) {timeDelayed}");
+            sbtexttemp.AppendLine($"Cycles since last ping: {dronePingTimerCount} ({Math.Round((((double)droneCommunicationsPingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
+            sbtexttemp.AppendLine($"Undock cycle timer: {undockTimer} ({Math.Round((((double)undockTimer * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) ({Math.Round((((double)undock_delay_limit * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
+            sbtexttemp.AppendLine($"Drones Undocking: {dronesUndocking} {total_drones_undocking}");
+            sbtexttemp.AppendLine($"Prospect comms buffer: {prospectorMessagesBuffer.Count}");
             StateShifter();
         }
 
@@ -701,7 +705,7 @@ namespace IngameScript
                     if (!visCoroutine.MoveNext())
                     {
                         // The coroutine has finished executing
-                        Echo("Job rendering complete.");
+                        sbtexttemp.AppendLine("Job rendering complete.");
                         visCoroutine = null; // Reset the coroutine
                         BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid).Dispose();
                     }
@@ -710,7 +714,7 @@ namespace IngameScript
                         // Handle intermediate status if needed
                         if (!currentYield)
                         {
-                            Echo($"Rendering mining job ... {Math.Round(percent_list_vis, 1)}%  {Math.Round(percent_list_drones, 1)}%");
+                            sbtexttemp.AppendLine($"Rendering mining job ... {Math.Round(percent_list_vis, 1)}%  {Math.Round(percent_list_drones, 1)}%");
                             visCoroutine.MoveNext();
                         }
                     }
@@ -732,7 +736,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        //Echo($"Frame reset - spritecount {spriteCounter}");
+                        //sbtexttemp.AppendLine($"Frame reset - spritecount {spriteCounter}");
                         var frame = sV.DrawFrame();
                         DrawSprites(ref frame);
                         frame.Dispose();
@@ -765,7 +769,7 @@ namespace IngameScript
                 if (!listCoroutine.MoveNext())
                 {
                     // The coroutine has finished executing
-                    Echo("Mining list complete.");
+                    sbtexttemp.AppendLine("Mining list complete.");
                     listCoroutine = null; // Reset the coroutine
                     GenListDisplay().Dispose();
                 }
@@ -774,7 +778,7 @@ namespace IngameScript
                     // Handle intermediate status if needed
                     if (!currentYield)
                     {
-                        Echo($"Updating mining job list... {Math.Round(percent_list, 1)}%");
+                        sbtexttemp.AppendLine($"Updating mining job list... {Math.Round(percent_list, 1)}%");
                         listCoroutine.MoveNext();
                     }
                 }
@@ -793,7 +797,7 @@ namespace IngameScript
         {
             if (lightIndicatorActual == null || lightsTag[0] == null)
             {
-                Echo($"Indicator light missing {lightsTagName.Replace("[", "[[").Replace("]", "]]")} - early exit");
+                sbtexttemp.AppendLine($"Indicator light missing {lightsTagName.Replace("[", "[[").Replace("]", "]]")} - early exit");
                 return;
             }
             if (canTransmit && !readyFlag || commandAsk == "Init")
@@ -1164,11 +1168,11 @@ namespace IngameScript
                             currentGPSIndex = 0;
                         }
                         //suspect code here
-                        Echo($"Drone coords: {i}");
+                        sbtexttemp.AppendLine($"Drone coords: {i}");
                         if (i < droneAssignedCoordinates.Count)
                         {
                             droneAssignedCoordinates[i] = true;
-                            Echo($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
+                            sbtexttemp.AppendLine($"Drone coords assigned: {i} {droneAssignedCoordinates[i]}");
                         }
                     }
                     else if (!miningGridValid)
@@ -1178,9 +1182,9 @@ namespace IngameScript
                         droneAssignedCoordinates[i] = true;
                         gpsGridPositionValue = 0;
                         currentGPSIndex = 0;
-                        Echo("invalid grid - defaulting");
+                        sbtexttemp.AppendLine("invalid grid - defaulting");
                     }
-                    Echo("data staging");
+                    sbtexttemp.AppendLine("data staging");
                     if (droneGPSListPosition[i] > -1)
                     {
                         if (gridBoreOccupied[droneGPSListPosition[i]] && !droneMining[i])
@@ -1206,7 +1210,7 @@ namespace IngameScript
                         if (gridBoreFinished[droneGPSListPosition[i]])
                         {
                             //suspect coordinates here 2
-                            Echo($"Drone position finished {i}");
+                            sbtexttemp.AppendLine($"Drone position finished {i}");
                             droneControlSequence[i] = 0;
                             droneMining[i] = false;
                             droneAssignedCoordinates[i] = false;
@@ -1419,7 +1423,7 @@ namespace IngameScript
                         if (!gridBoreFinished[droneGPSListPosition[i]])
                         {
                             gridBoreFinished[droneGPSListPosition[i]] = true; //Finish bore here
-                            Echo($"Grid bore finished: {droneGPSListPosition[i]}");
+                            sbtexttemp.AppendLine($"Grid bore finished: {droneGPSListPosition[i]}");
                         }
                     }
                 }
@@ -1816,7 +1820,7 @@ namespace IngameScript
         {
             if (pbInterfaceActual == null || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                sbtexttemp.AppendLine($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
             }
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
@@ -1855,7 +1859,7 @@ namespace IngameScript
 
                 if (remoteControlTag[0] == null || remoteControlActual == null)
                 {
-                    Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present - early exit");
+                    sbtexttemp.AppendLine($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present - early exit");
                     return;
                 }
                 Vector3D gravity = remoteControlActual.GetNaturalGravity();
@@ -1881,7 +1885,7 @@ namespace IngameScript
                     currentGPSIndex = 0;
                     realGPSIndex = currentGPSIndex;
                     GetStoredData(Storage);
-                    Echo("Grid positions restored");
+                    sbtexttemp.AppendLine("Grid positions restored");
                     canLoading = true;
                     Storage = null;
                     //reset everything else
@@ -1905,7 +1909,7 @@ namespace IngameScript
                     if (!gridCoroutine.MoveNext())
                     {
                         // The coroutine has finished executing
-                        Echo("Grid generation complete.");
+                        sbtexttemp.AppendLine("Grid generation complete.");
                         gridCoroutine = null; // Reset the coroutine
                         GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid).Dispose();
                     }
@@ -1914,13 +1918,13 @@ namespace IngameScript
                         // Handle intermediate status if needed
                         if (!currentYield)
                         {
-                            Echo($"Generating grid positions... {Math.Round(percent_grid, 1)}%");
+                            sbtexttemp.AppendLine($"Generating grid positions... {Math.Round(percent_grid, 1)}%");
                             gridCoroutine.MoveNext();
 
                         }
                         if (currentYield)
                         {
-                            debugcount++;
+                            //debugcount++;
                             gridInitialisationComplete = true;
                             pbInterfaceActual.CustomData = "";
                             canInit = false;
@@ -1958,7 +1962,7 @@ namespace IngameScript
                 gridBoresCompleted = 0;
                 currentGPSIndex = 0;
             }
-            Echo($"Grid: {gridCreated} - Bores: {totalMiningRuns} - Remaining: {boresRemaining}");
+            sbtexttemp.AppendLine($"Grid: {gridCreated} - Bores: {totalMiningRuns} - Remaining: {boresRemaining}");
             #endregion
         }
 
@@ -2014,7 +2018,7 @@ namespace IngameScript
                     }
                     else
                     {
-                        Echo($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
+                        sbtexttemp.AppendLine($"Remote control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                         return;
                     }
                     prospectorMessagesBuffer.RemoveAt(0);
@@ -2064,7 +2068,7 @@ namespace IngameScript
             }
             else
             {
-                Echo($"Job custom data invalid - initialising job data");
+                sbtexttemp.AppendLine($"Job custom data invalid - initialising job data");
                 mainCustomDataValid = false;
                 if (_cachedCustomData != "GPS:---:0:0:0:#FF75C9F1:5.0:10.0:1:1:0:False:1:10:0:False")
                 {
@@ -2143,7 +2147,7 @@ namespace IngameScript
             {
                 SetupSystem();
                 setupComplete = true;
-                Echo("Setup complete!");
+                sbtexttemp.AppendLine("Setup complete!");
             }
             ComponentPresenceCheck();
             if (!setupComplete)
@@ -2163,13 +2167,13 @@ namespace IngameScript
                 }
                 else
                 {
-                    Echo($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                    sbtexttemp.AppendLine($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                     return;
                 }
                 canInterfaceCommand = true;
                 interfaceArgument = pbInterfaceActual.CustomData;
-                Echo($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
-                Echo($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
+                sbtexttemp.AppendLine($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                sbtexttemp.AppendLine($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
             #endregion
             #region interface_command_processing
@@ -2259,7 +2263,7 @@ namespace IngameScript
             {
                 setupComplete = false;
                 argument = "";
-                Echo("Running Setup..");
+                sbtexttemp.AppendLine("Running Setup..");
             }
             if (argument.Contains("run") || i_run)
             {
@@ -2367,7 +2371,7 @@ namespace IngameScript
             int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
             if (dronesPerDisplay < droneName.Count)
             {
-                Echo($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneName.Count}");
+                sbtexttemp.AppendLine($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneName.Count}");
                 return;
             }
 
@@ -2385,7 +2389,7 @@ namespace IngameScript
                     renew_header = true;
                 }
             }
-            //Echo($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
         }
         private struct DroneStats
         {
@@ -2432,7 +2436,7 @@ namespace IngameScript
             {
                 totalDronesMining = 0;
             }
-            //Echo($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"UpdateDroneCounts: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         private int[] boreQueueCounts = new int[0]; // Static reuse
@@ -2468,7 +2472,7 @@ namespace IngameScript
                     if (gridBoreOccupied[l] && boreQueueCounts[l] == 0)
                         gridBoreOccupied[l] = false;
             }
-            //Echo($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
+            //sbtexttemp.AppendLine($"DroneUndockCheck: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
         public void updateDisplay(int i)
@@ -2617,12 +2621,12 @@ namespace IngameScript
         {
             if (block == null || remoteControlTag[0] == null)
             {
-                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
+                sbtexttemp.AppendLine($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                 return;
             }
             if (string.IsNullOrEmpty(block.CustomData) || string.IsNullOrWhiteSpace(block.CustomData))
             {
-                Echo("Prospector job data not found");
+                sbtexttemp.AppendLine("Prospector job data not found");
                 return;
             }
             // Checks if the block has CustomData AND if it's NOT already INI-formatted data
@@ -2839,13 +2843,13 @@ namespace IngameScript
                 {
                     StoreRawInput(block.CustomData, block, gmdccategory, jobinfo);
                 }
-                Echo("Dataconversion");
+                sbtexttemp.AppendLine("Dataconversion");
                 return;
 
             }
             if (string.IsNullOrWhiteSpace(block.CustomData.ToString()) || string.IsNullOrEmpty(block.CustomData.ToString()))
             {
-                Echo("Datablank");
+                sbtexttemp.AppendLine("Datablank");
                 return;
             }
             FetchJobData(block.CustomData.ToString());
@@ -2876,7 +2880,7 @@ namespace IngameScript
                 customData20 = "";
               //  customData21 = "";
                 customData22 = "";
-                Echo("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
+                sbtexttemp.AppendLine("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
                 return;
             }
             if (gpsCommand.Length > 4)
@@ -3024,7 +3028,7 @@ namespace IngameScript
 
             if (gpsCommand.Length > 16 && !prospectAlignTargetValid)
             {
-                Echo($"gpsCommandLen:{gpsCommand.Length}");
+                sbtexttemp.AppendLine($"gpsCommandLen:{gpsCommand.Length}");
                 bool targetAlignX;
                 bool targetAlignY;
                 bool targetAlignZ;
@@ -3401,7 +3405,7 @@ namespace IngameScript
             }
             gridcount = gridcount_inner + gridcount_outer;
             percent_grid = (double)gridBorePosition.Count / (double)gridcount;
-            //Echo($"{gridcount} {grid_bore_positions.Count} {gridcount}");
+            //sbtexttemp.AppendLine($"{gridcount} {grid_bore_positions.Count} {gridcount}");
             if (gridBorePosition.Count == gridcount)
             {
                 gridInitialisationComplete = true;
@@ -3533,7 +3537,7 @@ namespace IngameScript
                         Color = bore_colour.Alpha(alpha_bytes),
                         Alignment = TextAlignment.CENTER
                     };
-                    //Echo($"{position}");
+                    //sbtexttemp.AppendLine($"{position}");
                     sprites.Add(sprite);
                     percent_list_vis = (((double)i + (double)1) / ((double)gridBorePosition.Count)) * 100;
                     spriteCounter++;
@@ -3732,7 +3736,7 @@ namespace IngameScript
             {
                 var banger = new MySprite();
                 frame.Add(banger);
-                Echo("Frame shift");
+                sbtexttemp.AppendLine("Frame shift");
                 spriteInsert = true;
                 spriteCounter++;
             }
@@ -3827,7 +3831,7 @@ namespace IngameScript
 
 
                 }
-                Echo("Loading grid data");
+                sbtexttemp.AppendLine("Loading grid data");
                 if (setupComplete)
                 {
                     string[] str_data = gridstats.Split(';');
@@ -3964,7 +3968,7 @@ namespace IngameScript
             // --- Step 1: Handle Empty Input (Using the simpler IsNullOrWhiteSpace check) ---
             if (string.IsNullOrWhiteSpace(input))
             {
-                Echo("No arguments provided, using defaults.");
+                sbtexttemp.AppendLine("No arguments provided, using defaults.");
                 drone_tag = "SWRM_D";
                 drone_length = 2.6;
                 drone_clear_offset = 9.0; //drill clear mode distance offset
@@ -3977,7 +3981,7 @@ namespace IngameScript
             // Check if the split array is unexpectedly empty (though covered by the initial check)
             if (dronecontrolleronfigdata.Length == 0)
             {
-                Echo("No arguments provided, using defaults.");
+                sbtexttemp.AppendLine("No arguments provided, using defaults.");
                 // Use a consistent set of defaults or return immediately.
                 return;
             }
@@ -4110,7 +4114,7 @@ namespace IngameScript
                     //drone_custom_data_check(checker, i);
                     if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
                     {
-                        Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
+                        sbtexttemp.AppendLine($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
                         return;
 
                     }
@@ -4204,7 +4208,7 @@ namespace IngameScript
                 sV = ((IMyTextSurfaceProvider)display_tag_vis[0]).GetSurface(srfV);
                 if (sV.ContentType != ContentType.SCRIPT)
                 {
-                    Echo("Correcting visualiser display");
+                    sbtexttemp.AppendLine("Correcting visualiser display");
                     sV.ContentType = ContentType.SCRIPT;
                     sV.Script = "";
                     Visport_OK = true;
@@ -4213,16 +4217,16 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
             {
-                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' found");
                 _viewport = new RectangleF((sV.TextureSize - sV.SurfaceSize) / 2f, sV.SurfaceSize);
                 Visport_OK = true;
             }
@@ -4235,14 +4239,14 @@ namespace IngameScript
             #region presence_check
             if (antennaTag.Count <= 0 || antennaTag[0] == null)
             {
-                Echo($"Antenna with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                sbtexttemp.AppendLine($"Antenna with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
             antennaActual = antennaTag[0];
             if (remoteControlTag.Count <= 0 || remoteControlTag[0] == null)
             {
-                Echo($"remote control with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                sbtexttemp.AppendLine($"remote control with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -4251,7 +4255,7 @@ namespace IngameScript
 
             if (lightsTag.Count <= 0 || lightsTag[0] == null)
             {
-                Echo($"Indicator light with tag: '{lightsTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                sbtexttemp.AppendLine($"Indicator light with tag: '{lightsTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -4260,14 +4264,14 @@ namespace IngameScript
 
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                sbtexttemp.AppendLine($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
 
             if (display_tag_main.Count <= 0 || display_tag_main[0] == null)
             {
-                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_main.Count > 0 && display_tag_main[0] != null)
             {
@@ -4281,11 +4285,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                Echo($"Panel:'{srfM}' on '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Panel:'{srfM}' on '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count <= 0 || display_tag_list[0] == null)
             {
-                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count > 0 && display_tag_list[0] != null)
             {
@@ -4299,11 +4303,11 @@ namespace IngameScript
             }
             if (sL == null)
             {
-                Echo($"Panel:'{srfL}' on '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Panel:'{srfL}' on '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_drone.Count <= 0 || display_tag_drone[0] == null)
             {
-                Echo($"Display with tag '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
 
 
@@ -4320,11 +4324,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                Echo($"Panel:'{srfD}' on '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Panel:'{srfD}' on '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                sbtexttemp.AppendLine($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
             }
 
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
@@ -4333,7 +4337,7 @@ namespace IngameScript
                 sV = ((IMyTextSurfaceProvider)display_tag_vis[0]).GetSurface(srfV);
                 if (sV.ContentType != ContentType.SCRIPT)
                 {
-                    Echo("Correcting vis");
+                    sbtexttemp.AppendLine("Correcting vis");
                     sV.ContentType = ContentType.SCRIPT;
                     sV.Script = "";
                     Visport_OK = true;
@@ -4342,11 +4346,11 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             #endregion
@@ -4605,7 +4609,7 @@ namespace IngameScript
 
             // Save to the Programmable Block's CustomData
             block.CustomData = iniBuilder.ToString();
-            Echo($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
+            sbtexttemp.AppendLine($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
         }
 
     }

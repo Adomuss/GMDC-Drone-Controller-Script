@@ -1959,23 +1959,6 @@ namespace IngameScript
                     dronePingTimerCount = 0;
                     gridInitialisationComplete = true;
                 }
-                else if (!gridCreated && bores_regen && !gridInitialisationComplete && loadsave)
-                {
-                    //added from init
-                    currentGPSIndex = 0;
-                    realGPSIndex = currentGPSIndex;
-                    GetSavedJobData(Me);
-                    sbtexttemp.AppendLine("Grid positions restored");
-                    canLoading = true;
-                    Storage = null;
-                    //reset everything else
-                    reset_drone_data();
-                    reset_drone_list();
-                    dronesPinged = false;
-                    dronePingTimerCount = 0;
-                    gridInitialisationComplete = true;
-                    loadsave = false;
-                }
                 //coroutine management grid creation
                 if (gridCoroutine == null && !gridInitialisationComplete && bores_regen || gridCoroutine != null && !gridCoroutine.MoveNext() && !gridInitialisationComplete && bores_regen)
                 {
@@ -2017,6 +2000,24 @@ namespace IngameScript
                     }
 
                 }
+                if (!gridCreated && bores_regen && !gridInitialisationComplete && loadsave)
+                {
+                    //added from init
+                    currentGPSIndex = 0;
+                    realGPSIndex = currentGPSIndex;
+                    GetSavedJobData(Me);
+                    sbtexttemp.AppendLine("Grid positions restored");
+                    canLoading = true;
+                    Storage = null;
+                    //reset everything else
+                    reset_drone_data();
+                    reset_drone_list();
+                    dronesPinged = false;
+                    dronePingTimerCount = 0;
+                    gridInitialisationComplete = true;
+                    loadsave = false;
+                }
+
                 //grid data found - terminite initialisation
                 if (gridBorePosition.Count > 0 && gridInitialisationComplete)
                 {
@@ -3941,7 +3942,10 @@ namespace IngameScript
                             }
                         }
                     }
+                    _ini.Set(gmdccategory, "loadsave", false);
                 }
+                block.CustomData = _ini.ToString();
+                _ini.Clear();
             }
         }
         void reset_drone_data()

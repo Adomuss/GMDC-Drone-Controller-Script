@@ -57,7 +57,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.515B";
+        string ver = "V0.516B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -219,61 +219,61 @@ namespace IngameScript
         Vector3D targetGPSCoordinates;
         Vector3D alignGPSCoordinates;
         Vector3D planeNrml;
-        StringBuilder miningCoordinatesNew;
-        StringBuilder c;
-        List<Vector3D> drone_location;
-        List<string> droneName;
-        List<string> droneDamageState;
-        List<string> droneTunnelFinished;
-        List<string> droneControlStatus;
-        List<string> droneDocked;
-        List<string> droneUndocked;
-        List<string> droneAutopiloting;
-        List<string> droneBoreDepth;
-        List<string> droneBoreDepthCurrent;
-        List<string> drone_mine_depth_start_status;
-        List<int> droneGPSListPosition;
-        List<bool> droneReady;
-        List<string> drone_location_x;
-        List<string> drone_location_y;
-        List<string> drone_location_z;
-        List<string> drone_charge_storage;
-        List<string> drone_gas_storage;
-        List<string> drone_ore_storage;
-        List<string> drone_cargo_full;
-        List<string> drone_recharge_request;
-        List<string> drone_auto_pilot_enabled;
-        List<string> droneAutodock;
-        List<string> droneDockingReady;
-        List<int> drone_assigns_count;
-        List<double> dcs;
-        List<bool> droneAssignedCoordinates;
-        List<bool> droneRecallList;
-        List<Vector3D> droneGPSCoordinates;
-        List<int> droneControlSequence;
-        List<int> droneRecallSequence;
-        List<bool> droneResetFunction;
-        List<string> droneTranmissionOutput;
-        List<Vector3D> gridBorePosition;
-        List<bool> gridBoreOccupied;
-        List<bool> gridBoreFinished;
-        List<string> cl;
-        List<string> cl2;
-        List<int> tla;
-        List<int> rst;
-        List<string> fct;
-        List<bool> dst;
-        List<bool> droneTransmissionStatus;
+        StringBuilder miningCoordinatesNew = new StringBuilder();
+        StringBuilder c = new StringBuilder();
+        List<Vector3D> drone_location = new List<Vector3D>();
+        List<string> droneName = new List<string>();
+        List<string> droneDamageState = new List<string>();
+        List<string> droneTunnelFinished = new List<string>();
+        List<string> droneControlStatus = new List<string>();
+        List<string> droneDocked = new List<string>();
+        List<string> droneUndocked = new List<string>();
+        List<string> droneAutopiloting = new List<string>();
+        List<string> droneBoreDepth = new List<string>();
+        List<string> droneBoreDepthCurrent = new List<string>();
+        List<string> drone_mine_depth_start_status = new List<string>();
+        List<int> droneGPSListPosition = new List<int>();
+        List<bool> droneReady = new List<bool>();
+        List<string> drone_location_x = new List<string>();
+        List<string> drone_location_y = new List<string>();
+        List<string> drone_location_z = new List<string>();
+        List<string> drone_charge_storage = new List<string>();
+        List<string> drone_gas_storage = new List<string>();
+        List<string> drone_ore_storage = new List<string>();
+        List<string> drone_cargo_full = new List<string>();
+        List<string> drone_recharge_request = new List<string>();
+        List<string> drone_auto_pilot_enabled = new List<string>();
+        List<string> droneAutodock = new List<string>();
+        List<string> droneDockingReady = new List<string>();
+        List<int> drone_assigns_count = new List<int>();
+        List<double> dcs = new List<double>();
+        List<bool> droneAssignedCoordinates = new List<bool>();
+        List<bool> droneRecallList = new List<bool>();
+        List<Vector3D> droneGPSCoordinates = new List<Vector3D>();
+        List<int> droneControlSequence = new List<int>();
+        List<int> droneRecallSequence = new List<int>();
+        List<bool> droneResetFunction = new List<bool>();
+        List<string> droneTranmissionOutput = new List<string>();
+        List<Vector3D> gridBorePosition = new List<Vector3D>();
+        List<bool> gridBoreOccupied = new List<bool>();
+        List<bool> gridBoreFinished = new List<bool>();
+        List<string> cl = new List<string>();
+        List<string> cl2 = new List<string>();
+        List<int> tla = new List<int>();
+        List<int> rst = new List<int>();
+        List<string> fct = new List<string>();
+        List<bool> dst = new List<bool>();
+        List<bool> droneTransmissionStatus = new List<bool>();
         //int cbval = 0;
         //bool clbt = false;
         int gridBoresCompleted;
         int gpsGridPositionValue = -1;
         string drone_namer = "";
-        StringBuilder droneInformation;
-        StringBuilder displayTextMain;
-        StringBuilder displayTextList;
-        StringBuilder jxt;
-        List<bool> droneMining;
+        StringBuilder droneInformation = new StringBuilder();
+        StringBuilder displayTextMain = new StringBuilder();
+        StringBuilder displayTextList = new StringBuilder();
+        StringBuilder jxt = new StringBuilder();
+        List<bool> droneMining = new List<bool>();
         bool setupComplete = false;
         bool timeDelayed = false;
         int timeCounter = 0;
@@ -306,25 +306,25 @@ namespace IngameScript
         bool noInterfaceCommand = false;
         string interfaceArgument;
         //decimal dps_r_d = 0.0m;
-        List<IMyRemoteControl> remoteControlAll;
-        List<IMyRemoteControl> remoteControlTag;
-        List<IMyRadioAntenna> antennaAll;
-        List<IMyRadioAntenna> antennaTag;
-        List<IMyLightingBlock> lightsAll;
-        List<IMyLightingBlock> lightsTag;
-        List<IMyTerminalBlock> display_all;
-        List<IMyTerminalBlock> display_tag_main;
-        List<IMyTerminalBlock> display_tag_list;
-        List<IMyTerminalBlock> display_tag_drone;
-        List<IMyTerminalBlock> display_tag_vis;
-        List<IMyProgrammableBlock> programblockAll;
-        List<IMyProgrammableBlock> interfacePBTag;
+        List<IMyRemoteControl> remoteControlAll= new List<IMyRemoteControl>();
+        List<IMyRemoteControl> remoteControlTag = new List<IMyRemoteControl>();
+        List<IMyRadioAntenna> antennaAll = new List<IMyRadioAntenna>();
+        List<IMyRadioAntenna> antennaTag = new List<IMyRadioAntenna>();
+        List<IMyLightingBlock> lightsAll = new List<IMyLightingBlock>();
+        List<IMyLightingBlock> lightsTag = new List<IMyLightingBlock>();
+        List<IMyTerminalBlock> display_all = new List<IMyTerminalBlock>();
+        List<IMyTerminalBlock> display_tag_main = new List<IMyTerminalBlock>();
+        List<IMyTerminalBlock> display_tag_list = new List<IMyTerminalBlock>();
+        List<IMyTerminalBlock> display_tag_drone = new List<IMyTerminalBlock>();
+        List<IMyTerminalBlock> display_tag_vis = new List<IMyTerminalBlock>();
+        List<IMyProgrammableBlock> programblockAll = new List<IMyProgrammableBlock>();
+        List<IMyProgrammableBlock> interfacePBTag = new List<IMyProgrammableBlock>();
         IMyTextSurface sD;
         IMyTextSurface sM;
         IMyTextSurface sL;
         IMyTextSurface sV;
         RectangleF _viewport;
-        StringBuilder sb;
+        StringBuilder sb = new StringBuilder();
         int totalDronesDamaged = 0;
         int totalDronesUnknown = 0;
       //  int t_dn_ok = 0;
@@ -361,17 +361,17 @@ namespace IngameScript
 
         IMyBroadcastListener listenDrones;
         IMyBroadcastListener listenProspector;
-        List<MyIGCMessage> droneMessagesBuffer;
-        List<MyIGCMessage> prospectorMessagesBuffer;
+        List<MyIGCMessage> droneMessagesBuffer = new List<MyIGCMessage>();
+        List<MyIGCMessage> prospectorMessagesBuffer = new List<MyIGCMessage>();
         bool prospectorMessageReceived = false;
         bool droneMessageConfirmed = false;
         int receivedDroneNameIndex = -1;
         bool droneMessageReceived = false;
         bool Visport_OK = false;
-        List<MySprite> sprites;
+        List<MySprite> sprites = new List<MySprite>();
         int spriteCounter = 0;
         bool spriteInsert = false;
-        StringBuilder customDataString;
+        StringBuilder customDataString = new StringBuilder();
         string _oldCustomData = "";
 
 
@@ -396,6 +396,8 @@ namespace IngameScript
         string _cachedCustomData = "";
         int _frameCounter = 0;
         StringBuilder sbtexttemp = new StringBuilder();
+        MyIni safebuilder = new MyIni();
+        bool loadsave = false;
         #endregion
         public void Save()
         {
@@ -432,11 +434,21 @@ namespace IngameScript
                         sb.Append($"{g1}:{g2}:{px}:{py}:{pz}:;");
                     }
                     _ini.Set("jobdata", "gridstatus", sb.ToString());
-
                     Storage = _ini.ToString();
+                    safebuilder.Clear();
+                    //save jobdata into customdata
+                    if (safebuilder.TryParse(Me.CustomData))
+                    {
+                        safebuilder.Set("configuration", "runargument", runargument);
+                        safebuilder.Set("configuration", "ship grid tag", secondary_tag);
+                        safebuilder.Set("jobdata", "gridstatus", sb.ToString());
+                        Me.CustomData = safebuilder.ToString();
+                    }
+                    safebuilder.Clear();
                     sb.Clear();
                     _ini.Clear();
                 }
+
             }
 
 
@@ -445,9 +457,17 @@ namespace IngameScript
         public void AntennaSaveData(IMyRadioAntenna block)
         {
             _antennaStore.Clear();
-            _antennaStore.Set("Configuration", "drone group tag", drone_tag);
-            _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
-            block.CustomData = _antennaStore.ToString();
+            if (_antennaStore.TryParse(block.CustomData.ToString()))
+            {
+                _antennaStore.Set("Configuration", "drone group tag", drone_tag);
+                _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
+            }
+            else
+            {
+                _antennaStore.Set("Configuration", "drone group tag", drone_tag);
+                _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
+            }
+            block.CustomData = _antennaStore.ToString();            
             _antennaStore.Clear();
         }
         public void manageFirstLoad(string input, string datacommandinput)
@@ -455,15 +475,15 @@ namespace IngameScript
             if (!string.IsNullOrWhiteSpace(Storage) && !string.IsNullOrEmpty(Storage))
             {
                 GetStoredData(Storage);
-                sbtexttemp.AppendLine("Running first parse");
+                Echo("Running first parse");
                 ParseAndApplyArguments(runargument);
-                sbtexttemp.AppendLine("Configuration loaded from Storage.");
+                Echo("Configuration loaded from Storage.");
             }
             else
             {
                 GetStoredData(Storage);
                 ParseAndApplyArguments(runargument);
-                sbtexttemp.AppendLine("No Storage data found, configuration loaded from arguments or defaults.");
+                Echo("No Storage data found, configuration loaded from arguments or defaults.");
             }
 
         }
@@ -2147,7 +2167,7 @@ namespace IngameScript
             {
                 SetupSystem();
                 setupComplete = true;
-                sbtexttemp.AppendLine("Setup complete!");
+                Echo("Setup complete!");
             }
             ComponentPresenceCheck();
             if (!setupComplete)
@@ -2621,7 +2641,7 @@ namespace IngameScript
         {
             if (block == null || remoteControlTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
+                Echo($"Remote Control {antennaTagName.Replace("[", "[[").Replace("]", "]]")} not present");
                 return;
             }
             if (string.IsNullOrEmpty(block.CustomData) || string.IsNullOrWhiteSpace(block.CustomData))
@@ -2647,7 +2667,7 @@ namespace IngameScript
                 return;
             }
 
-            FetchRCJobData(remoteControlActual.CustomData);
+            FetchRCJobData(remoteControlActual);
             String[] remoteGpsCommand = rcjobdata.Split(':');
 
             if (remoteGpsCommand.Length < 6)
@@ -2757,12 +2777,12 @@ namespace IngameScript
             }
         }
 
-        void FetchRCJobData(string input)
+        void FetchRCJobData(IMyTerminalBlock input)
         {
+            var str = "";
             _customDataStore.Clear();
-            if (_customDataStore.TryParse(input))
-            {
-                var str = "";
+            if (_customDataStore.TryParse(input.CustomData.ToString()))
+            {                
                 str = _customDataStore.Get(gmdccategory, rcjobinfo).ToString().Trim();
                 rcjobdata = str;
                 str = _customDataStore.Get(gmdccategory, "TargetGPS").ToString().Trim();
@@ -2823,12 +2843,23 @@ namespace IngameScript
         void StoreRCJobData(IMyTerminalBlock block, string input)
         {
             _customDataStore.Clear();
-            _customDataStore.Set(gmdccategory, rcjobinfo, input);
-            _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:{targetGPSCoordinates.X}:{targetGPSCoordinates.Y}:{targetGPSCoordinates.Z}:#FF75C9F1:");
-            _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
-            _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
-            block.CustomData = _customDataStore.ToString();
-            _customDataStore.Clear();
+            if (_customDataStore.TryParse(block.CustomData.ToString()))
+            {
+                _customDataStore.Set(gmdccategory, rcjobinfo, input);
+                _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:{targetGPSCoordinates.X}:{targetGPSCoordinates.Y}:{targetGPSCoordinates.Z}:#FF75C9F1:");
+                _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
+                _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
+                block.CustomData = _customDataStore.ToString();
+            }
+            else
+            {
+                _customDataStore.Set(gmdccategory, rcjobinfo, input);
+                _customDataStore.Set(gmdccategory, "TargetGPS", $"GPS:PDT:{targetGPSCoordinates.X}:{targetGPSCoordinates.Y}:{targetGPSCoordinates.Z}:#FF75C9F1:");
+                _customDataStore.Set(gmdccategory, "AlignGPS", $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:");
+                _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
+                block.CustomData = _customDataStore.ToString();
+            }
+                _customDataStore.Clear();
         }
 
 
@@ -2852,7 +2883,7 @@ namespace IngameScript
                 sbtexttemp.AppendLine("Datablank");
                 return;
             }
-            FetchJobData(block.CustomData.ToString());
+            FetchJobData(block);
             String[] gpsCommand = jobdata.Split(':');
 
             customDataAlignTargetValid = false;
@@ -3111,8 +3142,6 @@ namespace IngameScript
 
             if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
             {
-
-
                 string tempbro = jobdata;
                 string updater = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";
                 StoreRawInput(updater, block, gmdccategory, jobinfo);
@@ -3120,115 +3149,46 @@ namespace IngameScript
             }
 
         }
-        void FetchJobData(string input)
+        void FetchJobData(IMyTerminalBlock input)
         {
+            var str = "";
+            bool _isMissing = false;
             _customDataStore.Clear();
-            if (_customDataStore.TryParse(input))
+            if (_customDataStore.TryParse(input.CustomData.ToString()))
+            {                
+                if (_customDataStore.ContainsKey(gmdccategory, jobinfo))
+                {
+                    str = _customDataStore.Get(gmdccategory, jobinfo).ToString().Trim();
+                    jobdata = str;
+
+                }
+                else
+                {
+                    //write custom data here to input
+                    _customDataStore.Set(gmdccategory, jobinfo, jobdata);
+
+                    _isMissing = true;
+                }
+                //manage flag for loading data from interface
+                if (_customDataStore.ContainsKey("GMDCJobData", "loadsave"))
+                {
+                    str = _customDataStore.Get("GMDCJobData", "loadsave").ToString().Trim();
+                    if (!bool.TryParse(str, out loadsave))
+                    {
+                        loadsave = false;
+                    }                    
+                }
+                else
+                {
+                    //write custom data here to input
+                    _customDataStore.Set("GMDCJobData", "loadsave","false");
+                    _isMissing = true;
+                }
+            }
+            if (_isMissing)
             {
-                var str = "";
-                str = _customDataStore.Get(gmdccategory, jobinfo).ToString().Trim();
-                jobdata = str;
-                /*str = _customDataStore.Get(gmdccategory, "TargetGPS").ToString().Trim();
-                String[] vectorsplit = str.Split(':');
-                if (vectorsplit.Length >= 5)
-                {
-                    if (!double.TryParse(vectorsplit[2], out miningGPSCoordinates.X))
-                    {
-                        miningGPSCoordinates.X = 0.0;
-                    }
-                    if (!double.TryParse(vectorsplit[3], out miningGPSCoordinates.Y))
-                    {
-                        miningGPSCoordinates.Y = 0.0;
-                    }
-                    if (!double.TryParse(vectorsplit[4], out miningGPSCoordinates.Z))
-                    {
-                        miningGPSCoordinates.Z = 0.0;
-                    }
-                }
-                else
-                {
-                    targetGPSCoordinates.X = 0.0;
-                    targetGPSCoordinates.Y = 0.0;
-                    targetGPSCoordinates.Z = 0.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "AlignGPS").ToString().Trim();
-                String[] vectorsplita = str.Split(':');
-                if (vectorsplita.Length >= 5)
-                {
-                    if (!double.TryParse(vectorsplit[2], out alignGPSCoordinates.X))
-                    {
-                        alignGPSCoordinates.X = 0.0;
-                    }
-                    if (!double.TryParse(vectorsplit[3], out alignGPSCoordinates.Y))
-                    {
-                        alignGPSCoordinates.Y = 0.0;
-                    }
-                    if (!double.TryParse(vectorsplit[4], out alignGPSCoordinates.Z))
-                    {
-                        alignGPSCoordinates.Z = 0.0;
-                    }
-                }
-                else
-                {
-                    alignGPSCoordinates.X = 0.0;
-                    alignGPSCoordinates.Y = 0.0;
-                    alignGPSCoordinates.Z = 0.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "BoreSeparation").ToString().Trim();
-                if (!double.TryParse(str, out gridSize))
-                {
-                    gridSize = 10.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "GridXBores").ToString().Trim();
-                if (!int.TryParse(str, out numPointsX))
-                {
-                    numPointsX = 1;
-                }
-                str = _customDataStore.Get(gmdccategory, "GridYBores").ToString().Trim();
-                if (!int.TryParse(str, out numPointsY))
-                {
-                    numPointsY = 1;
-                }
-                str = _customDataStore.Get(gmdccategory, "SkipBores").ToString().Trim();
-                if (!int.TryParse(str, out skipBoresNumber))
-                {
-                    skipBoresNumber = 0;
-                }
-                str = _customDataStore.Get(gmdccategory, "SafeAlignDistance").ToString().Trim();
-                if (!double.TryParse(str, out safe_dstvl))
-                {
-                    safe_dstvl = 30.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "DrillDepth").ToString().Trim();
-                if (!double.TryParse(str, out drillLength))
-                {
-                    drillLength = 30.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "IgnoreDepth").ToString().Trim();
-                if (!double.TryParse(str, out ignoreDepth))
-                {
-                    ignoreDepth = 0.0;
-                }
-                str = _customDataStore.Get(gmdccategory, "LimitDronesInFlight").ToString().Trim();
-                if (!bool.TryParse(str, out dronesLaunchedStatus))
-                {
-                    dronesLaunchedStatus = false;
-                }
-                str = _customDataStore.Get(gmdccategory, "DronesFlightHardLimit").ToString().Trim();
-                if (!int.TryParse(str, out dronesActiveHardLimit))
-                {
-                    dronesActiveHardLimit = 10;
-                }
-                str = _customDataStore.Get(gmdccategory, "DronesFlightFactor").ToString().Trim();
-                if (!int.TryParse(str, out dronesInFlightFactor))
-                {
-                    dronesInFlightFactor = 1;
-                }
-                str = _customDataStore.Get(gmdccategory, "CoreOutFunction").ToString().Trim();
-                if (!bool.TryParse(str, out coreOutGrid))
-                {
-                    coreOutGrid = false;
-                }   */
+                input.CustomData = _customDataStore.ToString();
+                _isMissing = false;
             }
             _customDataStore.Clear();
         }
@@ -3828,10 +3788,8 @@ namespace IngameScript
                     secondary = str;
                     str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
                     gridstats = str;
-
-
                 }
-                sbtexttemp.AppendLine("Loading grid data");
+                Echo("Loading grid data");
                 if (setupComplete)
                 {
                     string[] str_data = gridstats.Split(';');
@@ -4039,60 +3997,60 @@ namespace IngameScript
             txDronePingChannel = "[" + drone_tag + "]" + " " + pingMessage;
             txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
             syncMessage = secondary;
-            drone_location = new List<Vector3D>();
-            droneName = new List<string>();
-            droneDamageState = new List<string>();
-            droneTunnelFinished = new List<string>();
-            droneControlStatus = new List<string>();
-            droneDocked = new List<string>();
-            droneUndocked = new List<string>();
-            droneAutopiloting = new List<string>();
-            droneGPSCoordinates = new List<Vector3D>();
-            droneControlSequence = new List<int>();
-            droneGPSListPosition = new List<int>();
-            droneAssignedCoordinates = new List<bool>();
-            gridBorePosition = new List<Vector3D>();
-            droneBoreDepth = new List<string>();
-            droneBoreDepthCurrent = new List<string>();
-            drone_mine_depth_start_status = new List<string>();
-            droneMining = new List<bool>();
-            drone_location_x = new List<string>();
-            drone_location_y = new List<string>();
-            drone_location_z = new List<string>();
-            drone_charge_storage = new List<string>();
-            drone_gas_storage = new List<string>();
-            drone_ore_storage = new List<string>();
-            droneTranmissionOutput = new List<string>();
-            droneRecallSequence = new List<int>();
-            droneReady = new List<bool>();
-            droneMustWait = new List<bool>();
-            droneRecallList = new List<bool>();
-            drone_assigns_count = new List<int>();
-            sprites = new List<MySprite>();
-            remoteControlAll = new List<IMyRemoteControl>();
-            remoteControlTag = new List<IMyRemoteControl>();
-            droneAutodock = new List<string>();
-            droneDockingReady = new List<string>();
-            drone_cargo_full = new List<string>();
-            drone_recharge_request = new List<string>();
-            drone_auto_pilot_enabled = new List<string>();
+            drone_location.Clear();
+            droneName.Clear();
+            droneDamageState.Clear();
+            droneTunnelFinished.Clear();
+            droneControlStatus.Clear();
+            droneDocked.Clear();
+            droneUndocked.Clear();
+            droneAutopiloting.Clear();
+            droneGPSCoordinates.Clear();
+            droneControlSequence.Clear();
+            droneGPSListPosition.Clear();
+            droneAssignedCoordinates.Clear();
+            gridBorePosition.Clear();
+            droneBoreDepth.Clear();
+            droneBoreDepthCurrent.Clear();
+            drone_mine_depth_start_status.Clear();
+            droneMining.Clear();
+            drone_location_x.Clear();
+            drone_location_y.Clear();
+            drone_location_z.Clear();
+            drone_charge_storage.Clear();
+            drone_gas_storage.Clear();
+            drone_ore_storage.Clear();
+            droneTranmissionOutput.Clear();
+            droneRecallSequence.Clear();
+            droneReady.Clear();
+            droneMustWait.Clear();
+            droneRecallList.Clear();
+            drone_assigns_count.Clear();
+            sprites.Clear();
+            remoteControlAll.Clear();
+            remoteControlTag.Clear();
+            droneAutodock.Clear();
+            droneDockingReady.Clear();
+            drone_cargo_full.Clear();
+            drone_recharge_request.Clear();
+            drone_auto_pilot_enabled.Clear();
             bores_regen = false;
-            cl = new List<string>();
-            cl2 = new List<string>();
-            tla = new List<int>();
-            rst = new List<int>();
-            fct = new List<string>();
-            dcs = new List<double>();
-            dst = new List<bool>();
-            droneTransmissionStatus = new List<bool>();
-            miningCoordinatesNew = new StringBuilder();
-            displayTextMain = new StringBuilder();
-            displayTextList = new StringBuilder();
-            droneInformation = new StringBuilder();
-            droneResetFunction = new List<bool>();
-            c = new StringBuilder();
-            jxt = new StringBuilder();
-            customDataString = new StringBuilder();
+            cl.Clear();
+            cl2.Clear();
+            tla.Clear();
+            rst.Clear();
+            fct.Clear();
+            dcs.Clear();
+            dst.Clear();
+            droneTransmissionStatus.Clear();
+            miningCoordinatesNew.Clear();
+            displayTextMain.Clear();
+            displayTextList.Clear();
+            droneInformation.Clear();
+            droneResetFunction.Clear();
+            c.Clear();
+            jxt.Clear();
+            customDataString.Clear();
             listenDrones = IGC.RegisterBroadcastListener(rxChannelDrone);
             listenProspector = IGC.RegisterBroadcastListener(rxChannelProspector);
             for (int i = 0; i < 12; i++)
@@ -4114,7 +4072,7 @@ namespace IngameScript
                     //drone_custom_data_check(checker, i);
                     if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
                     {
-                        sbtexttemp.AppendLine($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
+                        Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
                         return;
 
                     }
@@ -4217,16 +4175,16 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                sbtexttemp.AppendLine($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' found");
                 _viewport = new RectangleF((sV.TextureSize - sV.SurfaceSize) / 2f, sV.SurfaceSize);
                 Visport_OK = true;
             }
@@ -4239,14 +4197,14 @@ namespace IngameScript
             #region presence_check
             if (antennaTag.Count <= 0 || antennaTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Antenna with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"Antenna with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
             antennaActual = antennaTag[0];
             if (remoteControlTag.Count <= 0 || remoteControlTag[0] == null)
             {
-                sbtexttemp.AppendLine($"remote control with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"remote control with tag: '{antennaTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -4255,7 +4213,7 @@ namespace IngameScript
 
             if (lightsTag.Count <= 0 || lightsTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Indicator light with tag: '{lightsTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"Indicator light with tag: '{lightsTagName.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -4264,14 +4222,14 @@ namespace IngameScript
 
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
 
             if (display_tag_main.Count <= 0 || display_tag_main[0] == null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_main.Count > 0 && display_tag_main[0] != null)
             {
@@ -4285,11 +4243,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                sbtexttemp.AppendLine($"Panel:'{srfM}' on '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Panel:'{srfM}' on '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count <= 0 || display_tag_list[0] == null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Display with tag '{dp_mn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_list.Count > 0 && display_tag_list[0] != null)
             {
@@ -4303,11 +4261,11 @@ namespace IngameScript
             }
             if (sL == null)
             {
-                sbtexttemp.AppendLine($"Panel:'{srfL}' on '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Panel:'{srfL}' on '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_drone.Count <= 0 || display_tag_drone[0] == null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Display with tag '{dp_lst_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
 
 
@@ -4324,11 +4282,11 @@ namespace IngameScript
             }
             if (sM == null)
             {
-                sbtexttemp.AppendLine($"Panel:'{srfD}' on '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Panel:'{srfD}' on '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
             }
 
             if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
@@ -4337,7 +4295,7 @@ namespace IngameScript
                 sV = ((IMyTextSurfaceProvider)display_tag_vis[0]).GetSurface(srfV);
                 if (sV.ContentType != ContentType.SCRIPT)
                 {
-                    sbtexttemp.AppendLine("Correcting vis");
+                    Echo("Correcting vis");
                     sV.ContentType = ContentType.SCRIPT;
                     sV.Script = "";
                     Visport_OK = true;
@@ -4346,11 +4304,11 @@ namespace IngameScript
             }
             if (sV == null)
             {
-                sbtexttemp.AppendLine($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Panel:'{srfV}' on '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
             }
             if (display_tag_vis.Count <= 0 || display_tag_vis[0] == null)
             {
-                sbtexttemp.AppendLine($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
+                Echo($"Display with tag '{dp_vis_tag.Replace("[", "[[").Replace("]", "]]")}' not found");
                 Visport_OK = false;
             }
             #endregion
@@ -4604,11 +4562,17 @@ namespace IngameScript
         public void StoreRawInput(string inputString, IMyTerminalBlock block, string INI_SECTION = "GMDCJobData", string INI_KEY = "Jobinfo")
         {
             var iniBuilder = new MyIni();
-            // 1. Correct MyIni.Set() usage: (Section, Key, Value)
-            iniBuilder.Set(INI_SECTION, INI_KEY, inputString);
-
-            // Save to the Programmable Block's CustomData
+            iniBuilder.Clear();
+            if (iniBuilder.TryParse(block.CustomData.ToString()))
+            {
+                iniBuilder.Set(INI_SECTION, INI_KEY, inputString);
+            }
+            else
+            {
+                iniBuilder.Set(INI_SECTION, INI_KEY, inputString);;
+            }
             block.CustomData = iniBuilder.ToString();
+            iniBuilder.Clear();
             sbtexttemp.AppendLine($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
         }
 

@@ -58,7 +58,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.516B";
+        string ver = "V0.600B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -592,6 +592,7 @@ namespace IngameScript
 
             InitializeMiningGrid();
             ValidateCustomData();
+            ManageReload();
             PingDrones();
             GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
             //sbtexttemp.AppendLine($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
@@ -628,11 +629,20 @@ namespace IngameScript
                 gridCreated = false;
             }
             GetCustomDataJobCommand(Me.CustomData, Me);
+            
             ProcessJobGrid();
             UpdateActiveDroneLimits();
             //sbtexttemp.AppendLine($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
         }
-
+        private void ManageReload()
+        {
+            if (loadsave)
+            {
+                gridCreated = false;
+                i_init = true;
+            }
+           
+        }
         private void HandleDroneOperations()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
@@ -1880,9 +1890,9 @@ namespace IngameScript
             //if mining grid data empty resolve issues to avoid exception
             if (numPointsY == 0 && !gridCreated || numPointsX == 0 && !gridCreated || gridSize == 0 && !gridCreated)
             {
-                gridBorePosition = new List<Vector3D>();
-                gridBoreOccupied = new List<bool>();
-                gridBoreFinished = new List<bool>();
+                gridBorePosition.Clear();
+                gridBoreOccupied.Clear();
+                gridBoreFinished.Clear();
                 gridCreated = true;
                 gridCentreGPSCoordinates = miningGPSCoordinates;
                 gridBoreOccupied.Add(false);
@@ -1900,9 +1910,9 @@ namespace IngameScript
 
                 if (!bores_regen)
                 {
-                    gridBorePosition = new List<Vector3D>();
-                    gridBoreFinished = new List<bool>();
-                    gridBoreOccupied = new List<bool>();
+                    gridBorePosition.Clear();
+                    gridBoreFinished.Clear();
+                    gridBoreOccupied.Clear();
                     bores_regen = true;
                 }
 
@@ -1933,7 +1943,7 @@ namespace IngameScript
                 Vector3D centerPoint = miningGPSCoordinates;
                 //load from storage if present (test required)
 
-                if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete)
+                if (!string.IsNullOrEmpty(Storage) && !string.IsNullOrWhiteSpace(Storage) && !gridCreated && bores_regen && !gridInitialisationComplete && !loadsave)
                 {
                     //added from init
                     currentGPSIndex = 0;
@@ -1948,6 +1958,23 @@ namespace IngameScript
                     dronesPinged = false;
                     dronePingTimerCount = 0;
                     gridInitialisationComplete = true;
+                }
+                else if (!gridCreated && bores_regen && !gridInitialisationComplete && loadsave)
+                {
+                    //added from init
+                    currentGPSIndex = 0;
+                    realGPSIndex = currentGPSIndex;
+                    GetSavedJobData(Me);
+                    sbtexttemp.AppendLine("Grid positions restored");
+                    canLoading = true;
+                    //Storage = null;
+                    //reset everything else
+                    reset_drone_data();
+                    reset_drone_list();
+                    dronesPinged = false;
+                    dronePingTimerCount = 0;
+                    gridInitialisationComplete = true;
+                    loadsave = false;
                 }
                 //coroutine management grid creation
                 if (gridCoroutine == null && !gridInitialisationComplete && bores_regen || gridCoroutine != null && !gridCoroutine.MoveNext() && !gridInitialisationComplete && bores_regen)
@@ -2145,8 +2172,6 @@ namespace IngameScript
                     GetCustomDataJobCommand(_cachedCustomData, Me);
                     _oldCustomData = _cachedCustomData;
                 }
-
-
             }
         }
         void InvalidJobDataWrite(IMyTerminalBlock block, string input)
@@ -3844,6 +3869,50 @@ namespace IngameScript
                 Echo("Loading grid data");
                 if (setupComplete)
                 {
+                    string[] str_data = gridstats.Split(';');
+                    for (int i = 0; i < str_data.Length; i++)
+                    {
+                        if (string.IsNullOrEmpty(str_data[i])) continue; // Skip empty entries (e.g., trailing semicolon)
+
+                        string[] str_datai = str_data[i].Split(':');
+                        if (str_datai.Length >= 2) // Minimum for bn:bc
+                        {
+                            int bn, bc;
+                            bool bnParsed = int.TryParse(str_datai[0], out bn);
+                            bool bcParsed = int.TryParse(str_datai[1], out bc);
+
+                            gridBoreFinished.Add(bnParsed && bn > 0); // Default false if unparsed
+                            gridBoreOccupied.Add(bcParsed && bc > 0); // Default false if unparsed
+
+                            if (str_datai.Length >= 5) // Full bn:bc:x:y:z
+                            {
+                                double x = double.TryParse(str_datai[2], out bx) ? bx : 0.0;
+                                double y = double.TryParse(str_datai[3], out by) ? by : 0.0;
+                                double z = double.TryParse(str_datai[4], out bz) ? bz : 0.0;
+                                gridBorePosition.Add(new Vector3D(x, y, z));
+                            }
+                            else
+                            {
+                                gridBorePosition.Add(new Vector3D(0, 0, 0)); // Default position if incomplete
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        void GetSavedJobData(IMyProgrammableBlock block)
+        {
+            
+            var str = "";
+            string gridstats = "";
+            Echo("Loading grid data");            
+            if (setupComplete)
+            {
+                _ini.Clear();
+                if (_ini.TryParse(block.CustomData.ToString()))
+                {
+                    str = _ini.Get("jobdata", "gridstatus").ToString().Trim();
+                    gridstats = str;
                     string[] str_data = gridstats.Split(';');
                     for (int i = 0; i < str_data.Length; i++)
                     {

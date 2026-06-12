@@ -2000,11 +2000,15 @@ namespace IngameScript
                     }
 
                 }
-                if (!gridCreated && bores_regen && !gridInitialisationComplete && loadsave)
+                if (!gridCreated && bores_regen && gridInitialisationComplete && loadsave)
                 {
                     //added from init
+                    gridBorePosition.Clear();
+                    gridBoreFinished.Clear();
+                    gridBoreOccupied.Clear();
                     currentGPSIndex = 0;
                     realGPSIndex = currentGPSIndex;
+
                     GetSavedJobData(Me);
                     sbtexttemp.AppendLine("Grid positions restored");
                     canLoading = true;
@@ -3903,10 +3907,10 @@ namespace IngameScript
         }
         void GetSavedJobData(IMyProgrammableBlock block)
         {
-            
+
             var str = "";
             string gridstats = "";
-            Echo("Loading grid data");            
+            Echo("Loading grid data");
             if (setupComplete)
             {
                 _ini.Clear();
@@ -3942,12 +3946,13 @@ namespace IngameScript
                             }
                         }
                     }
-                    _ini.Set(gmdccategory, "loadsave", false);
                 }
-                block.CustomData = _ini.ToString();
-                _ini.Clear();
+                _ini.Set(gmdccategory, "loadsave", false);
             }
+            block.CustomData = _ini.ToString();
+            _ini.Clear();
         }
+        
         void reset_drone_data()
         {
             droneName.Clear();

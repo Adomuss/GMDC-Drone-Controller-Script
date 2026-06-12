@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using VRage.Game.GUI.TextPanel;
 using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Input;
+using VRage.Network;
 using VRageMath;
 
 namespace IngameScript
@@ -135,7 +136,7 @@ namespace IngameScript
         bool found = false;
         bool generalReset;
         bool miningGridValid = false;
-        List<bool> droneMustWait;
+        
         double ignoreDepth = 0.0;
         double safe_dstvl = 0.0;
         bool prospectTargetValid = false;
@@ -221,6 +222,7 @@ namespace IngameScript
         Vector3D planeNrml;
         StringBuilder miningCoordinatesNew = new StringBuilder();
         StringBuilder c = new StringBuilder();
+        List<bool> droneMustWait = new List<bool>();
         List<Vector3D> drone_location = new List<Vector3D>();
         List<string> droneName = new List<string>();
         List<string> droneDamageState = new List<string>();
@@ -397,7 +399,9 @@ namespace IngameScript
         int _frameCounter = 0;
         StringBuilder sbtexttemp = new StringBuilder();
         MyIni safebuilder = new MyIni();
+        MyIni _interfaceCommand = new MyIni();
         bool loadsave = false;
+        string jobname = "Default";
         #endregion
         public void Save()
         {
@@ -510,7 +514,7 @@ namespace IngameScript
             firstload = false;
             if (!setupComplete)
             {
-                sbtexttemp.AppendLine("Setup incomplete - exiting");
+                Echo("Setup incomplete - exiting");
                 ClearAllNonEmptyLists();
                 return;
             }
@@ -550,12 +554,12 @@ namespace IngameScript
 
                 SetupSystem();
                 setupComplete = true;
-                sbtexttemp.AppendLine("Setup complete!");
+                Echo("Setup complete!");
             }
             CheckSystemSetupStatus();
             if (!setupComplete)
             {
-                sbtexttemp.AppendLine("Setup incomplete - exiting");
+                Echo("Setup incomplete - exiting");
                 ClearAllNonEmptyLists();
                 return;
             }
@@ -1836,6 +1840,36 @@ namespace IngameScript
             #endregion
         }
 
+        public void writeInterfaceCommand(IMyTerminalBlock block, string command)
+        {
+            _interfaceCommand.Clear();
+            if (_interfaceCommand.TryParse(block.CustomData.ToString()))
+            {
+                _interfaceCommand.Set("GMDIJobData", "interfacecommand", command);
+            }
+            else
+            {
+                _interfaceCommand.Set("GMDIJobData", "interfacecommand", command);
+            }
+            block.CustomData = _interfaceCommand.ToString();
+            _interfaceCommand.Clear();
+        }
+        public void readInterfaceCommand(IMyTerminalBlock block)
+        {
+            var str = "";
+            _interfaceCommand.Clear();
+            if (_interfaceCommand.TryParse(block.CustomData.ToString()))
+            {
+                str = _interfaceCommand.Get("GMDIJobData", "interfacecommand").ToString();
+                interfaceArgument = str;
+            }
+            else
+            {
+                interfaceArgument = "";
+                writeInterfaceCommand(block, "");                
+            }            
+            _interfaceCommand.Clear();
+        }
         private void ProcessJobGrid()
         {
             if (pbInterfaceActual == null || interfacePBTag[0] == null)
@@ -1946,7 +1980,9 @@ namespace IngameScript
                         {
                             //debugcount++;
                             gridInitialisationComplete = true;
-                            pbInterfaceActual.CustomData = "";
+                            //clear interface command here
+                            writeInterfaceCommand(pbInterfaceActual, "");
+                            //pbInterfaceActual.CustomData = "";
                             canInit = false;
                             i_init = false;
                             interfaceArgument = "";
@@ -1958,7 +1994,9 @@ namespace IngameScript
                 if (gridBorePosition.Count > 0 && gridInitialisationComplete)
                 {
                     gridCreated = true;
-                    pbInterfaceActual.CustomData = "";
+                    //clear interface command here
+                    writeInterfaceCommand(pbInterfaceActual, "");
+                    //pbInterfaceActual.CustomData = "";
                     canInit = false;
                     i_init = false;
                     interfaceArgument = "";
@@ -2191,7 +2229,9 @@ namespace IngameScript
                     return;
                 }
                 canInterfaceCommand = true;
-                interfaceArgument = pbInterfaceActual.CustomData;
+                //read interface command here
+                //interfaceArgument = pbInterfaceActual.CustomData;
+                readInterfaceCommand(pbInterfaceActual);                
                 sbtexttemp.AppendLine($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                 sbtexttemp.AppendLine($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
@@ -3184,6 +3224,18 @@ namespace IngameScript
                     _customDataStore.Set("GMDCJobData", "loadsave","false");
                     _isMissing = true;
                 }
+                //manage jobname
+                if (_customDataStore.ContainsKey("GMDCJobData", "jobname"))
+                {
+                    str = _customDataStore.Get("GMDCJobData", "jobname").ToString().Trim();
+                    jobname = str;
+                }
+                else
+                {
+                    //write custom data here to input
+                    _customDataStore.Set("GMDCJobData", "jobname", "");
+                    _isMissing = true;
+                }
             }
             if (_isMissing)
             {
@@ -3260,7 +3312,7 @@ namespace IngameScript
         {
             if (!listHeaderGenerated)
             {
-                displayTextList.Append($"{secondary_tag} Mining Grid Status - GMDC {ver} {icon}");
+                displayTextList.Append($"{secondary_tag} Mining Grid Status [{jobname}] - GMDC {ver} {icon}");
                 displayTextList.Append('\n');
                 displayTextList.Append('\n');
                 displayTextList.Append($"Remaining bores: {boresRemaining} - Current Index: {currentGPSIndex}");
@@ -3403,7 +3455,7 @@ namespace IngameScript
                 var spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"--- {secondary_tag} Mining Grid  Status ---",
+                    Data = $"--- {secondary_tag} Mining Grid Status ---",
                     Position = text_position,
                     RotationOrScale = 1.0f,
                     Size = sizer,
@@ -3416,7 +3468,7 @@ namespace IngameScript
                 spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
+                    Data = $"[{jobname}] - Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
                     Position = text_position,
                     RotationOrScale = 0.7f,
                     Size = sizer,
@@ -3982,7 +4034,9 @@ namespace IngameScript
         {
             ClearAllNonEmptyLists();
             #region setup_system
+            Echo("Running Setup");
             IMyGridTerminalSystem gts = GridTerminalSystem as IMyGridTerminalSystem;
+            Echo("Loading Names");
             antennaTagName = "[" + drone_tag + " " + comms + "]";
             lightsTagName = "[" + drone_tag + " " + comms + "]";
             dp_mn_tag = "[" + drone_tag + " " + MainS + " " + dspy + "]";
@@ -3997,6 +4051,7 @@ namespace IngameScript
             txDronePingChannel = "[" + drone_tag + "]" + " " + pingMessage;
             txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
             syncMessage = secondary;
+            Echo("Clearning Lists");
             drone_location.Clear();
             droneName.Clear();
             droneDamageState.Clear();
@@ -4006,6 +4061,7 @@ namespace IngameScript
             droneUndocked.Clear();
             droneAutopiloting.Clear();
             droneGPSCoordinates.Clear();
+            Echo("Stage 1");
             droneControlSequence.Clear();
             droneGPSListPosition.Clear();
             droneAssignedCoordinates.Clear();
@@ -4021,20 +4077,20 @@ namespace IngameScript
             drone_gas_storage.Clear();
             drone_ore_storage.Clear();
             droneTranmissionOutput.Clear();
-            droneRecallSequence.Clear();
-            droneReady.Clear();
-            droneMustWait.Clear();
+            Echo("Stage 2");
+            droneRecallSequence.Clear();            
+            droneReady.Clear();            
+            droneMustWait.Clear();           
             droneRecallList.Clear();
             drone_assigns_count.Clear();
             sprites.Clear();
             remoteControlAll.Clear();
-            remoteControlTag.Clear();
+            remoteControlTag.Clear();            
             droneAutodock.Clear();
             droneDockingReady.Clear();
             drone_cargo_full.Clear();
             drone_recharge_request.Clear();
-            drone_auto_pilot_enabled.Clear();
-            bores_regen = false;
+            drone_auto_pilot_enabled.Clear();            
             cl.Clear();
             cl2.Clear();
             tla.Clear();
@@ -4042,6 +4098,7 @@ namespace IngameScript
             fct.Clear();
             dcs.Clear();
             dst.Clear();
+            Echo("Stage 3");
             droneTransmissionStatus.Clear();
             miningCoordinatesNew.Clear();
             displayTextMain.Clear();
@@ -4051,6 +4108,8 @@ namespace IngameScript
             c.Clear();
             jxt.Clear();
             customDataString.Clear();
+            Echo("ListClear Complete");
+            bores_regen = false;            
             listenDrones = IGC.RegisterBroadcastListener(rxChannelDrone);
             listenProspector = IGC.RegisterBroadcastListener(rxChannelProspector);
             for (int i = 0; i < 12; i++)
@@ -4459,7 +4518,7 @@ namespace IngameScript
         void update_display()  // Extracted from drone_processing
         {
             displayTextMain.Clear().EnsureCapacity(512); // ~400-600 chars typical
-            displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] Running {icon}")
+            displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] [{jobname}] Running {icon}")
                   .AppendLine($"------------------------------")
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {droneName.Count}")
@@ -4477,7 +4536,7 @@ namespace IngameScript
                   .AppendLine($"Command: {commandAsk} Reset: {generalReset}")
                   .AppendLine($"Status: {screenStatus}")
                   .AppendLine()
-                  .AppendLine("Target Coordinates:")
+                  .AppendLine($"Target Coordinates [{jobname}]:")
                   .AppendLine($"{miningGPSCoordinates}");
             if (prospectAlignTargetValid || customDataAlignTargetValid) displayTextMain.AppendLine("Align Coordinates:").AppendLine(alignGPSCoordinates.ToString());
 

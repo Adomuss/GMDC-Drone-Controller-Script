@@ -1967,7 +1967,7 @@ namespace IngameScript
                     GetSavedJobData(Me);
                     sbtexttemp.AppendLine("Grid positions restored");
                     canLoading = true;
-                    //Storage = null;
+                    Storage = null;
                     //reset everything else
                     reset_drone_data();
                     reset_drone_list();

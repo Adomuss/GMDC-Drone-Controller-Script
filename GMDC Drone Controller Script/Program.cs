@@ -460,7 +460,8 @@ namespace IngameScript
 
         }
 
-        public void AntennaSaveData(IMyRadioAntenna block)
+
+            public void AntennaSaveData(IMyRadioAntenna block)
         {
             _antennaStore.Clear();
             if (_antennaStore.TryParse(block.CustomData.ToString()))
@@ -4747,6 +4748,57 @@ namespace IngameScript
             block.CustomData = iniBuilder.ToString();
             iniBuilder.Clear();
             sbtexttemp.AppendLine($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
+        }
+
+        public class DroneData
+        {
+            // Identifiers & Status
+            public string Name;
+            public string DamageState;
+            public string TunnelFinished;
+            public string ControlStatus;
+
+            // Docking & Autopilot
+            public string Docked;
+            public string Undocked;
+            public string Autopiloting;
+            public string Autodock;
+            public string DockingReady;
+            public string AutoPilotEnabled;
+
+            // Navigation & Coordinates
+            public int GpsListPosition;
+            public Vector3D GpsCoordinates;
+            public string LocationX;
+            public string LocationY;
+            public string LocationZ;
+
+            // Mining & Depth
+            public string BoreDepth;
+            public string BoreDepthCurrent;
+            public string MineDepthStartStatus;
+            public bool IsMining;
+
+            // Storage & Resources
+            public string ChargeStorage;
+            public string GasStorage;
+            public string OreStorage;
+            public string CargoFull;
+            public string RechargeRequest;
+
+            // State Machine Flags
+            public bool AssignedCoordinates;
+            public int ControlSequence;
+            public int RecallSequence;
+            public string TransmissionOutput;
+            public bool IsReady;
+            public bool MustWait;
+            public double Dcs;
+            public bool Dst;
+            public bool TransmissionStatus;
+            public bool RecallList;
+            public bool ResetFunction;
+            public int AssignsCount;
         }
 
     }

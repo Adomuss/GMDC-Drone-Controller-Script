@@ -43,8 +43,8 @@ namespace IngameScript
         int srfD = 0;
         int srfV = 0;
         int drones_per_screen = 8;
-        int droneUndockDelayTime = 60;
-        int undock_delay_limit = 120;
+        int droneUndockDelayTime = 6;
+        int undock_delay_limit = 12;
 
         //Drone Comms
         int droneCommunicationsProcessingDelay = 0;
@@ -54,8 +54,8 @@ namespace IngameScript
 
         #region static_variables
         //visualiser settings
-        int spriteCountLimit = 500;
-        int spritecount_limit_insert = 250;
+        int spriteCountLimit = 50;
+        int spritecount_limit_insert = 25;
         //statics
         int game_factor = 10;
         string ver = "V0.601B";
@@ -402,6 +402,8 @@ namespace IngameScript
         MyIni _interfaceCommand = new MyIni();
         bool loadsave = false;
         string jobname = "Default";
+        string rcdataOld = "";
+        string interfacecommandOld = "";
         #endregion
         public void Save()
         {
@@ -594,7 +596,11 @@ namespace IngameScript
             ValidateCustomData();
             ManageReload();
             PingDrones();
-            GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
+            if (rcdataOld != remoteControlActual.CustomData)
+            {
+                GetRemoteControlData(remoteControlActual.CustomData, remoteControlActual);
+                rcdataOld = remoteControlActual.CustomData;
+            }
             //sbtexttemp.AppendLine($"Pre-Prospect: valid= RC: {prospectTargetValid}  , ALN: {prospectAlignTargetValid}, coords= PB: {miningGPSCoordinates} RC: {targetGPSCoordinates}");
             if (prospectAlignTargetValid)
             {
@@ -628,8 +634,11 @@ namespace IngameScript
                 prospectorMessageReceived = false;
                 gridCreated = false;
             }
-            GetCustomDataJobCommand(Me.CustomData, Me);
-            
+            if (_oldCustomData != Me.CustomData)
+            {
+                GetCustomDataJobCommand(Me.CustomData, Me);
+                _oldCustomData = Me.CustomData;
+            }
             ProcessJobGrid();
             UpdateActiveDroneLimits();
             //sbtexttemp.AppendLine($"UpdateMiningGrid: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -2261,7 +2270,11 @@ namespace IngameScript
                 canInterfaceCommand = true;
                 //read interface command here
                 //interfaceArgument = pbInterfaceActual.CustomData;
-                readInterfaceCommand(pbInterfaceActual);                
+                if (interfacecommandOld != pbInterfaceActual.CustomData)
+                {
+                    readInterfaceCommand(pbInterfaceActual);
+                    interfacecommandOld = pbInterfaceActual.CustomData;
+                }
                 sbtexttemp.AppendLine($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                 sbtexttemp.AppendLine($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }

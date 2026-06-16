@@ -48,17 +48,17 @@ namespace IngameScript
 
         //Drone Comms
         int droneCommunicationsProcessingDelay = 0;
-        int droneCommunicationsPingDelay = 18;
+        int droneCommunicationsPingDelay = 60;
 
         #endregion
 
         #region static_variables
         //visualiser settings
-        int spriteCountLimit = 50;
-        int spritecount_limit_insert = 25;
+        int spriteCountLimit = 500;
+        int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.601B";
+        string ver = "V0.602B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -136,7 +136,7 @@ namespace IngameScript
         bool found = false;
         bool generalReset;
         bool miningGridValid = false;
-        
+
         double ignoreDepth = 0.0;
         double safe_dstvl = 0.0;
         bool prospectTargetValid = false;
@@ -159,24 +159,24 @@ namespace IngameScript
         string customData14;
         string customData15;
         //string customData16;
-       // string customData17;
+        // string customData17;
         string customData18;
         string customData19;
         string customData20;
-      //  string customData21;
+        //  string customData21;
         string customData22;
-     //   string remoteControlCustomData1 = "";
+        //   string remoteControlCustomData1 = "";
         string remoteControlCustomData2 = "";
         string remoteControlCustomData3 = "";
         string remoteControlCustomData4 = "";
-     //   string remoteControlCustomData5 = "";
+        //   string remoteControlCustomData5 = "";
         string remoteControlCustomData6 = "";
-      //  string remoteControlCustomData7 = "";
-      //  string remoteControlCustomData8 = "";
+        //  string remoteControlCustomData7 = "";
+        //  string remoteControlCustomData8 = "";
         string remoteControlCustomData9 = "";
         string remoteControlCustomData10 = "";
         string remoteControlCustomData11 = "";
-      //  string remoteControlCustomData12 = "";
+        //  string remoteControlCustomData12 = "";
 
         string cd1 = "";
         string xp = "";
@@ -216,7 +216,7 @@ namespace IngameScript
         IMyProgrammableBlock pbInterfaceActual;
         Vector3D miningGPSCoordinates;
         Vector3D gridCentreGPSCoordinates;
-      //  Vector3D next_gps_crds;
+        //  Vector3D next_gps_crds;
         Vector3D targetGPSCoordinates;
         Vector3D alignGPSCoordinates;
         Vector3D planeNrml;
@@ -308,7 +308,7 @@ namespace IngameScript
         bool noInterfaceCommand = false;
         string interfaceArgument;
         //decimal dps_r_d = 0.0m;
-        List<IMyRemoteControl> remoteControlAll= new List<IMyRemoteControl>();
+        List<IMyRemoteControl> remoteControlAll = new List<IMyRemoteControl>();
         List<IMyRemoteControl> remoteControlTag = new List<IMyRemoteControl>();
         List<IMyRadioAntenna> antennaAll = new List<IMyRadioAntenna>();
         List<IMyRadioAntenna> antennaTag = new List<IMyRadioAntenna>();
@@ -329,7 +329,7 @@ namespace IngameScript
         StringBuilder sb = new StringBuilder();
         int totalDronesDamaged = 0;
         int totalDronesUnknown = 0;
-      //  int t_dn_ok = 0;
+        //  int t_dn_ok = 0;
         string g1;
         string g2;
         int di = 0;
@@ -379,22 +379,22 @@ namespace IngameScript
 
         private double totalRuntimeMs = 0.0;
         private int runCount = 0;
-      //  private double averageRuntimeMs = 0.0;
+        //  private double averageRuntimeMs = 0.0;
 
         MyIni _ini = new MyIni();
         MyIni _antennaStore = new MyIni();
         string runargument = "";
         bool firstload = false;
         MyIni _customDataStore = new MyIni();
-       // MyIni _commsData = new MyIni();
+        // MyIni _commsData = new MyIni();
         string jobdata = "";
         string rcjobdata = "";
         string jobinfo = "Jobinfo";
         string gmdccategory = "GMDCJobData";
-     //   string gmdpcategory = "GMDPJobData";
+        //   string gmdpcategory = "GMDPJobData";
         string rcjobinfo = "Jobinfo";
-     //   string prospectmain = "maindata";
-     //   string prospecttarget = "aligndata";
+        //   string prospectmain = "maindata";
+        //   string prospecttarget = "aligndata";
         string _cachedCustomData = "";
         int _frameCounter = 0;
         StringBuilder sbtexttemp = new StringBuilder();
@@ -473,7 +473,7 @@ namespace IngameScript
                 _antennaStore.Set("Configuration", "drone group tag", drone_tag);
                 _antennaStore.Set("Configuration", "ship grid tag", secondary_tag);
             }
-            block.CustomData = _antennaStore.ToString();            
+            block.CustomData = _antennaStore.ToString();
             _antennaStore.Clear();
         }
         public void manageFirstLoad(string input, string datacommandinput)
@@ -529,7 +529,7 @@ namespace IngameScript
             Echo(sbtexttemp.ToString());
             sbtexttemp.Clear();
             sbtexttemp.AppendLine($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
-            
+
         }
 
         private void UpdateRuntimeMetrics(UpdateType updateSource)
@@ -540,7 +540,7 @@ namespace IngameScript
             runCount++;
             if (runCount == 10)
             {
-               // averageRuntimeMs = totalRuntimeMs / runCount;
+                // averageRuntimeMs = totalRuntimeMs / runCount;
                 runCount = 0;
                 totalRuntimeMs = 0;
             }
@@ -650,7 +650,7 @@ namespace IngameScript
                 gridCreated = false;
                 i_init = true;
             }
-           
+
         }
         private void HandleDroneOperations()
         {
@@ -1885,8 +1885,8 @@ namespace IngameScript
             else
             {
                 interfaceArgument = "";
-                writeInterfaceCommand(block, "");                
-            }            
+                writeInterfaceCommand(block, "");
+            }
             _interfaceCommand.Clear();
         }
         private void ProcessJobGrid()
@@ -2061,7 +2061,29 @@ namespace IngameScript
                 gridBoresCompleted = 0;
                 currentGPSIndex = 0;
             }
-            sbtexttemp.AppendLine($"Grid: {gridCreated} - Bores: {totalMiningRuns} - Remaining: {boresRemaining}");
+            if (gridBorePosition.Count > 0)
+            {
+                if (spriteCountLimit != gridBorePosition.Count + (gridBorePosition.Count / 2) + 50)
+                {
+                    spriteCountLimit = gridBorePosition.Count + (gridBorePosition.Count / 2) + 50;
+                }
+                if (spritecount_limit_insert != (gridBorePosition.Count / 2))
+                {
+                    spritecount_limit_insert = (gridBorePosition.Count / 2);
+                }
+            }
+            else
+            {
+                if (spriteCountLimit != 500)
+                {
+                    spriteCountLimit = 500;
+                }
+                if (spritecount_limit_insert != 250)
+                {
+                    spritecount_limit_insert = 250;
+                }
+            }
+                sbtexttemp.AppendLine($"Grid: {gridCreated} - Bores: {totalMiningRuns} - Remaining: {boresRemaining}");
             #endregion
         }
 
@@ -2156,11 +2178,11 @@ namespace IngameScript
 
         private void ValidateCustomData()
         {
-            if(_cachedCustomData != Me.CustomData)
+            if (_cachedCustomData != Me.CustomData)
             {
                 _cachedCustomData = Me.CustomData;
             }
-            
+
             if (!string.IsNullOrEmpty(_cachedCustomData) && !string.IsNullOrWhiteSpace(_cachedCustomData))
             {
                 mainCustomDataValid = true;
@@ -2178,10 +2200,11 @@ namespace IngameScript
             }
             if (mainCustomDataValid)
             {
-                if(_cachedCustomData == _oldCustomData)
+                if (_cachedCustomData == _oldCustomData)
                 {
                     return;
-                } else if (_cachedCustomData != _oldCustomData)
+                }
+                else if (_cachedCustomData != _oldCustomData)
                 {
                     GetCustomDataJobCommand(_cachedCustomData, Me);
                     _oldCustomData = _cachedCustomData;
@@ -2755,11 +2778,11 @@ namespace IngameScript
 
             if (remoteGpsCommand.Length < 6)
             {
-              //  remoteControlCustomData1 = "";
+                //  remoteControlCustomData1 = "";
                 remoteControlCustomData2 = "";
                 remoteControlCustomData3 = "";
                 remoteControlCustomData4 = "";
-             //   remoteControlCustomData5 = "";
+                //   remoteControlCustomData5 = "";
                 remoteControlCustomData6 = "";
 
                 prospectTargetValid = false;
@@ -2770,11 +2793,11 @@ namespace IngameScript
 
                 //target_gps_coords = new Vector3D(Double.Parse(remoteGpsCommand[2]), Double.Parse(remoteGpsCommand[3]), Double.Parse(remoteGpsCommand[4]));
                 prospectTargetValid = true;
-              //  remoteControlCustomData1 = remoteGpsCommand[1];
+                //  remoteControlCustomData1 = remoteGpsCommand[1];
                 remoteControlCustomData2 = remoteGpsCommand[2];
                 remoteControlCustomData3 = remoteGpsCommand[3];
                 remoteControlCustomData4 = remoteGpsCommand[4];
-              //  remoteControlCustomData5 = remoteGpsCommand[5];
+                //  remoteControlCustomData5 = remoteGpsCommand[5];
                 remoteControlCustomData6 = remoteGpsCommand[6];
                 if (!double.TryParse(remoteControlCustomData2, out targetGPSCoordinates.X))
                 {
@@ -2800,12 +2823,12 @@ namespace IngameScript
             }
             if (remoteGpsCommand.Length < 11 && remoteGpsCommand.Length > 7 && !prospectAlignTargetValid)
             {
-              //  remoteControlCustomData7 = "";
-             //   remoteControlCustomData8 = "";
+                //  remoteControlCustomData7 = "";
+                //   remoteControlCustomData8 = "";
                 remoteControlCustomData9 = "";
                 remoteControlCustomData10 = "";
                 remoteControlCustomData11 = "";
-             //   remoteControlCustomData12 = "";
+                //   remoteControlCustomData12 = "";
                 prospectAlignTargetValid = false;
                 return;
             }
@@ -2815,12 +2838,12 @@ namespace IngameScript
                 bool AlignY = false;
                 bool AlignZ = false;
 
-             //   remoteControlCustomData7 = remoteGpsCommand[7];
-             //   remoteControlCustomData8 = remoteGpsCommand[8];
+                //   remoteControlCustomData7 = remoteGpsCommand[7];
+                //   remoteControlCustomData8 = remoteGpsCommand[8];
                 remoteControlCustomData9 = remoteGpsCommand[9];
                 remoteControlCustomData10 = remoteGpsCommand[10];
                 remoteControlCustomData11 = remoteGpsCommand[11];
-             //   remoteControlCustomData12 = remoteGpsCommand[12];
+                //   remoteControlCustomData12 = remoteGpsCommand[12];
                 if (!double.TryParse(remoteControlCustomData9, out alignGPSCoordinates.X))
                 {
                     alignGPSCoordinates.X = 0.0;
@@ -2865,7 +2888,7 @@ namespace IngameScript
             var str = "";
             _customDataStore.Clear();
             if (_customDataStore.TryParse(input.CustomData.ToString()))
-            {                
+            {
                 str = _customDataStore.Get(gmdccategory, rcjobinfo).ToString().Trim();
                 rcjobdata = str;
                 str = _customDataStore.Get(gmdccategory, "TargetGPS").ToString().Trim();
@@ -2942,7 +2965,7 @@ namespace IngameScript
                 _customDataStore.Set(gmdccategory, "SafeAlignDistance", safe_dstvl);
                 block.CustomData = _customDataStore.ToString();
             }
-                _customDataStore.Clear();
+            _customDataStore.Clear();
         }
 
 
@@ -2987,12 +3010,12 @@ namespace IngameScript
                 customData13 = "";
                 customData14 = "";
                 customData15 = "";
-               // customData16 = "";
-               // customData17 = "";
+                // customData16 = "";
+                // customData17 = "";
                 customData18 = "";
                 customData19 = "";
                 customData20 = "";
-              //  customData21 = "";
+                //  customData21 = "";
                 customData22 = "";
                 sbtexttemp.AppendLine("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
                 return;
@@ -3146,14 +3169,14 @@ namespace IngameScript
                 bool targetAlignX;
                 bool targetAlignY;
                 bool targetAlignZ;
-             //   if (gpsCommand.Length > 16)
-             //   {
-                   // customData16 = gpsCommand[16];
-             //   }
-              //  if (gpsCommand.Length > 17)
-              //  {
-             //       customData17 = gpsCommand[17];
-             //   }
+                //   if (gpsCommand.Length > 16)
+                //   {
+                // customData16 = gpsCommand[16];
+                //   }
+                //  if (gpsCommand.Length > 17)
+                //  {
+                //       customData17 = gpsCommand[17];
+                //   }
                 if (gpsCommand.Length > 18)
                 {
                     customData18 = gpsCommand[18];
@@ -3166,10 +3189,10 @@ namespace IngameScript
                 {
                     customData20 = gpsCommand[20];
                 }
-             //   if (gpsCommand.Length > 21)
-             //   {
-             //       customData21 = gpsCommand[21];
-             //   }
+                //   if (gpsCommand.Length > 21)
+                //   {
+                //       customData21 = gpsCommand[21];
+                //   }
                 if (gpsCommand.Length > 22)
                 {
                     customData22 = gpsCommand[22];
@@ -3238,7 +3261,7 @@ namespace IngameScript
             bool _isMissing = false;
             _customDataStore.Clear();
             if (_customDataStore.TryParse(input.CustomData.ToString()))
-            {                
+            {
                 if (_customDataStore.ContainsKey(gmdccategory, jobinfo))
                 {
                     str = _customDataStore.Get(gmdccategory, jobinfo).ToString().Trim();
@@ -3259,12 +3282,12 @@ namespace IngameScript
                     if (!bool.TryParse(str, out loadsave))
                     {
                         loadsave = false;
-                    }                    
+                    }
                 }
                 else
                 {
                     //write custom data here to input
-                    _customDataStore.Set("GMDCJobData", "loadsave","false");
+                    _customDataStore.Set("GMDCJobData", "loadsave", "false");
                     _isMissing = true;
                 }
                 //manage jobname
@@ -3965,7 +3988,7 @@ namespace IngameScript
             block.CustomData = _ini.ToString();
             _ini.Clear();
         }
-        
+
         void reset_drone_data()
         {
             droneName.Clear();
@@ -4169,19 +4192,19 @@ namespace IngameScript
             drone_ore_storage.Clear();
             droneTranmissionOutput.Clear();
             Echo("Stage 2");
-            droneRecallSequence.Clear();            
-            droneReady.Clear();            
-            droneMustWait.Clear();           
+            droneRecallSequence.Clear();
+            droneReady.Clear();
+            droneMustWait.Clear();
             droneRecallList.Clear();
             drone_assigns_count.Clear();
             sprites.Clear();
             remoteControlAll.Clear();
-            remoteControlTag.Clear();            
+            remoteControlTag.Clear();
             droneAutodock.Clear();
             droneDockingReady.Clear();
             drone_cargo_full.Clear();
             drone_recharge_request.Clear();
-            drone_auto_pilot_enabled.Clear();            
+            drone_auto_pilot_enabled.Clear();
             cl.Clear();
             cl2.Clear();
             tla.Clear();
@@ -4200,7 +4223,7 @@ namespace IngameScript
             jxt.Clear();
             customDataString.Clear();
             Echo("ListClear Complete");
-            bores_regen = false;            
+            bores_regen = false;
             listenDrones = IGC.RegisterBroadcastListener(rxChannelDrone);
             listenProspector = IGC.RegisterBroadcastListener(rxChannelProspector);
             for (int i = 0; i < 12; i++)
@@ -4719,7 +4742,7 @@ namespace IngameScript
             }
             else
             {
-                iniBuilder.Set(INI_SECTION, INI_KEY, inputString);;
+                iniBuilder.Set(INI_SECTION, INI_KEY, inputString); ;
             }
             block.CustomData = iniBuilder.ToString();
             iniBuilder.Clear();

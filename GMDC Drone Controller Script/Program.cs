@@ -218,50 +218,11 @@ namespace IngameScript
         Vector3D planeNrml;
         StringBuilder miningCoordinatesNew = new StringBuilder();
         StringBuilder c = new StringBuilder();
-        List<bool> droneMustWait = new List<bool>();
-        List<Vector3D> drone_location = new List<Vector3D>();
-        List<string> droneName = new List<string>();
-        List<string> droneDamageState = new List<string>();
-        List<string> droneTunnelFinished = new List<string>();
-        List<string> droneControlStatus = new List<string>();
-        List<string> droneDocked = new List<string>();
-        List<string> droneUndocked = new List<string>();
-        List<string> droneAutopiloting = new List<string>();
-        List<string> droneBoreDepth = new List<string>();
-        List<string> droneBoreDepthCurrent = new List<string>();
-        List<string> drone_mine_depth_start_status = new List<string>();
-        List<int> droneGPSListPosition = new List<int>();
-        List<bool> droneReady = new List<bool>();
-        List<string> drone_location_x = new List<string>();
-        List<string> drone_location_y = new List<string>();
-        List<string> drone_location_z = new List<string>();
-        List<string> drone_charge_storage = new List<string>();
-        List<string> drone_gas_storage = new List<string>();
-        List<string> drone_ore_storage = new List<string>();
-        List<string> drone_cargo_full = new List<string>();
-        List<string> drone_recharge_request = new List<string>();
-        List<string> drone_auto_pilot_enabled = new List<string>();
-        List<string> droneAutodock = new List<string>();
-        List<string> droneDockingReady = new List<string>();
-        List<int> drone_assigns_count = new List<int>();
-        List<double> dcs = new List<double>();
-        List<bool> droneAssignedCoordinates = new List<bool>();
-        List<bool> droneRecallList = new List<bool>();
-        List<Vector3D> droneGPSCoordinates = new List<Vector3D>();
-        List<int> droneControlSequence = new List<int>();
-        List<int> droneRecallSequence = new List<int>();
-        List<bool> droneResetFunction = new List<bool>();
-        List<string> droneTranmissionOutput = new List<string>();
         List<Vector3D> gridBorePosition = new List<Vector3D>();
         List<bool> gridBoreOccupied = new List<bool>();
         List<bool> gridBoreFinished = new List<bool>();
         List<string> cl = new List<string>();
         List<string> cl2 = new List<string>();
-        List<int> tla = new List<int>();
-        List<int> rst = new List<int>();
-        List<string> fct = new List<string>();
-        List<bool> dst = new List<bool>();
-        List<bool> droneTransmissionStatus = new List<bool>();
         //int cbval = 0;
         //bool clbt = false;
         int gridBoresCompleted;
@@ -923,10 +884,10 @@ namespace IngameScript
 
         private void DroneResetStatusCounter()
         {
-            if (droneGPSListPosition.Count > 0 && canReset)
+            if (Swarm.Count > 0 && canReset)
             {
                 droneResetStatusCount = CountIntegerValues("GPSListPosition", -1);
-                droneDockedStatusCount = CountStatusValues(droneControlStatus, "Docked");
+                droneDockedStatusCount = CountStatusValues("ControlStatus", "Docked");
             }
             if (Swarm.Count > 0)
             {
@@ -1183,7 +1144,7 @@ namespace IngameScript
                                 }
                                 if (!gridBoreFinished[k])
                                 {
-                                    if (droneGPSListPosition.Count > 0)
+                                    if (Swarm.Count > 0)
                                     {
                                         int queued_count = CountIntegerValues("GPSListPosition", k);
                                         if (!gridBoreOccupied[k] && queued_count > 0) //check if preassigned here
@@ -1218,7 +1179,7 @@ namespace IngameScript
                         if (!miningGridValid)
                         {
                             totalMiningRuns = 1;
-                            if (droneGPSCoordinates.Count > 0)
+                            if (Swarm.Count > 0)
                             {
                                 drone.GpsCoordinates = miningGPSCoordinates;
                             }
@@ -1227,7 +1188,7 @@ namespace IngameScript
                         }
                         //suspect code here
                         sbtexttemp.AppendLine($"Drone coords: {i}");
-                        if (i < droneAssignedCoordinates.Count)
+                        if (i < Swarm.Count)
                         {
                             drone.AssignedCoordinates = true;
                             sbtexttemp.AppendLine($"Drone coords assigned: {i} {drone.AssignedCoordinates}");
@@ -1982,8 +1943,6 @@ namespace IngameScript
                     canLoading = true;
                     Storage = null;
                     //reset everything else
-                    reset_drone_data();
-                    reset_drone_list();
                     dronesPinged = false;
                     dronePingTimerCount = 0;
                     gridInitialisationComplete = true;
@@ -2043,8 +2002,6 @@ namespace IngameScript
                     canLoading = true;
                     Storage = null;
                     //reset everything else
-                    reset_drone_data();
-                    reset_drone_list();
                     dronesPinged = false;
                     dronePingTimerCount = 0;
                     gridInitialisationComplete = true;
@@ -2634,9 +2591,10 @@ namespace IngameScript
                     boreQueueCounts = new int[gridBoreOccupied.Count];
                 Array.Clear(boreQueueCounts, 0, gridBoreOccupied.Count);
 
-                for (int d = 0; d < droneGPSListPosition.Count; d++)
-                    if (droneGPSListPosition[d] >= 0 && droneGPSListPosition[d] < boreQueueCounts.Length)
-                        boreQueueCounts[droneGPSListPosition[d]]++;
+                foreach (DroneData drone in Swarm.Values)                
+                    if (drone.GpsListPosition >= 0 && drone.GpsListPosition < boreQueueCounts.Length)
+                        boreQueueCounts[drone.GpsListPosition]++;
+                
 
                 for (int l = 0; l < gridBoreOccupied.Count; l++)
                     if (gridBoreOccupied[l] && boreQueueCounts[l] == 0)
@@ -3451,22 +3409,22 @@ namespace IngameScript
 
             for (int i = 0; i < gridBoreFinished.Count; i++)
             {
-                for (int j = 0; j < droneGPSListPosition.Count; j++)
+                foreach (DroneData drone in Swarm.Values)
                 {
                     if (!gridBoreOccupied[i])
                     {
                         drone_namer = "";
                     }
-                    else if (i == droneGPSListPosition[j])
+                    else if (i == drone.GpsListPosition)
                     {
-                        drone_namer = droneName[j];
-                        drone_assigns_count[j]++;
+                        drone_namer = drone.Name;
+                        drone.AssignsCount++;
                     }
-                    if (drone_assigns_count[j] > 1)
+                    if (drone.AssignsCount > 1)
                     {
                         gridBoreOccupied[i] = false;
                     }
-                    drone_assigns_count[j] = 0;
+                    drone.AssignsCount = 0;
 
                 }
                 if (!gridBoreFinished[i])
@@ -3952,7 +3910,7 @@ namespace IngameScript
 
             return truCnt;
         }
-        int CountStatusValues(List<string> list, string textval)
+        int CountStatusValuesList(List<string> list, string textval)
         {
             int trueCount = 0;
 
@@ -3962,6 +3920,16 @@ namespace IngameScript
                 {
                     trueCount++;
                 }
+            }
+            return trueCount;
+        }
+        int CountStatusValues(string propertyName, string textval)
+        {
+            int trueCount = 0;
+
+            foreach (DroneData drone in Swarm.Values)
+            {
+                if (propertyName == "ControlStatus" && drone.ControlStatus == textval) trueCount++;
             }
             return trueCount;
         }
@@ -4078,74 +4046,7 @@ namespace IngameScript
             _ini.Clear();
         }
 
-        void reset_drone_data()
-        {
-            droneName.Clear();
-            droneDamageState.Clear();
-            droneTunnelFinished.Clear();
-            droneControlStatus.Clear();
-            droneDocked.Clear();
-            droneUndocked.Clear();
-            droneAutopiloting.Clear();
-            droneGPSListPosition.Clear();
-            droneGPSCoordinates.Clear();
-            droneBoreDepth.Clear();
-            droneBoreDepthCurrent.Clear();
-            drone_mine_depth_start_status.Clear();
-            drone_location_x.Clear();
-            drone_location_y.Clear();
-            drone_location_z.Clear();
-            drone_charge_storage.Clear();
-            drone_gas_storage.Clear();
-            drone_ore_storage.Clear();
-            droneMining.Clear();
-            droneAssignedCoordinates.Clear();
-            droneControlSequence.Clear(); ;
-            droneRecallSequence.Clear();
-            droneTranmissionOutput.Clear();
-            droneReady.Clear();
-            droneMustWait.Clear();
-            dcs.Clear();
-            dst.Clear();
-            droneTransmissionStatus.Clear();
-            droneRecallList.Clear();
-            droneResetFunction.Clear();
-            drone_assigns_count.Clear();
-        }
-        void reset_drone_list()
-        {
-            droneName = new List<string>();
-            droneDamageState = new List<string>();
-            droneTunnelFinished = new List<string>();
-            droneControlStatus = new List<string>();
-            droneDocked = new List<string>();
-            droneUndocked = new List<string>();
-            droneAutopiloting = new List<string>();
-            droneGPSListPosition = new List<int>();
-            droneGPSCoordinates = new List<Vector3D>();
-            droneBoreDepth = new List<string>();
-            droneBoreDepthCurrent = new List<string>();
-            drone_mine_depth_start_status = new List<string>();
-            drone_location_x = new List<string>();
-            drone_location_y = new List<string>();
-            drone_location_z = new List<string>();
-            drone_charge_storage = new List<string>();
-            drone_gas_storage = new List<string>();
-            drone_ore_storage = new List<string>();
-            droneMining = new List<bool>();
-            droneAssignedCoordinates = new List<bool>();
-            droneControlSequence = new List<int>();
-            droneRecallSequence = new List<int>();
-            droneTranmissionOutput = new List<string>();
-            droneReady = new List<bool>();
-            droneMustWait = new List<bool>();
-            dcs = new List<double>();
-            dst = new List<bool>();
-            droneTransmissionStatus = new List<bool>();
-            droneRecallList = new List<bool>();
-            droneResetFunction = new List<bool>();
-            drone_assigns_count = new List<int>();
-        }
+
 
         void runicon(int state)
         {
@@ -4255,60 +4156,27 @@ namespace IngameScript
             txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
             syncMessage = secondary;
             Echo("Clearning Lists");
-            drone_location.Clear();
-            droneName.Clear();
-            droneDamageState.Clear();
-            droneTunnelFinished.Clear();
-            droneControlStatus.Clear();
-            droneDocked.Clear();
-            droneUndocked.Clear();
-            droneAutopiloting.Clear();
-            droneGPSCoordinates.Clear();
+
             Echo("Stage 1");
-            droneControlSequence.Clear();
-            droneGPSListPosition.Clear();
-            droneAssignedCoordinates.Clear();
+
             gridBorePosition.Clear();
-            droneBoreDepth.Clear();
-            droneBoreDepthCurrent.Clear();
-            drone_mine_depth_start_status.Clear();
+
             droneMining.Clear();
-            drone_location_x.Clear();
-            drone_location_y.Clear();
-            drone_location_z.Clear();
-            drone_charge_storage.Clear();
-            drone_gas_storage.Clear();
-            drone_ore_storage.Clear();
-            droneTranmissionOutput.Clear();
+
             Echo("Stage 2");
-            droneRecallSequence.Clear();
-            droneReady.Clear();
-            droneMustWait.Clear();
-            droneRecallList.Clear();
-            drone_assigns_count.Clear();
+
             sprites.Clear();
             remoteControlAll.Clear();
             remoteControlTag.Clear();
-            droneAutodock.Clear();
-            droneDockingReady.Clear();
-            drone_cargo_full.Clear();
-            drone_recharge_request.Clear();
-            drone_auto_pilot_enabled.Clear();
+
             droneID.Clear();
             cl.Clear();
             cl2.Clear();
-            tla.Clear();
-            rst.Clear();
-            fct.Clear();
-            dcs.Clear();
-            dst.Clear();
             Echo("Stage 3");
-            droneTransmissionStatus.Clear();
             miningCoordinatesNew.Clear();
             displayTextMain.Clear();
             displayTextList.Clear();
             droneInformation.Clear();
-            droneResetFunction.Clear();
             c.Clear();
             jxt.Clear();
             customDataString.Clear();
@@ -4320,9 +4188,6 @@ namespace IngameScript
             {
                 cl.Add("");
                 cl2.Add("");
-                tla.Add(0);
-                rst.Add(0);
-                fct.Add("");
             }
             antennaAll = new List<IMyRadioAntenna>();
             antennaTag = new List<IMyRadioAntenna>();
@@ -4627,6 +4492,7 @@ namespace IngameScript
                 newDrone.AutoPilotEnabled = rc_auto_pilot_enabled;
                 newDrone.Autodock = recievedDroneAutdock;
                 newDrone.DockingReady = recievedDroneDockingReady;
+                
 
                 // 3. Add the fully built drone to the dictionary
                 droneID.Add(newDrone.Name);
@@ -4752,29 +4618,22 @@ namespace IngameScript
             ClearReferenceLists(programblockAll, interfacePBTag);
 
             // Clear other reference type lists (strings)
-            ClearReferenceLists(droneName, droneDamageState, droneTunnelFinished,
-                               droneControlStatus, droneDocked, droneUndocked,
-                               droneAutopiloting, droneBoreDepth, droneBoreDepthCurrent,
-                               drone_mine_depth_start_status, drone_location_x,
-                               drone_location_y, drone_location_z, drone_charge_storage,
-                               drone_gas_storage, drone_ore_storage, droneTranmissionOutput,
-                               cl, cl2, fct, drone_cargo_full, drone_recharge_request,
-                               drone_auto_pilot_enabled, droneAutodock, droneDockingReady);
+            ClearReferenceLists( 
+                                 
+                                 
+                                                               
+                                 
+                               cl, cl2  
+                                 );
 
             // Clear value type lists (bool)
-            ClearValueLists(droneMining, droneAssignedCoordinates, droneReady,
-                           droneMustWait, droneRecallList, droneResetFunction,
-                           dst, droneTransmissionStatus, gridBoreOccupied, gridBoreFinished);
+            ClearValueLists(droneMining,  
+                             
+                            gridBoreOccupied, gridBoreFinished);
 
-            // Clear value type lists (int)
-            ClearValueLists(droneGPSListPosition, droneControlSequence, droneRecallSequence,
-                           tla, rst, drone_assigns_count);
-
-            // Clear value type lists (double)
-            ClearValueLists(dcs);
 
             // Clear struct lists (Vector3D)
-            ClearValueLists(drone_location, droneGPSCoordinates, gridBorePosition);
+            ClearValueLists( gridBorePosition);
 
             // Clear struct lists (MySprite)
             ClearValueLists(sprites);

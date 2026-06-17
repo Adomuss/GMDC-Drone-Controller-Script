@@ -3372,7 +3372,7 @@ namespace IngameScript
             {
                 if (Swarm.TryGetValue(droneID[ivl], out drone1))
                 {
-
+                   // Echo($"Drone1:{droneID[ivl]}");
                 }
             }
 
@@ -3380,7 +3380,7 @@ namespace IngameScript
             {
                 if (Swarm.TryGetValue(droneID[ivl2], out drone2))
                 {
-
+                  // Echo($"Drone2:{droneID[ivl2]}");
                 }
             }
 
@@ -3416,12 +3416,12 @@ namespace IngameScript
 
             if (slu)
             {
-                cl2[0] = $"{droneID[ivl]} Status: {drone2.DamageState} {drone2.ControlStatus}";
-                cl2[1] = $"{droneID[ivl]} Docked: {drone2.Docked} Rdy: {drone2.IsReady}";
-                cl2[2] = $"{droneID[ivl]} Undocked: {drone2.Undocked}";
-                cl2[3] = $"{droneID[ivl]} Finished: {drone2.TunnelFinished} Bore: {butter}";
-                cl2[4] = $"{droneID[ivl]} Mining: {drone2.IsMining}";
-                cl2[5] = $"{droneID[ivl]} Waiting: {drone2.MustWait} Reset: {drone2.ResetFunction}";
+                cl2[0] = $"{droneID[ivl2]} Status: {drone2.DamageState} {drone2.ControlStatus}";
+                cl2[1] = $"{droneID[ivl2]} Docked: {drone2.Docked} Rdy: {drone2.IsReady}";
+                cl2[2] = $"{droneID[ivl2]} Undocked: {drone2.Undocked}";
+                cl2[3] = $"{droneID[ivl2]} Finished: {drone2.TunnelFinished} Bore: {butter2}";
+                cl2[4] = $"{droneID[ivl2]} Mining: {drone2.IsMining}";
+                cl2[5] = $"{droneID[ivl2]} Waiting: {drone2.MustWait} Reset: {drone2.ResetFunction}";
                 cl2[6] = $"Charge: {drone2.ChargeStorage}% Tank: {drone2.GasStorage}% Cargo: {drone2.OreStorage}%";
                 cl2[7] = $"Drill depth: {drone2.BoreDepth}m Start: {drone2.MineDepthStartStatus}m";
                 cl2[8] = $"Current depth: {drone2.BoreDepthCurrent}m";

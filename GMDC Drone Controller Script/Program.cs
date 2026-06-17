@@ -18,12 +18,8 @@ namespace IngameScript
 {
     partial class Program : MyGridProgram
     {
-        // R e a d m e
-        // -----------
-        // GMDC Drone controller 504B refactor
-        // 
 
-        Dictionary<string, DroneData> Swarm = new Dictionary<string, DroneData>();
+
         #region mdk preserve
         public Program()
         {
@@ -58,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.602B";
+        string ver = "V0.603B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -406,6 +402,7 @@ namespace IngameScript
         string interfacecommandOld = "";
         string incomingName = "";
         List<string> droneID = new List<string>();
+        Dictionary<string, DroneData> Swarm = new Dictionary<string, DroneData>();
         #endregion
         public void Save()
         {

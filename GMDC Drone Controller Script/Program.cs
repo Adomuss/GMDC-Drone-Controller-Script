@@ -133,7 +133,7 @@ namespace IngameScript
         bool mustRecall_Command = false;
         bool mustFreeze_Command = false;
         bool canInit = false;
-        bool found = false;
+        //bool found = false;
         bool generalReset;
         bool miningGridValid = false;
 
@@ -332,7 +332,7 @@ namespace IngameScript
         //  int t_dn_ok = 0;
         string g1;
         string g2;
-        int di = 0;
+        //int di = 0;
         int total_drones_undocking = 0;
         int undockTimer = 0;
         bool dronesUndocking = false;
@@ -523,12 +523,19 @@ namespace IngameScript
                 ClearAllNonEmptyLists();
                 return;
             }
+           // Echo("M1");
             ProcessInputs(argument);
+         //   Echo("M2");
             ManageCommunications();
+         //   Echo("M3");
             UpdateMiningGrid();
+        //    Echo("M4");
             HandleDroneOperations();
+         //   Echo("M5");
             RenderDisplays();
+         //   Echo("M6");
             UpdateStatus();
+         //   Echo("M7");
             Echo(sbtexttemp.ToString());
             sbtexttemp.Clear();
             sbtexttemp.AppendLine($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -579,7 +586,9 @@ namespace IngameScript
             string blank = "";
             int startInstructions = Runtime.CurrentInstructionCount;
             ProcessInterface();
+         //   Echo("M1a");
             HandleCommands(blank);
+         //   Echo("M1b");
             //sbtexttemp.AppendLine($"ProcessInputs: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -919,7 +928,7 @@ namespace IngameScript
         {
             if (droneGPSListPosition.Count > 0 && canReset)
             {
-                droneResetStatusCount = CountIntegerValues(droneGPSListPosition, -1);
+                droneResetStatusCount = CountIntegerValues("GPSListPosition", -1);
                 droneDockedStatusCount = CountStatusValues(droneControlStatus, "Docked");
             }
             if (droneName.Count > 0)
@@ -1082,7 +1091,7 @@ namespace IngameScript
                     }
                     if (!gridBoreFinished[drone.GpsListPosition])
                     {
-                        int queued_count = CountIntegerValues(droneGPSListPosition, drone.GpsListPosition);
+                        int queued_count = CountIntegerValues("GPSListPosition", drone.GpsListPosition);
                         if (gridBoreOccupied[drone.GpsListPosition] && queued_count == 0)
                         {
                             gridBoreOccupied[drone.GpsListPosition] = false;
@@ -1179,7 +1188,7 @@ namespace IngameScript
                                 {
                                     if (droneGPSListPosition.Count > 0)
                                     {
-                                        int queued_count = CountIntegerValues(droneGPSListPosition, k);
+                                        int queued_count = CountIntegerValues("GPSListPosition", k);
                                         if (!gridBoreOccupied[k] && queued_count > 0) //check if preassigned here
                                         {
                                             gridBoreOccupied[k] = true;
@@ -2075,6 +2084,7 @@ namespace IngameScript
                 gridBoresCompleted = 0;
                 currentGPSIndex = 0;
             }
+            
             if (gridBorePosition.Count > 0)
             {
                 if (spriteCountLimit != gridBorePosition.Count + (gridBorePosition.Count / 2) + 50)
@@ -2097,6 +2107,7 @@ namespace IngameScript
                     spritecount_limit_insert = 250;
                 }
             }
+            
                 sbtexttemp.AppendLine($"Grid: {gridCreated} - Bores: {totalMiningRuns} - Remaining: {boresRemaining}");
             #endregion
         }
@@ -2315,83 +2326,92 @@ namespace IngameScript
                 sbtexttemp.AppendLine($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
                 sbtexttemp.AppendLine($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
+            else
+            {
+                sbtexttemp.AppendLine($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                return;
+            }
             #endregion
             #region interface_command_processing
-            if (canInterfaceCommand && pbInterfaceActual.CustomData != null)
-            {
-                if (interfaceArgument == "" && !noInterfaceCommand)
+            if (interfacePBTag.Count > 0)
+            {                
+                if (canInterfaceCommand && !string.IsNullOrEmpty(pbInterfaceActual.CustomData))
                 {
-                    noInterfaceCommand = true;
+                    if (interfaceArgument == "" && !noInterfaceCommand)
+                    {
+                        noInterfaceCommand = true;
+                    }
+                    else
+                    {
+                        noInterfaceCommand = false;
+                    }
+                    if (interfaceArgument.Contains("init") && !i_init)
+                    {
+                        i_init = true;
+                    }
+                    if (!interfaceArgument.Contains("init") && i_init)
+                    {
+                        i_init = false;
+                    }
+                    if (interfaceArgument.Contains("reset") && !i_res)
+                    {
+                        i_res = true;
+                    }
+                    else
+                    {
+                        i_res = false;
+                    }
+                    if (interfaceArgument.Contains("run") && !i_run)
+                    {
+                        i_run = true;
+                    }
+                    else
+                    {
+                        i_run = false;
+                    }
+                    if (interfaceArgument.Contains("recall") && !i_recall)
+                    {
+                        i_recall = true;
+                    }
+                    else
+                    {
+                        i_recall = false;
+                    }
+                    if (interfaceArgument.Contains("eject") && !i_eject)
+                    {
+                        i_eject = true;
+                    }
+                    else
+                    {
+                        i_eject = false;
+                    }
+                    if (interfaceArgument.Contains("freeze") && !i_frz)
+                    {
+                        i_frz = true;
+                    }
+                    else
+                    {
+                        i_frz = false;
+                    }
+                    if (interfaceArgument.Contains("stop") && !i_stop)
+                    {
+                        i_stop = true;
+                    }
+                    else
+                    {
+                        i_stop = false;
+                    }
                 }
-                else
-                {
-                    noInterfaceCommand = false;
-                }
-                if (interfaceArgument.Contains("init") && !i_init)
-                {
-                    i_init = true;
-                }
-                if (!interfaceArgument.Contains("init") && i_init)
-                {
-                    i_init = false;
-                }
-                if (interfaceArgument.Contains("reset") && !i_res)
-                {
-                    i_res = true;
-                }
-                else
-                {
-                    i_res = false;
-                }
-                if (interfaceArgument.Contains("run") && !i_run)
-                {
-                    i_run = true;
-                }
-                else
-                {
-                    i_run = false;
-                }
-                if (interfaceArgument.Contains("recall") && !i_recall)
-                {
-                    i_recall = true;
-                }
-                else
-                {
-                    i_recall = false;
-                }
-                if (interfaceArgument.Contains("eject") && !i_eject)
-                {
-                    i_eject = true;
-                }
-                else
-                {
-                    i_eject = false;
-                }
-                if (interfaceArgument.Contains("freeze") && !i_frz)
-                {
-                    i_frz = true;
-                }
-                else
+
+                if (!canInterfaceCommand || noInterfaceCommand || pbInterfaceActual.CustomData == null)
                 {
                     i_frz = false;
+                    i_eject = false;
+                    i_recall = false;
+                    i_run = false;
+                    i_res = false;
+                    i_init = false;
                 }
-                if (interfaceArgument.Contains("stop") && !i_stop)
-                {
-                    i_stop = true;
-                }
-                else
-                {
-                    i_stop = false;
-                }
-            }
-            if (!canInterfaceCommand || noInterfaceCommand || pbInterfaceActual.CustomData == null)
-            {
-                i_frz = false;
-                i_eject = false;
-                i_recall = false;
-                i_run = false;
-                i_res = false;
-                i_init = false;
             }
             #endregion
         }
@@ -2542,7 +2562,7 @@ namespace IngameScript
             gridBoresCompleted = CountTrueValuesList(gridBoreFinished);
             boresRemaining = totalMiningRuns - gridBoresCompleted;
             totalDronesActive = CountTrueValues("IsMining");
-            total_drones_undocking = CountIntegerValues(droneControlSequence, 2);
+            total_drones_undocking = CountIntegerValues("ControlSequence", 2);
 
             DroneStats stats = new DroneStats();
             foreach (DroneData drone in Swarm.Values)
@@ -3877,7 +3897,7 @@ namespace IngameScript
             }
             return truCnt;
         }
-        int CountIntegerValues(List<int> list, int val)
+        int CountIntegerValuesList(List<int> list, int val)
         {
             int truCnt = 0;
 
@@ -3888,6 +3908,19 @@ namespace IngameScript
                     truCnt++;
                 }
             }
+            return truCnt;
+        }
+
+        int CountIntegerValues(string propertyName, int val)
+        {
+            int truCnt = 0;
+
+            foreach (DroneData drone in Swarm.Values)
+            {
+                if (propertyName == "GPSListPosition" && drone.GpsListPosition == val) truCnt++;
+                if (propertyName == "ControlSequence" && drone.ControlSequence == val) truCnt++;
+            }
+
             return truCnt;
         }
         int CountStatusValues(List<string> list, string textval)

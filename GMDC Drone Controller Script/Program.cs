@@ -405,7 +405,7 @@ namespace IngameScript
         string rcdataOld = "";
         string interfacecommandOld = "";
         string incomingName = "";
-
+        List<string> droneID = new List<string>();
         #endregion
         public void Save()
         {
@@ -667,7 +667,7 @@ namespace IngameScript
         private void HandleDroneOperations()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
-            if (droneName.Count > 0 && gridCreated && timeDelayed)
+            if (Swarm.Count > 0 && gridCreated && timeDelayed)
             {
                 UpdateDroneCounts();
                 DroneUndockCheck();
@@ -708,7 +708,7 @@ namespace IngameScript
         private void LocalStatusUpdate(double _Runtime)
         {
             sbtexttemp.AppendLine($"Load: {Math.Round((_Runtime / game_tick_length) * (double)100.0, 3)}% ({Math.Round(_Runtime, 3)}ms) S#:{spriteCounter} {spriteInsert}");
-            sbtexttemp.AppendLine($"Drones #: {droneName.Count}");
+            sbtexttemp.AppendLine($"Drones #: {Swarm.Count}");
             sbtexttemp.AppendLine($"Drone comms buffer: {droneMessagesBuffer.Count} OK: {droneMessageReceived}");
             sbtexttemp.AppendLine($"Cycles since last broadcast: {timeCounter} ({Math.Round((((double)droneCommunicationsProcessingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s) {timeDelayed}");
             sbtexttemp.AppendLine($"Cycles since last ping: {dronePingTimerCount} ({Math.Round((((double)droneCommunicationsPingDelay * game_tick_length) / (double)1000) * (double)game_factor, 1)}s)");
@@ -931,9 +931,9 @@ namespace IngameScript
                 droneResetStatusCount = CountIntegerValues("GPSListPosition", -1);
                 droneDockedStatusCount = CountStatusValues(droneControlStatus, "Docked");
             }
-            if (droneName.Count > 0)
+            if (Swarm.Count > 0)
             {
-                if (droneResetStatusCount == droneName.Count && droneDockedStatusCount == droneName.Count && canReset)
+                if (droneResetStatusCount == Swarm.Count && droneDockedStatusCount == Swarm.Count && canReset)
                 {
                     readyFlag = true;
                 }
@@ -959,7 +959,7 @@ namespace IngameScript
                 else generalReset = false;                
                 faultCounter = CountTrueValues("Dst");
                 
-                if (faultCounter < droneName.Count)
+                if (faultCounter < Swarm.Count)
                 {
                     faultLightOutput = true;
                 }
@@ -976,7 +976,7 @@ namespace IngameScript
                 {
                     drone.GpsListPosition = -1;
                 }
-                if (droneName.Count > 0)
+                if (Swarm.Count > 0)
                 {
                     if (drone.GpsListPosition > -1 && drone.AssignedCoordinates && drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.IsMining && drone.IsReady)
                     {
@@ -1867,9 +1867,9 @@ namespace IngameScript
         {
             #region active_drones_processing
             //drone limit processing
-            if (droneName.Count > 0)
+            if (Swarm.Count > 0)
             {
-                maxActiveDronesCount = droneName.Count - dronesInFlightFactor;
+                maxActiveDronesCount = Swarm.Count - dronesInFlightFactor;
                 if (maxActiveDronesCount <= 1)
                 {
                     maxActiveDronesCount = 1;
@@ -2124,7 +2124,7 @@ namespace IngameScript
                     droneMessagesBuffer.Add(droneMessageNew);
                 }
                 //process drone message list here
-                if (droneMessagesBuffer.Count < droneName.Count)
+                if (droneMessagesBuffer.Count > 0)
                 {
                     droneMessageReceived = true;
                 }
@@ -2135,7 +2135,7 @@ namespace IngameScript
                     ProcessDroneMessageData(droneDataInput);
                     ProcessReceivedDroneMessageToDroneLists();
                 }
-                if (droneMessagesBuffer.Count > droneName.Count)
+                if (droneMessagesBuffer.Count <= 0)
                 {
                     droneMessageReceived = false;
                 }
@@ -2182,7 +2182,7 @@ namespace IngameScript
             if (antennaActual != null && antennaTag[0] != null)
             {
                 string syncMessageOut = "";
-                if (droneName.Count == 0 && !dronesPinged || droneName.Count > 0 && !dronesPinged)
+                if (Swarm.Count == 0 && !dronesPinged || Swarm.Count > 0 && !dronesPinged)
                 {
                     IGC.SendBroadcastMessage(txDronePingChannel, pingMessage, TransmissionDistance.TransmissionDistanceMax);
                     if (!string.IsNullOrEmpty(syncMessage) && !string.IsNullOrWhiteSpace(syncMessage))
@@ -2517,10 +2517,22 @@ namespace IngameScript
             #endregion
         }
 
+        private void checkDroneID()
+        {
+            if(droneID.Count != Swarm.Count)
+            {
+                droneID.Clear();
+                foreach (DroneData drone in Swarm.Values)
+                {
+                    droneID.Add(drone.Name);                    
+                }
+            }
+        }
         private void DroneRenderCall()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
-            if (display_tag_drone.Count == 0 || droneName.Count == 0 || display_tag_drone[0] == null) return;
+            if (display_tag_drone.Count == 0 || Swarm.Count == 0 || display_tag_drone[0] == null) return;
+            checkDroneID();
 
             if (renew_header)
             {
@@ -2528,21 +2540,22 @@ namespace IngameScript
                 renew_header = false;
             }
 
+
             int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
-            if (dronesPerDisplay < droneName.Count)
+            if (dronesPerDisplay < droneID.Count)
             {
-                sbtexttemp.AppendLine($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneName.Count}");
+                sbtexttemp.AppendLine($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneID.Count}");
                 return;
             }
-
-            for (int i = 0; i < droneName.Count; i += 2)
-            {
-                bool hasPair = i + 1 < droneName.Count;
+            
+            for (int i = 0; i < droneID.Count; i+=2)
+            {                
+                bool hasPair = i + 1 < droneID.Count;
                 DroneScreenBuilder(i, hasPair ? i + 1 : i, hasPair);
 
                 int displayIndex = i / drones_per_screen;
                 if (displayIndex < display_tag_drone.Count && display_tag_drone[displayIndex] != null &&
-                    (i % drones_per_screen == drones_per_screen - 2 || i >= droneName.Count - 2))
+                    (i % drones_per_screen == drones_per_screen - 2 || i >= droneID.Count - 2))
                 {
                     sD = ((IMyTextSurfaceProvider)display_tag_drone[displayIndex]).GetSurface(srfD);
                     sD.WriteText(droneInformation);
@@ -3346,56 +3359,75 @@ namespace IngameScript
         }
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
-            if (droneName.Count <= 0)
+
+            if (droneID.Count <= 0)
             {
                 return;
             }
+            DroneData drone1 = new DroneData();
+            DroneData drone2 = new DroneData();
             string butter = "";
             string butter2 = "";
-            if (droneGPSListPosition[ivl] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl] < gridBoreFinished.Count)
+            if (droneID[ivl] != null)
             {
-                butter = gridBoreFinished[droneGPSListPosition[ivl]].ToString();
+                if (Swarm.TryGetValue(droneID[ivl], out drone1))
+                {
+
+                }
+            }
+
+            if (droneID[ivl2] != null)
+            {
+                if (Swarm.TryGetValue(droneID[ivl2], out drone2))
+                {
+
+                }
+            }
+
+            if (drone1.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone1.GpsListPosition < gridBoreFinished.Count)
+            {
+                butter = gridBoreFinished[drone1.GpsListPosition].ToString();
             }
             else
             {
                 butter = "N/A";
             }
-            if (droneGPSListPosition[ivl2] != -1 && gridBoreFinished.Count > 0 && droneGPSListPosition[ivl2] < gridBoreFinished.Count)
+            if (drone2.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone2.GpsListPosition < gridBoreFinished.Count)
             {
-                butter2 = gridBoreFinished[droneGPSListPosition[ivl2]].ToString();
+                butter2 = gridBoreFinished[drone2.GpsListPosition].ToString();
             }
             else
             {
                 butter2 = "N/A";
             }
             // Pre-build strings into cl/cl2 for padding
-            cl[0] = $"{droneName[ivl]} Status: {droneDamageState[ivl]} {droneControlStatus[ivl]}";
-            cl[1] = $"{droneName[ivl]} Docked: {droneDocked[ivl]} Rdy: {droneReady[ivl]}";
-            cl[2] = $"{droneName[ivl]} Undocked: {droneUndocked[ivl]}";
-            cl[3] = $"{droneName[ivl]} Finished: {droneTunnelFinished[ivl]} Bore: {butter}";
-            cl[4] = $"{droneName[ivl]} Mining: {droneMining[ivl]}";
-            cl[5] = $"{droneName[ivl]} Waiting: {droneMustWait[ivl]} Reset: {droneResetFunction[ivl]}";
-            cl[6] = $"Charge: {drone_charge_storage[ivl]}% Tank: {drone_gas_storage[ivl]}% Cargo: {drone_ore_storage[ivl]}%";
-            cl[7] = $"Drill depth: {droneBoreDepth[ivl]}m Start: {drone_mine_depth_start_status[ivl]}m";
-            cl[8] = $"Current depth: {droneBoreDepthCurrent[ivl]}m";
-            cl[9] = $"Drone control seq: {droneControlSequence[ivl]} Recall seq: {droneRecallSequence[ivl]} {droneRecallList[ivl]}";
-            cl[10] = $"Location: {droneGPSListPosition[ivl]} Asnd: {droneAssignedCoordinates[ivl]} Unit OK: {dst[ivl]}";
-            cl[11] = $"X: {drone_location_x[ivl]} Y: {drone_location_y[ivl]} Z: {drone_location_z[ivl]}";
+            cl[0] = $"{droneID[ivl]} Status: {drone1.DamageState} {drone1.ControlStatus}";
+            cl[1] = $"{droneID[ivl]} Docked: {drone1.Docked} Rdy: {drone1.IsReady}";
+            cl[2] = $"{droneID[ivl]} Undocked: {drone1.Undocked}";
+            cl[3] = $"{droneID[ivl]} Finished: {drone1.TunnelFinished} Bore: {butter}";
+            cl[4] = $"{droneID[ivl]} Mining: {drone1.IsMining}";
+            cl[5] = $"{droneID[ivl]} Waiting: {drone1.MustWait} Reset: {drone1.ResetFunction}";
+            cl[6] = $"Charge: {drone1.ChargeStorage}% Tank: {drone1.GasStorage}% Cargo: {drone1.OreStorage}%";
+            cl[7] = $"Drill depth: {drone1.BoreDepth}m Start: {drone1.MineDepthStartStatus}m";
+            cl[8] = $"Current depth: {drone1.BoreDepthCurrent}m";
+            cl[9] = $"Drone control seq: {drone1.ControlSequence} Recall seq: {drone1.RecallSequence} {drone1.RecallList}";
+            cl[10] = $"Location: {drone1.GpsListPosition} Asnd: {drone1.AssignedCoordinates} Unit OK: {drone1.Dst}";
+            cl[11] = $"X: {drone1.LocationX} Y: {drone1.LocationY} Z: {drone1.LocationZ}";
 
             if (slu)
             {
-                cl2[0] = $"{droneName[ivl2]} Status: {droneDamageState[ivl2]} {droneControlStatus[ivl2]}";
-                cl2[1] = $"{droneName[ivl2]} Docked: {droneDocked[ivl2]} Rdy: {droneReady[ivl2]}";
-                cl2[2] = $"{droneName[ivl2]} Undocked: {droneUndocked[ivl2]}";
-                cl2[3] = $"{droneName[ivl2]} Finished: {droneTunnelFinished[ivl2]} Bore: {butter2}";
-                cl2[4] = $"{droneName[ivl2]} Mining: {droneMining[ivl2]}";
-                cl2[5] = $"{droneName[ivl2]} Waiting: {droneMustWait[ivl2]} Reset: {droneResetFunction[ivl2]}";
-                cl2[6] = $"Charge: {drone_charge_storage[ivl2]}% Tank: {drone_gas_storage[ivl2]}% Cargo: {drone_ore_storage[ivl2]}%";
-                cl2[7] = $"Drill depth: {droneBoreDepth[ivl2]}m Start: {drone_mine_depth_start_status[ivl2]}m";
-                cl2[8] = $"Current depth: {droneBoreDepthCurrent[ivl2]}m";
-                cl2[9] = $"Drone control seq: {droneControlSequence[ivl2]} Recall seq: {droneRecallSequence[ivl2]} {droneRecallList[ivl2]}";
-                cl2[10] = $"Location: {droneGPSListPosition[ivl2]} Asnd: {droneAssignedCoordinates[ivl2]} Unit OK: {dst[ivl2]}";
-                cl2[11] = $"X: {drone_location_x[ivl2]} Y: {drone_location_y[ivl2]} Z: {drone_location_z[ivl2]}";
+                cl2[0] = $"{droneID[ivl]} Status: {drone2.DamageState} {drone2.ControlStatus}";
+                cl2[1] = $"{droneID[ivl]} Docked: {drone2.Docked} Rdy: {drone2.IsReady}";
+                cl2[2] = $"{droneID[ivl]} Undocked: {drone2.Undocked}";
+                cl2[3] = $"{droneID[ivl]} Finished: {drone2.TunnelFinished} Bore: {butter}";
+                cl2[4] = $"{droneID[ivl]} Mining: {drone2.IsMining}";
+                cl2[5] = $"{droneID[ivl]} Waiting: {drone2.MustWait} Reset: {drone2.ResetFunction}";
+                cl2[6] = $"Charge: {drone2.ChargeStorage}% Tank: {drone2.GasStorage}% Cargo: {drone2.OreStorage}%";
+                cl2[7] = $"Drill depth: {drone2.BoreDepth}m Start: {drone2.MineDepthStartStatus}m";
+                cl2[8] = $"Current depth: {drone2.BoreDepthCurrent}m";
+                cl2[9] = $"Drone control seq: {drone2.ControlSequence} Recall seq: {drone2.RecallSequence} {drone2.RecallList}";
+                cl2[10] = $"Location: {drone2.GpsListPosition} Asnd: {drone2.AssignedCoordinates} Unit OK: {drone2.Dst}";
+                cl2[11] = $"X: {drone2.LocationX} Y: {drone2.LocationY} Z: {drone2.LocationZ}";
             }
 
             droneInformation.AppendLine();
@@ -3656,7 +3688,7 @@ namespace IngameScript
                     yield return false;
                 }
 
-                if (droneName.Count > 0)
+                if (droneID.Count > 0)
                 {
                     drone_total = 0;
                     foreach(DroneData drone in Swarm.Values) 
@@ -3812,12 +3844,12 @@ namespace IngameScript
                             FontId = "White"
                         };
                         sprites.Add(sprite_name);
-                        percent_list_drones = ((double)drone_total / (double)droneName.Count) * 100;
+                        percent_list_drones = ((double)drone_total / (double)droneID.Count) * 100;
                         spriteCounter++;
                         yield return false;
                     }
                 }
-                if (droneName.Count == 0)
+                if (droneID.Count == 0)
                 {
                     if (sprite_total == gridBorePosition.Count)
                     {
@@ -3829,9 +3861,9 @@ namespace IngameScript
                         frame_generator_finished = false;
                     }
                 }
-                if (droneName.Count > 0)
+                if (droneID.Count > 0)
                 {
-                    if (sprite_total == gridBorePosition.Count && drone_total == droneName.Count)
+                    if (sprite_total == gridBorePosition.Count && drone_total == droneID.Count)
                     {
                         frame_generator_finished = true;
                         drone_total = 0;
@@ -4265,6 +4297,7 @@ namespace IngameScript
             drone_cargo_full.Clear();
             drone_recharge_request.Clear();
             drone_auto_pilot_enabled.Clear();
+            droneID.Clear();
             cl.Clear();
             cl2.Clear();
             tla.Clear();
@@ -4599,7 +4632,9 @@ namespace IngameScript
                 newDrone.DockingReady = recievedDroneDockingReady;
 
                 // 3. Add the fully built drone to the dictionary
+                droneID.Add(newDrone.Name);
                 Swarm.Add(safeDroneName, newDrone);
+                
             }
             else if(Swarm.TryGetValue(safeDroneName, out drone))
             {                
@@ -4687,7 +4722,7 @@ namespace IngameScript
             displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] [{jobname}] Running {icon}")
                   .AppendLine($"------------------------------")
                   .AppendLine($" ")
-                   .AppendLine($"Total drones detected: {droneName.Count}")
+                   .AppendLine($"Total drones detected: {Swarm.Count}")
                   .AppendLine(dronesLaunchedStatus
                       ? $"Drones active: {totalDronesActive} - Fault: {totalDronesDamaged} (Max: {maxActiveDronesCount} ({dronesInFlightFactor})) Hard limit: {dronesActiveHardLimit}"
                       : $"Drones active: {totalDronesActive} - Fault: {totalDronesDamaged}")

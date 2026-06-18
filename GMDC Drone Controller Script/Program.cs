@@ -161,7 +161,7 @@ namespace IngameScript
         string customData20;
         //  string customData21;
         string customData22;
-        string customData23;
+        //string customData23;
         //   string remoteControlCustomData1 = "";
         string remoteControlCustomData2 = "";
         string remoteControlCustomData3 = "";
@@ -3040,7 +3040,7 @@ namespace IngameScript
                 customData20 = "";
                 //  customData21 = "";
                 customData22 = "";
-                customData23 = "";
+                //customData23 = "";
                 sbtexttemp.AppendLine("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:perimeteronly 0,1");
                 return;
             }

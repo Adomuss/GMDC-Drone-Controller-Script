@@ -367,6 +367,7 @@ namespace IngameScript
         Dictionary<string, DroneData> Swarm = new Dictionary<string, DroneData>();
         bool perimeterOnly = false;
         int perimiterInt = 0;
+        bool rotateHome = false;
         #endregion
         public void Save()
         {
@@ -537,8 +538,8 @@ namespace IngameScript
                 return;
             }
             AntennaSaveData(antennaActual);
-            sbtexttemp.AppendLine($"GMDC {ver} Running {icon}");
-            sbtexttemp.AppendLine($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")}");
+            sbtexttemp.AppendLine($"GMDC {ver} Running {icon} Rotation: {rotateHome}");
+            sbtexttemp.AppendLine($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")} ");
             //sbtexttemp.AppendLine($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -710,7 +711,7 @@ namespace IngameScript
 
                 if (visCoroutine == null && !frame_generator_finished)
                 {
-                    visCoroutine = BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid);
+                    visCoroutine = BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid, rotateHome);
                 }
                 if (visCoroutine != null && !frame_generator_finished)
                 {
@@ -724,7 +725,7 @@ namespace IngameScript
                         sbtexttemp.AppendLine("Job rendering complete.");
                         visCoroutine?.Dispose();
                         visCoroutine = null;
-                        BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid).Dispose();
+                        BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid, rotateHome).Dispose();
                     }
                     else
                     {
@@ -2062,9 +2063,9 @@ namespace IngameScript
             
             if (gridBorePosition.Count > 0)
             {
-                if (spriteCountLimit != gridBorePosition.Count + (gridBorePosition.Count / 2) + 50)
+                if (spriteCountLimit != gridBorePosition.Count + (gridBorePosition.Count / 2) + (Swarm.Count * 10))
                 {
-                    spriteCountLimit = gridBorePosition.Count + (gridBorePosition.Count / 2) + 50;
+                    spriteCountLimit = gridBorePosition.Count + (gridBorePosition.Count / 2) + (Swarm.Count * 10);
                 }
                 if (spritecount_limit_insert != (gridBorePosition.Count / 2))
                 {
@@ -3646,7 +3647,339 @@ namespace IngameScript
             yield return true;
         }
 
-        IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
+        IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool rotateToHome = true)
+        {
+            int sprite_total = 0;
+            int drone_total = 0;
+
+            var Viewport_scale = 0.4f;
+            var Viewport_size_y = _viewport.Height * Viewport_scale;
+            var Viewport_size_x = _viewport.Width * Viewport_scale;
+            var view_spacer_x = Viewport_size_x / numPointsX;
+            var view_spacer_y = Viewport_size_y / numPointsY;
+            var sizer = new Vector2(view_spacer_x, view_spacer_y);
+            var width_real = gridSize * numPointsX;
+            var height_real = gridSize * numPointsY;
+            var scale_factor_x = (float)(Viewport_size_x / width_real) * 1.5f;
+            var scale_factor_y = (float)(Viewport_size_y / height_real) * 1.5f;
+
+            if (gridBorePosition.Count > 0)
+            {
+                var text_position = new Vector2(256, 20) + _viewport.Position;
+                var spriteText = new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = $"--- {secondary_tag} Mining Grid Status ---",
+                    Position = text_position,
+                    RotationOrScale = 1.0f,
+                    Size = sizer,
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
+                    Alignment = TextAlignment.CENTER,
+                    FontId = "White"
+                };
+                sprites.Add(spriteText);
+                text_position = new Vector2(256, 60) + _viewport.Position;
+                spriteText = new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = $"[{jobname}] - Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
+                    Position = text_position,
+                    RotationOrScale = 0.7f,
+                    Size = sizer,
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
+                    Alignment = TextAlignment.CENTER,
+                    FontId = "White"
+                };
+                sprites.Add(spriteText);
+
+                Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
+                Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
+
+                // --- Viewport Rotation Matrix Setup ---
+                bool doRotation = rotateToHome && remoteControlActual != null;
+                double cosRot = 1.0;
+                double sinRot = 0.0;
+
+                if (doRotation)
+                {
+                    scale_factor_x *= 0.8f;
+                    scale_factor_y *= 0.8f;
+
+                    Vector3D LocalRCHome = remoteControlActual.GetPosition();
+                    Vector3D relativePointHome = LocalRCHome - centerPoint;
+
+                    // Get local 2D planar coordinates
+                    double xPlanarHome = Vector3D.Dot(relativePointHome, xAxis);
+                    double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
+
+                    // Screen Y is inverted
+                    double cxHome = xPlanarHome;
+                    double cyHome = -yPlanarHome;
+
+                    double magHome = Math.Sqrt(cxHome * cxHome + cyHome * cyHome);
+
+                    if (magHome > 0.0001)
+                    {
+                        // Calculate angle required to point Home straight up (-PI/2 radians)
+                        double currentTheta = Math.Atan2(cyHome, cxHome);
+                        double targetTheta = -Math.PI / 2.0;
+                        double alpha = targetTheta - currentTheta;
+
+                        cosRot = Math.Cos(alpha);
+                        sinRot = Math.Sin(alpha);
+                    }
+                    else
+                    {
+                        doRotation = false; // RC is at dead center, no rotation possible
+                    }
+                }
+
+                // --- Draw Home Chevron ---
+                float screenRadius = Math.Min(_viewport.Size.X, _viewport.Size.Y) / 2 * 0.8f;
+                if (remoteControlActual != null)
+                {
+                    Vector3D LocalRCHome = remoteControlActual.GetPosition();
+                    Vector3D relativePointHome = LocalRCHome - centerPoint;
+                    string ImageHome = "AH_BoreSight";
+                    var home_colour = Color.Purple;
+                    var alpha_bytes_home = 1.0f;
+
+                    double xPlanarHome = Vector3D.Dot(relativePointHome, xAxis);
+                    double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
+
+                    double cxHome = xPlanarHome;
+                    double cyHome = -yPlanarHome;
+
+                    if (doRotation)
+                    {
+                        double xRot = cxHome * cosRot - cyHome * sinRot;
+                        double yRot = cxHome * sinRot + cyHome * cosRot;
+                        cxHome = xRot;
+                        cyHome = yRot;
+                    }
+
+                    var CentXHome = (float)cxHome * scale_factor_x;
+                    var CentYHome = (float)cyHome * scale_factor_y;
+                    float mag = (float)Math.Sqrt(CentXHome * CentXHome + CentYHome * CentYHome);
+
+                    float normX = mag > 0 ? CentXHome / mag : 0;
+                    float normY = mag > 0 ? CentYHome / mag : -1;
+
+                    var positionHome = _viewport.Center + screenRadius * new Vector2(normX, normY);
+                    float rotationHome = (float)Math.Atan2(normY, normX);
+
+                    var spriteHomeDirection = new MySprite()
+                    {
+                        Type = SpriteType.TEXTURE,
+                        Data = ImageHome,
+                        Position = positionHome,
+                        RotationOrScale = rotationHome,
+                        Size = sizer,
+                        Color = home_colour.Alpha(alpha_bytes_home),
+                        Alignment = TextAlignment.CENTER
+                    };
+
+                    if (mag != 0.0f)
+                    {
+                        sprites.Add(spriteHomeDirection);
+                        spriteCounter++;
+                    }
+                }
+
+                // --- Draw Grid Bores ---
+                for (int i = 0; i < gridBorePosition.Count; i++)
+                {
+                    sprite_total++;
+                    Vector3D relativePoint = gridBorePosition[i] - centerPoint;
+                    double xPlanar = Vector3D.Dot(relativePoint, xAxis);
+                    double yPlanar = Vector3D.Dot(relativePoint, yAxis);
+
+                    double cx = xPlanar;
+                    double cy = -yPlanar;
+
+                    // Apply mathematical rotation to the coordinates
+                    if (doRotation)
+                    {
+                        double xRot = cx * cosRot - cy * sinRot;
+                        double yRot = cx * sinRot + cy * cosRot;
+                        cx = xRot;
+                        cy = yRot;
+                    }
+
+                    var CentX = (float)cx;
+                    var CentY = (float)cy;
+
+                    string Image = gridBoreFinished[i] ? "CircleHollow" : "Circle";
+                    var alpha_bytes = gridBoreOccupied[i] ? 1.0f : 0.5f;
+                    var bore_colour = gridBoreOccupied[i] ? Color.LightSkyBlue : Color.DeepSkyBlue;
+                    var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
+
+                    var sprite = new MySprite()
+                    {
+                        Type = SpriteType.TEXTURE,
+                        Data = Image,
+                        Position = position,
+                        Size = sizer,
+                        Color = bore_colour.Alpha(alpha_bytes),
+                        Alignment = TextAlignment.CENTER
+                    };
+                    sprites.Add(sprite);
+                    percent_list_vis = (((double)i + (double)1) / ((double)gridBorePosition.Count)) * 100;
+                    spriteCounter++;
+                    yield return false;
+                }
+
+                // --- Draw Drones ---
+                if (droneID.Count > 0)
+                {
+                    drone_total = 0;
+
+                    // EXCEPTION FIX: Using a standard 'for' loop over the ID list instead of 'foreach' on the dictionary.
+                    for (int dIndex = 0; dIndex < droneID.Count; dIndex++)
+                    {
+                        DroneData drone;
+                        // If the drone somehow doesn't exist in the dictionary, skip to the next one safely.
+                        if (!Swarm.TryGetValue(droneID[dIndex], out drone)) continue;
+
+                        double drone_locale_x = 0.0;
+                        double drone_locale_y = 0.0;
+                        double drone_locale_z = 0.0;
+                        drone_total++;
+
+                        if (!double.TryParse(drone.LocationX, out drone_locale_x)) { drone_locale_x = 0.0; }
+                        if (!double.TryParse(drone.LocationY, out drone_locale_y)) { drone_locale_y = 0.0; }
+                        if (!double.TryParse(drone.LocationZ, out drone_locale_z)) { drone_locale_z = 0.0; }
+
+                        Vector3D Drone_point = new Vector3D(drone_locale_x, drone_locale_y, drone_locale_z);
+                        Vector3D relativePoint = Drone_point - centerPoint;
+                        double xPlanar = Vector3D.Dot(relativePoint, xAxis);
+                        double yPlanar = Vector3D.Dot(relativePoint, yAxis);
+
+                        double cx = xPlanar;
+                        double cy = -yPlanar;
+
+                        if (doRotation)
+                        {
+                            double xRot = cx * cosRot - cy * sinRot;
+                            double yRot = cx * sinRot + cy * cosRot;
+                            cx = xRot;
+                            cy = yRot;
+                        }
+
+                        var CentX = (float)cx;
+                        var CentY = (float)cy;
+                        string Image_drone = "Circle";
+                        var bore_colour_drone = Color.Gray;
+                        var alpha_val = 1.0f;
+
+                        if (drone.ControlStatus.Contains("Docked") || drone.ControlStatus.Contains("Undocked") || drone.ControlStatus.Contains("Docking") || drone.ControlStatus.Contains("Undocking"))
+                        {
+                            alpha_val = 0.25f;
+                        }
+
+                        if (drone.IsMining)
+                        {
+                            if (drone.ControlStatus.Contains("Min")) { bore_colour_drone = Color.Purple; }
+                            else if (drone.ControlStatus.Contains("Exit")) { bore_colour_drone = Color.Orange; }
+                            else if (drone.ControlStatus.Contains("RTB: Ready")) { bore_colour_drone = Color.Green; }
+                            else if (drone.ControlStatus.Contains("Undock")) { bore_colour_drone = Color.Yellow; }
+                            else { bore_colour_drone = Color.Navy; }
+                            alpha_val = 1.0f;
+                        }
+                        if (drone.DamageState == "DMG")
+                        {
+                            bore_colour_drone = Color.Red;
+                        }
+
+                        var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
+
+                        var sprite = new MySprite()
+                        {
+                            Type = SpriteType.TEXTURE,
+                            Data = Image_drone,
+                            Position = position,
+                            Size = sizer * 0.8f,
+                            Color = bore_colour_drone.Alpha(alpha_val),
+                            Alignment = TextAlignment.CENTER
+                        };
+                        sprites.Add(sprite);
+
+                        if (drone.CargoFull.Contains("True") || drone.RechargeRequest.Contains("True"))
+                        {
+                            if (drone.RechargeRequest.Contains("True") && drone.CargoFull.Contains("True")) { bore_colour_drone = Color.White; }
+                            else if (drone.RechargeRequest.Contains("True")) { bore_colour_drone = Color.YellowGreen; }
+                            else if (drone.CargoFull.Contains("True")) { bore_colour_drone = Color.RosyBrown; }
+
+                            var sprite_layer_h = new MySprite()
+                            {
+                                Type = SpriteType.TEXTURE,
+                                Data = "CircleHollow",
+                                Position = position,
+                                Size = sizer * 0.8f,
+                                Color = bore_colour_drone.Alpha(alpha_val),
+                                Alignment = TextAlignment.CENTER
+                            };
+                            sprites.Add(sprite_layer_h);
+                            spriteCounter++;
+                        }
+
+                        if (drone.ControlStatus.Contains("Recharg") || drone.ControlStatus.Contains("Unload") || drone.RechargeRequest.Contains("True"))
+                        {
+                            bore_colour_drone = Color.Yellow;
+                            var sprite_layer = new MySprite()
+                            {
+                                Type = SpriteType.TEXTURE,
+                                Data = "IconEnergy",
+                                Position = position,
+                                Size = sizer * 0.8f,
+                                Color = bore_colour_drone.Alpha(alpha_val),
+                                Alignment = TextAlignment.CENTER
+                            };
+                            sprites.Add(sprite_layer);
+                            spriteCounter++;
+                        }
+
+                        bore_colour_drone = Color.WhiteSmoke;
+                        var sprite_name = new MySprite()
+                        {
+                            Type = SpriteType.TEXT,
+                            Data = $"{drone.Name}- ({drone.ChargeStorage}%)",
+                            Position = position,
+                            RotationOrScale = 0.3f, // Text scale remains untouched, orientation stays perfectly level
+                            Size = sizer * 0.5f,
+                            Color = bore_colour_drone.Alpha(alpha_val),
+                            Alignment = TextAlignment.CENTER,
+                            FontId = "White"
+                        };
+                        sprites.Add(sprite_name);
+
+                        percent_list_drones = ((double)drone_total / (double)droneID.Count) * 100;
+                        spriteCounter++;
+                        yield return false; // Pauses execution safely, dictionary modification won't crash the for-loop
+                    }
+                }
+
+                if (droneID.Count == 0)
+                {
+                    frame_generator_finished = (sprite_total == gridBorePosition.Count);
+                }
+                else if (droneID.Count > 0)
+                {
+                    if (sprite_total == gridBorePosition.Count && drone_total == droneID.Count)
+                    {
+                        frame_generator_finished = true;
+                        drone_total = 0;
+                    }
+                    else
+                    {
+                        frame_generator_finished = false;
+                    }
+                }
+
+                yield return true;
+            }
+        }
+        IEnumerator<bool> BuildSpritesOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             //sprites.Clear();
             int sprite_total = 0;
@@ -4263,6 +4596,17 @@ namespace IngameScript
             {
                 drone_clear_offset = 9.0; // Default if argument is missing
             }
+            if (dronecontrolleronfigdata.Length >= 5)
+            {
+                if (!bool.TryParse(dronecontrolleronfigdata[4].ToString().Trim(), out rotateHome))
+                {
+                    rotateHome = false; // Set to default on fail
+                }
+            }
+            else
+            {
+                rotateHome = false; // Default if argument is missing
+            }
         }
         public void SetupSystem()
         {
@@ -4712,7 +5056,7 @@ namespace IngameScript
         void update_display()  // Extracted from drone_processing
         {
             displayTextMain.Clear().EnsureCapacity(512); // ~400-600 chars typical
-            displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] [{jobname}] Running {icon}")
+            displayTextMain.AppendLine($"GMDC {ver} {secondary_tag} [{drone_tag}] [{jobname}] Running {icon} {rotateHome}")
                   .AppendLine($"------------------------------")
                   .AppendLine($" ")
                    .AppendLine($"Total drones detected: {Swarm.Count}")

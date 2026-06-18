@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.603B";
+        string ver = "V0.605B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -161,6 +161,7 @@ namespace IngameScript
         string customData20;
         //  string customData21;
         string customData22;
+        string customData23;
         //   string remoteControlCustomData1 = "";
         string remoteControlCustomData2 = "";
         string remoteControlCustomData3 = "";
@@ -364,6 +365,8 @@ namespace IngameScript
         string incomingName = "";
         List<string> droneID = new List<string>();
         Dictionary<string, DroneData> Swarm = new Dictionary<string, DroneData>();
+        bool perimeterOnly = false;
+        int perimiterInt = 0;
         #endregion
         public void Save()
         {
@@ -421,7 +424,7 @@ namespace IngameScript
         }
 
 
-            public void AntennaSaveData(IMyRadioAntenna block)
+        public void AntennaSaveData(IMyRadioAntenna block)
         {
             _antennaStore.Clear();
             if (_antennaStore.TryParse(block.CustomData.ToString()))
@@ -719,7 +722,8 @@ namespace IngameScript
                     {
                         // The coroutine has finished executing
                         sbtexttemp.AppendLine("Job rendering complete.");
-                        visCoroutine = null; // Reset the coroutine
+                        visCoroutine?.Dispose();
+                        visCoroutine = null;
                         BuildSprites(miningGPSCoordinates, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid).Dispose();
                     }
                     else
@@ -783,8 +787,8 @@ namespace IngameScript
                 {
                     // The coroutine has finished executing
                     sbtexttemp.AppendLine("Mining list complete.");
-                    listCoroutine = null; // Reset the coroutine
-                    GenListDisplay().Dispose();
+                    listCoroutine?.Dispose();
+                    listCoroutine = null;
                 }
                 else
                 {
@@ -1894,6 +1898,14 @@ namespace IngameScript
                 {
                     readyFlag = false;
                 }
+                if (perimiterInt == 0 && perimeterOnly)
+                {
+                    perimeterOnly = false;
+                }
+                if (perimiterInt == 1 && !perimeterOnly)
+                {
+                    perimeterOnly = true;
+                }
             }
             if (!gridCreated)
             {
@@ -1903,6 +1915,14 @@ namespace IngameScript
                     gridBorePosition.Clear();
                     gridBoreFinished.Clear();
                     gridBoreOccupied.Clear();
+                    if (perimiterInt == 0 && perimeterOnly)
+                    {
+                        perimeterOnly = false;
+                    }
+                    if (perimiterInt == 1 && !perimeterOnly)
+                    {
+                        perimeterOnly = true;
+                    }
                     bores_regen = true;
                 }
 
@@ -1950,7 +1970,7 @@ namespace IngameScript
                 //coroutine management grid creation
                 if (gridCoroutine == null && !gridInitialisationComplete && bores_regen || gridCoroutine != null && !gridCoroutine.MoveNext() && !gridInitialisationComplete && bores_regen)
                 {
-                    gridCoroutine = GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid);
+                    gridCoroutine = GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid, perimeterOnly);
                 }
                 if (gridCoroutine != null && !gridInitialisationComplete && bores_regen)
                 {
@@ -1962,8 +1982,9 @@ namespace IngameScript
                     {
                         // The coroutine has finished executing
                         sbtexttemp.AppendLine("Grid generation complete.");
-                        gridCoroutine = null; // Reset the coroutine
-                        GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid).Dispose();
+                        gridCoroutine?.Dispose();
+                        gridCoroutine = null;
+                        GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid, perimeterOnly).Dispose();
                     }
                     else
                     {
@@ -3019,7 +3040,8 @@ namespace IngameScript
                 customData20 = "";
                 //  customData21 = "";
                 customData22 = "";
-                sbtexttemp.AppendLine("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:skipboresnum");
+                customData23 = "";
+                sbtexttemp.AppendLine("Data format invalid - GPS:name:x:y:z:depth:grid:numx:numy:limit=True/False:flightfactor:flighthardlimit:perimeteronly 0,1");
                 return;
             }
             if (gpsCommand.Length > 4)
@@ -3149,11 +3171,21 @@ namespace IngameScript
             if (gpsCommand.Length > 14)
             {
                 customData14 = gpsCommand[14];
-                if (!int.TryParse(customData14, out skipBoresNumber))
+                if (!int.TryParse(customData14, out perimiterInt))
                 {
                     skipBoresNumber = 0;
+                    perimiterInt = 0;
+                    perimeterOnly = false;
                     customData14 = "";
                 }
+            }
+            if(perimiterInt == 0 && perimeterOnly)
+            {
+                perimeterOnly = false;
+            }
+            if (perimiterInt == 1 && !perimeterOnly)
+            {
+                perimeterOnly = true;
             }
             if (gpsCommand.Length > 15)
             {
@@ -3443,7 +3475,105 @@ namespace IngameScript
             yield return true;
         }
 
-        IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
+        IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
+        {
+            // debugcount++;
+            // initgridcount++;
+            // List<Vector3D> grdPositins = new List<Vector3D>();
+
+            int gridcount_inner = 0;
+            int gridcount_outer = 0;
+            int gridcount = 0;
+            int core_numpoints_x = 0;
+            int core_numpoints_y = 0;
+
+            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
+            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
+            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
+            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
+
+            // Calculate total points for the outer layer accurately based on mode
+            if (perimeterOnly)
+            {
+                int innerX = numPointsX - 2;
+                int innerY = numPointsY - 2;
+                if (innerX < 0) innerX = 0;
+                if (innerY < 0) innerY = 0;
+
+                // Perimeter count = Total Area minus the Inner Core Area
+                gridcount_outer = (numPointsX * numPointsY) - (innerX * innerY);
+            }
+            else
+            {
+                gridcount_outer = numPointsX * numPointsY;
+            }
+
+            for (int i = 0; i < numPointsX; i++)
+            {
+                for (int j = 0; j < numPointsY; j++)
+                {
+                    // If mapping perimeter only, skip any point that isn't on a boundary edge
+                    if (perimeterOnly && !(i == 0 || i == numPointsX - 1 || j == 0 || j == numPointsY - 1))
+                    {
+                        continue;
+                    }
+
+                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
+
+                    gridBorePosition.Add(position);
+                    gridBoreOccupied.Add(false);
+                    gridBoreFinished.Add(false);
+                }
+                yield return false;
+            }
+
+            // Only map the coreout sub-grid if we are not in perimeter-only mode
+            if (coreout && !perimeterOnly)
+            {
+                core_numpoints_x = numPointsX - 1;
+                core_numpoints_y = numPointsY - 1;
+                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
+                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
+                if (core_numpoints_x < 1)
+                {
+                    core_numpoints_x = 1;
+                }
+                if (core_numpoints_y < 1)
+                {
+                    core_numpoints_y = 1;
+                }
+                gridcount_inner = core_numpoints_x * core_numpoints_y;
+                if (gridcount_inner >= 1)
+                {
+                    for (int i = 0; i < core_numpoints_x; i++)
+                    {
+                        for (int j = 0; j < core_numpoints_y; j++)
+                        {
+                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
+                            gridBorePosition.Add(position);
+                            gridBoreOccupied.Add(false);
+                            gridBoreFinished.Add(false);
+                        }
+                        yield return false;
+                    }
+                }
+            }
+
+            gridcount = gridcount_inner + gridcount_outer;
+            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
+
+            // sbtexttemp.AppendLine($"{gridcount} {grid_bore_positions.Count} {gridcount}");
+            if (gridBorePosition.Count == gridcount)
+            {
+                gridInitialisationComplete = true;
+            }
+            else
+            {
+                gridInitialisationComplete = false;
+            }
+            yield return true;
+        }
+        IEnumerator<bool> GenGrdPositsOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
         {
             //debugcount++;
             //initgridcount++;

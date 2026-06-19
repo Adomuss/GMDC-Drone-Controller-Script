@@ -333,7 +333,7 @@ namespace IngameScript
         bool spriteInsert = false;
         StringBuilder customDataString = new StringBuilder();
         string _oldCustomData = "";
-
+        StringBuilder textSpriteBuffer = new StringBuilder();
 
         private double totalRuntimeMs = 0.0;
         private int runCount = 0;
@@ -368,6 +368,8 @@ namespace IngameScript
         bool perimeterOnly = false;
         int perimiterInt = 0;
         bool rotateHome = false;
+        float scale1;
+        string datatemp = "";
         #endregion
         public void Save()
         {
@@ -3718,8 +3720,25 @@ namespace IngameScript
             yield return true;
         }
 
+        private float GetScaleToFit(string text, float targetWidth, float baseScale, float charWidthAtBase)
+        {
+            // Estimate total width: char count * width per char at scale 1.0
+            float textWidth = text.Length * charWidthAtBase;
+
+            // If text is wider than the target, return a reduced scale; otherwise keep it at baseScale
+            if (textWidth > targetWidth)
+            {
+                return (targetWidth / textWidth) * baseScale;
+            }
+
+            return baseScale;
+        }
+
         IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool rotateToHome = true)
         {
+            // Define the usable width of your viewport
+            float usableWidth = _viewport.Width * 0.9f; // 90% of viewport width
+            float charWidth = 14.0f; // Adjust this value until the text fits perfectly
             int sprite_total = 0;
             int drone_total = 0;
 
@@ -3736,13 +3755,18 @@ namespace IngameScript
 
             if (gridBorePosition.Count > 0)
             {
+                textSpriteBuffer.Clear();
+                textSpriteBuffer.Append("--- ").Append(secondary_tag).Append(" Mining Grid Status ---");
                 var text_position = new Vector2(256, 20) + _viewport.Position;
+                datatemp = textSpriteBuffer.ToString();
+                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
+                
                 var spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"--- {secondary_tag} Mining Grid Status ---",
+                    Data = datatemp,
                     Position = text_position,
-                    RotationOrScale = 1.0f,
+                    RotationOrScale = scale1,                    
                     Size = sizer,
                     Color = Color.WhiteSmoke.Alpha(1.0f),
                     Alignment = TextAlignment.CENTER,
@@ -3750,19 +3774,24 @@ namespace IngameScript
                 };
                 sprites.Add(spriteText);
                 text_position = new Vector2(256, 60) + _viewport.Position;
+                textSpriteBuffer.Clear();
+                textSpriteBuffer.Append("[").Append(jobname).Append("] - Total Bores: ").Append(totalMiningRuns).Append(" - Remaining: ").Append(boresRemaining).Append(" - Drones: ").Append(totalDronesMining).Append(" ").Append("(").Append(totalDronesActive).Append(")");
+                datatemp = textSpriteBuffer.ToString();
+                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
                 spriteText = new MySprite()
                 {
                     Type = SpriteType.TEXT,
-                    Data = $"[{jobname}] - Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
+                    Data = datatemp,
                     Position = text_position,
-                    RotationOrScale = 0.7f,
+                    RotationOrScale = scale1,
                     Size = sizer,
                     Color = Color.WhiteSmoke.Alpha(1.0f),
                     Alignment = TextAlignment.CENTER,
                     FontId = "White"
                 };
                 sprites.Add(spriteText);
-
+                textSpriteBuffer.Clear();
+                datatemp = "";
                 Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
                 Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
 
@@ -4910,7 +4939,7 @@ namespace IngameScript
                 if (sM.ContentType != ContentType.TEXT_AND_IMAGE)
                 {
                     sM.ContentType = ContentType.TEXT_AND_IMAGE;
-                    sM.FontSize = 0.65f;
+                    sM.FontSize = 0.50f;
                     sM.Font = "White";
                 }
             }
@@ -4928,7 +4957,7 @@ namespace IngameScript
                 if (sL.ContentType != ContentType.TEXT_AND_IMAGE)
                 {
                     sL.ContentType = ContentType.TEXT_AND_IMAGE;
-                    sL.FontSize = 0.66f;
+                    sL.FontSize = 0.50f;
                     sL.Font = "White";
                 }
             }
@@ -5130,7 +5159,7 @@ namespace IngameScript
 
             displayTextMain.Append("GMDC ").Append(ver).Append(" ").Append(secondary_tag)
                 .Append(" [").Append(drone_tag).Append("] [").Append(jobname).Append("] Running ")
-                .Append(icon).Append(" ").Append(rotateHome).AppendLine();
+                .Append(icon).Append(" ").AppendLine();
 
             // Using \n inside AppendLine is highly efficient for double spacing
             displayTextMain.AppendLine("------------------------------\n");

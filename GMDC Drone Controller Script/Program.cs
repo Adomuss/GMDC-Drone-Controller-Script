@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.606B";
+        string ver = "V0.607B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -3553,6 +3553,245 @@ namespace IngameScript
         {
             // debugcount++;
             // initgridcount++;
+
+            int gridcount_inner = 0;
+            int gridcount_outer = 0;
+            int gridcount = 0;
+            int core_numpoints_x = 0;
+            int core_numpoints_y = 0;
+
+            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
+            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
+            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
+            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
+
+            // Calculate total points for the outer layer accurately based on mode
+            if (perimeterOnly)
+            {
+                int innerX = numPointsX - 2;
+                int innerY = numPointsY - 2;
+                if (innerX < 0) innerX = 0;
+                if (innerY < 0) innerY = 0;
+
+                gridcount_outer = (numPointsX * numPointsY) - (innerX * innerY);
+            }
+            else
+            {
+                gridcount_outer = numPointsX * numPointsY;
+            }
+
+            // A single temporary list to pool ALL points together
+            List<Vector3D> allPositions = new List<Vector3D>();
+
+            // Phase 1: Gather Main Grid Positions
+            for (int i = 0; i < numPointsX; i++)
+            {
+                for (int j = 0; j < numPointsY; j++)
+                {
+                    if (perimeterOnly && !(i == 0 || i == numPointsX - 1 || j == 0 || j == numPointsY - 1))
+                    {
+                        continue;
+                    }
+
+                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
+                    allPositions.Add(position);
+                }
+                yield return false;
+            }
+
+            // Phase 2: Gather Coreout Grid Positions
+            if (coreout && !perimeterOnly)
+            {
+                core_numpoints_x = numPointsX - 1;
+                core_numpoints_y = numPointsY - 1;
+                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
+                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
+
+                if (core_numpoints_x < 1) core_numpoints_x = 1;
+                if (core_numpoints_y < 1) core_numpoints_y = 1;
+
+                gridcount_inner = core_numpoints_x * core_numpoints_y;
+
+                if (gridcount_inner >= 1)
+                {
+                    for (int i = 0; i < core_numpoints_x; i++)
+                    {
+                        for (int j = 0; j < core_numpoints_y; j++)
+                        {
+                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
+                            allPositions.Add(position);
+                        }
+                        yield return false;
+                    }
+                }
+            }
+
+            // Phase 3: Dynamically sort the entire combined pool from the center outward
+            allPositions.Sort((a, b) => Vector3D.DistanceSquared(a, centerPoint).CompareTo(Vector3D.DistanceSquared(b, centerPoint)));
+
+            // Yielding after the sort keeps the PB execution time healthy
+            yield return false;
+
+            // Phase 4: Transfer to global lists with execution safety
+            int batchCounter = 0;
+            foreach (var pos in allPositions)
+            {
+                gridBorePosition.Add(pos);
+                gridBoreOccupied.Add(false);
+                gridBoreFinished.Add(false);
+
+                batchCounter++;
+                // Yield every 50 points to prevent "Script Too Complex" errors on massive grids
+                if (batchCounter % 50 == 0)
+                {
+                    yield return false;
+                }
+            }
+
+            gridcount = gridcount_inner + gridcount_outer;
+            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
+
+            if (gridBorePosition.Count == gridcount)
+            {
+                gridInitialisationComplete = true;
+            }
+            else
+            {
+                gridInitialisationComplete = false;
+            }
+
+            yield return true;
+        }
+
+        IEnumerator<bool> GenGrdPositsB(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
+        {
+            // debugcount++;
+            // initgridcount++;
+            // List<Vector3D> grdPositins = new List<Vector3D>();
+
+            int gridcount_inner = 0;
+            int gridcount_outer = 0;
+            int gridcount = 0;
+            int core_numpoints_x = 0;
+            int core_numpoints_y = 0;
+
+            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
+            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
+            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
+            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
+
+            // Calculate total points for the outer layer accurately based on mode
+            if (perimeterOnly)
+            {
+                int innerX = numPointsX - 2;
+                int innerY = numPointsY - 2;
+                if (innerX < 0) innerX = 0;
+                if (innerY < 0) innerY = 0;
+
+                // Perimeter count = Total Area minus the Inner Core Area
+                gridcount_outer = (numPointsX * numPointsY) - (innerX * innerY);
+            }
+            else
+            {
+                gridcount_outer = numPointsX * numPointsY;
+            }
+
+            // Temporary list to hold main grid positions for sorting
+            List<Vector3D> tempPositions = new List<Vector3D>();
+
+            for (int i = 0; i < numPointsX; i++)
+            {
+                for (int j = 0; j < numPointsY; j++)
+                {
+                    // If mapping perimeter only, skip any point that isn't on a boundary edge
+                    if (perimeterOnly && !(i == 0 || i == numPointsX - 1 || j == 0 || j == numPointsY - 1))
+                    {
+                        continue;
+                    }
+
+                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
+                    tempPositions.Add(position);
+                }
+                yield return false;
+            }
+
+            // Sort the main grid outward from the center point
+            tempPositions.Sort((a, b) => Vector3D.DistanceSquared(a, centerPoint).CompareTo(Vector3D.DistanceSquared(b, centerPoint)));
+
+            // Add the sorted positions to your global arrays
+            foreach (var pos in tempPositions)
+            {
+                gridBorePosition.Add(pos);
+                gridBoreOccupied.Add(false);
+                gridBoreFinished.Add(false);
+            }
+
+            // Yielding after the loop to preserve execution limits
+            yield return false;
+
+            // Only map the coreout sub-grid if we are not in perimeter-only mode
+            if (coreout && !perimeterOnly)
+            {
+                core_numpoints_x = numPointsX - 1;
+                core_numpoints_y = numPointsY - 1;
+                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
+                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
+
+                if (core_numpoints_x < 1) core_numpoints_x = 1;
+                if (core_numpoints_y < 1) core_numpoints_y = 1;
+
+                gridcount_inner = core_numpoints_x * core_numpoints_y;
+
+                if (gridcount_inner >= 1)
+                {
+                    // Temporary list to hold coreout positions for sorting
+                    List<Vector3D> tempCorePositions = new List<Vector3D>();
+
+                    for (int i = 0; i < core_numpoints_x; i++)
+                    {
+                        for (int j = 0; j < core_numpoints_y; j++)
+                        {
+                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
+                            tempCorePositions.Add(position);
+                        }
+                        yield return false;
+                    }
+
+                    // Sort the coreout grid outward from the center point
+                    tempCorePositions.Sort((a, b) => Vector3D.DistanceSquared(a, centerPoint).CompareTo(Vector3D.DistanceSquared(b, centerPoint)));
+
+                    // Add the sorted coreout positions to your global arrays
+                    foreach (var pos in tempCorePositions)
+                    {
+                        gridBorePosition.Add(pos);
+                        gridBoreOccupied.Add(false);
+                        gridBoreFinished.Add(false);
+                    }
+
+                    yield return false;
+                }
+            }
+
+            gridcount = gridcount_inner + gridcount_outer;
+            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
+
+            // sbtexttemp.AppendLine($"{gridcount} {grid_bore_positions.Count} {gridcount}");
+            if (gridBorePosition.Count == gridcount)
+            {
+                gridInitialisationComplete = true;
+            }
+            else
+            {
+                gridInitialisationComplete = false;
+            }
+
+            yield return true;
+        }
+
+        IEnumerator<bool> GenGrdPositsOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
+        {
+            // debugcount++;
+            // initgridcount++;
             // List<Vector3D> grdPositins = new List<Vector3D>();
 
             int gridcount_inner = 0;
@@ -3647,79 +3886,6 @@ namespace IngameScript
             }
             yield return true;
         }
-        IEnumerator<bool> GenGrdPositsOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
-        {
-            //debugcount++;
-            //initgridcount++;
-            //List<Vector3D> grdPositins = new List<Vector3D>();
-
-            int gridcount_inner = 0;
-            int gridcount_outer = 0;
-            int gridcount = 0;
-            int core_numpoints_x = 0;
-            int core_numpoints_y = 0;
-
-            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
-            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
-            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
-            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
-            gridcount_outer = numPointsX * numPointsY;
-            for (int i = 0; i < numPointsX; i++)
-            {
-                for (int j = 0; j < numPointsY; j++)
-                {
-                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
-
-                    gridBorePosition.Add(position);
-                    gridBoreOccupied.Add(false);
-                    gridBoreFinished.Add(false);
-                }
-                yield return false;
-            }
-            if (coreout)
-            {
-                core_numpoints_x = numPointsX - 1;
-                core_numpoints_y = numPointsY - 1;
-                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
-                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
-                if (core_numpoints_x < 1)
-                {
-                    core_numpoints_x = 1;
-                }
-                if (core_numpoints_y < 1)
-                {
-                    core_numpoints_y = 1;
-                }
-                gridcount_inner = core_numpoints_x * core_numpoints_y;
-                if (gridcount_inner >= 1)
-                {
-                    for (int i = 0; i < core_numpoints_x; i++)
-                    {
-                        for (int j = 0; j < core_numpoints_y; j++)
-                        {
-                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
-                            gridBorePosition.Add(position);
-                            gridBoreOccupied.Add(false);
-                            gridBoreFinished.Add(false);
-                        }
-                        yield return false;
-                    }
-                }
-            }
-            gridcount = gridcount_inner + gridcount_outer;
-            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
-            //sbtexttemp.AppendLine($"{gridcount} {grid_bore_positions.Count} {gridcount}");
-            if (gridBorePosition.Count == gridcount)
-            {
-                gridInitialisationComplete = true;
-            }
-            else
-            {
-                gridInitialisationComplete = false;
-            }
-            yield return true;
-        }
-
         private float GetScaleToFit(string text, float targetWidth, float baseScale, float charWidthAtBase)
         {
             // Estimate total width: char count * width per char at scale 1.0
@@ -3755,43 +3921,7 @@ namespace IngameScript
 
             if (gridBorePosition.Count > 0)
             {
-                textSpriteBuffer.Clear();
-                textSpriteBuffer.Append("--- ").Append(secondary_tag).Append(" Mining Grid Status ---");
-                var text_position = new Vector2(256, 20) + _viewport.Position;
-                datatemp = textSpriteBuffer.ToString();
-                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
-                
-                var spriteText = new MySprite()
-                {
-                    Type = SpriteType.TEXT,
-                    Data = datatemp,
-                    Position = text_position,
-                    RotationOrScale = scale1,                    
-                    Size = sizer,
-                    Color = Color.WhiteSmoke.Alpha(1.0f),
-                    Alignment = TextAlignment.CENTER,
-                    FontId = "White"
-                };
-                sprites.Add(spriteText);
-                text_position = new Vector2(256, 60) + _viewport.Position;
-                textSpriteBuffer.Clear();
-                textSpriteBuffer.Append("[").Append(jobname).Append("] - Total Bores: ").Append(totalMiningRuns).Append(" - Remaining: ").Append(boresRemaining).Append(" - Drones: ").Append(totalDronesMining).Append(" ").Append("(").Append(totalDronesActive).Append(")");
-                datatemp = textSpriteBuffer.ToString();
-                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
-                spriteText = new MySprite()
-                {
-                    Type = SpriteType.TEXT,
-                    Data = datatemp,
-                    Position = text_position,
-                    RotationOrScale = scale1,
-                    Size = sizer,
-                    Color = Color.WhiteSmoke.Alpha(1.0f),
-                    Alignment = TextAlignment.CENTER,
-                    FontId = "White"
-                };
-                sprites.Add(spriteText);
-                textSpriteBuffer.Clear();
-                datatemp = "";
+ 
                 Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
                 Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
 
@@ -3886,6 +4016,45 @@ namespace IngameScript
                     }
                 }
 
+
+                textSpriteBuffer.Clear();
+                textSpriteBuffer.Append("--- ").Append(secondary_tag).Append(" Mining Grid Status ---");
+                var text_position = new Vector2(256, 20) + _viewport.Position;
+                datatemp = textSpriteBuffer.ToString();
+                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
+
+                var spriteText = new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = datatemp,
+                    Position = text_position,
+                    RotationOrScale = scale1,
+                    Size = sizer,
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
+                    Alignment = TextAlignment.CENTER,
+                    FontId = "White"
+                };
+                sprites.Add(spriteText);
+                text_position = new Vector2(256, 60) + _viewport.Position;
+                textSpriteBuffer.Clear();
+                textSpriteBuffer.Append("[").Append(jobname).Append("] - Total Bores: ").Append(totalMiningRuns).Append(" - Remaining: ").Append(boresRemaining).Append(" - Drones: ").Append(totalDronesMining).Append(" ").Append("(").Append(totalDronesActive).Append(")");
+                datatemp = textSpriteBuffer.ToString();
+                scale1 = GetScaleToFit(datatemp, usableWidth, 1.0f, charWidth);
+                spriteText = new MySprite()
+                {
+                    Type = SpriteType.TEXT,
+                    Data = datatemp,
+                    Position = text_position,
+                    RotationOrScale = scale1,
+                    Size = sizer,
+                    Color = Color.WhiteSmoke.Alpha(1.0f),
+                    Alignment = TextAlignment.CENTER,
+                    FontId = "White"
+                };
+                sprites.Add(spriteText);
+                textSpriteBuffer.Clear();
+                datatemp = "";
+
                 // --- Draw Grid Bores ---
                 for (int i = 0; i < gridBorePosition.Count; i++)
                 {
@@ -3928,6 +4097,8 @@ namespace IngameScript
                     spriteCounter++;
                     yield return false;
                 }
+
+
 
                 // --- Draw Drones ---
                 if (droneID.Count > 0)
@@ -4058,6 +4229,7 @@ namespace IngameScript
                         yield return false; // Pauses execution safely, dictionary modification won't crash the for-loop
                     }
                 }
+
 
                 if (droneID.Count == 0)
                 {

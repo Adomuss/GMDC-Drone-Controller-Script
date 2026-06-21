@@ -4006,8 +4006,8 @@ namespace IngameScript
                     float normX = mag > 0 ? CentXHome / mag : 0;
                     float normY = mag > 0 ? CentYHome / mag : -1;
 
-                    var positionHome = _viewport.Center + screenRadius * new Vector2(normX, normY);
-                    float rotationHome = (float)Math.Atan2(normY, normX);
+                    var positionHome = _viewport.Center - screenRadius * new Vector2(normX, normY);
+                    float rotationHome = (float)Math.Atan2(normY, normX) + (float)Math.PI;
 
                     var spriteHomeDirection = new MySprite()
                     {

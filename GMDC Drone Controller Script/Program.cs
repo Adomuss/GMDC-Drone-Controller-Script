@@ -3549,7 +3549,7 @@ namespace IngameScript
             yield return true;
         }
 
-        IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
+        IEnumerator<bool> GenGrdPositsC(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
         {
             // debugcount++;
             // initgridcount++;
@@ -3663,7 +3663,7 @@ namespace IngameScript
             yield return true;
         }
 
-        IEnumerator<bool> GenGrdPositsB(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
+        IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
         {
             // debugcount++;
             // initgridcount++;
@@ -3934,7 +3934,10 @@ namespace IngameScript
                 {
                     scale_factor_x *= 0.8f;
                     scale_factor_y *= 0.8f;
-
+                    if (sizer != new Vector2(view_spacer_x * 0.8f, view_spacer_y * 0.8f))
+                    {
+                        sizer = new Vector2(view_spacer_x * 0.8f, view_spacer_y * 0.8f);
+                    }
                     Vector3D LocalRCHome = remoteControlActual.GetPosition();
                     Vector3D relativePointHome = LocalRCHome - centerPoint;
 
@@ -3960,6 +3963,10 @@ namespace IngameScript
                     }
                     else
                     {
+                        if(sizer != new Vector2(view_spacer_x, view_spacer_y))
+                        {
+                            sizer = new Vector2(view_spacer_x, view_spacer_y);
+                        }
                         doRotation = false; // RC is at dead center, no rotation possible
                     }
                 }
@@ -3982,6 +3989,10 @@ namespace IngameScript
 
                     if (doRotation)
                     {
+                        if (sizer != new Vector2(view_spacer_x * 0.8f, view_spacer_y * 0.8f))
+                        {
+                            sizer = new Vector2(view_spacer_x * 0.8f, view_spacer_y * 0.8f);
+                        }
                         double xRot = cxHome * cosRot - cyHome * sinRot;
                         double yRot = cxHome * sinRot + cyHome * cosRot;
                         cxHome = xRot;

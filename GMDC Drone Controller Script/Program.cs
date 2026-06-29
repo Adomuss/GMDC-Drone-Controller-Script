@@ -4087,7 +4087,7 @@ namespace IngameScript
                     }
 
                     var CentX = -(float)cx;
-                    var CentY = (float)cy;
+                    var CentY = -(float)cy;
 
                     string Image = gridBoreFinished[i] ? "CircleHollow" : "Circle";
                     var alpha_bytes = gridBoreOccupied[i] ? 1.0f : 0.5f;
@@ -4149,7 +4149,7 @@ namespace IngameScript
                         }
 
                         var CentX = -(float)cx;
-                        var CentY = (float)cy;
+                        var CentY = -(float)cy;
                         string Image_drone = "Circle";
                         var bore_colour_drone = Color.Gray;
                         var alpha_val = 1.0f;

@@ -4148,7 +4148,7 @@ namespace IngameScript
                             cy = yRot;
                         }
 
-                        var CentX = (float)cx;
+                        var CentX = -(float)cx;
                         var CentY = (float)cy;
                         string Image_drone = "Circle";
                         var bore_colour_drone = Color.Gray;

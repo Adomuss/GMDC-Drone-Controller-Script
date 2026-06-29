@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.607B";
+        string ver = "V0.608B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -4086,7 +4086,7 @@ namespace IngameScript
                         cy = yRot;
                     }
 
-                    var CentX = (float)cx;
+                    var CentX = -(float)cx;
                     var CentY = (float)cy;
 
                     string Image = gridBoreFinished[i] ? "CircleHollow" : "Circle";

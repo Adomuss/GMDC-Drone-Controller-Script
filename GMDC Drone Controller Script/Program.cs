@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.608B";
+        string ver = "V0.609B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -344,6 +344,7 @@ namespace IngameScript
         string runargument = "";
         bool firstload = false;
         MyIni _customDataStore = new MyIni();
+        MyIni _remoteDataStore = new MyIni();
         // MyIni _commsData = new MyIni();
         string jobdata = "";
         string rcjobdata = "";
@@ -1962,7 +1963,7 @@ namespace IngameScript
                     return;
                 }
                 Vector3D gravity = remoteControlActual.GetNaturalGravity();
-
+                GetCustomDataJobCommand(Me.CustomData, Me);
                 if (prospectAlignTargetValid || customDataAlignTargetValid)
                 {
                     planeNrml = ((miningGPSCoordinates - alignGPSCoordinates));
@@ -2208,7 +2209,7 @@ namespace IngameScript
                 _cachedCustomData = Me.CustomData;
             }
 
-            if (!string.IsNullOrEmpty(_cachedCustomData) && !string.IsNullOrWhiteSpace(_cachedCustomData))
+            if (!string.IsNullOrWhiteSpace(_cachedCustomData))
             {
                 mainCustomDataValid = true;
             }
@@ -2934,6 +2935,9 @@ namespace IngameScript
         void FetchRCJobData(IMyTerminalBlock input)
         {
             var str = "";
+            bool rcx = false;
+            bool rcy = false;
+            bool rcz = false;
             _customDataStore.Clear();
             if (_customDataStore.TryParse(input.CustomData.ToString()))
             {
@@ -2970,13 +2974,25 @@ namespace IngameScript
                     {
                         alignGPSCoordinates.X = 0.0;
                     }
+                    else
+                    {
+                        rcx = true;
+                    }
                     if (!double.TryParse(vectorsplita[3], out alignGPSCoordinates.Y))
                     {
                         alignGPSCoordinates.Y = 0.0;
                     }
+                    else
+                    {
+                        rcy = true;
+                    }
                     if (!double.TryParse(vectorsplita[4], out alignGPSCoordinates.Z))
                     {
                         alignGPSCoordinates.Z = 0.0;
+                    }
+                    else
+                    {
+                        rcz = true;
                     }
                 }
                 else
@@ -2991,6 +3007,10 @@ namespace IngameScript
                 {
                     safe_dstvl = 30.0;
                 }
+            }
+            if (rcx && rcy && rcz && !customDataAlignTargetValid)
+            {
+                customDataAlignTargetValid = true;
             }
             _customDataStore.Clear();
         }
@@ -3032,7 +3052,7 @@ namespace IngameScript
                 return;
 
             }
-            if (string.IsNullOrWhiteSpace(block.CustomData.ToString()) || string.IsNullOrEmpty(block.CustomData.ToString()))
+            if (string.IsNullOrWhiteSpace(block.CustomData.ToString()))
             {
                 sbtexttemp.AppendLine("Datablank");
                 return;
@@ -3305,7 +3325,7 @@ namespace IngameScript
                 }
             }
 
-            if (prospectAlignTargetValid && gpsCommand.Length > 16 && gpsCommand.Length < 18)
+            if ((prospectAlignTargetValid  || customDataAlignTargetValid)&& gpsCommand.Length > 16 && gpsCommand.Length < 18)
             {
                 string tempbro = jobdata;
                 string updater = tempbro + $"GPS:TGT:{alignGPSCoordinates.X}:{alignGPSCoordinates.Y}:{alignGPSCoordinates.Z}:#F77668:{safe_dstvl}:";

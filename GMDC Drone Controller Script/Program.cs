@@ -44,7 +44,7 @@ namespace IngameScript
 
         //Drone Comms
         int droneCommunicationsProcessingDelay = 0;
-        int droneCommunicationsPingDelay = 60;
+        int droneCommunicationsPingDelay = 30;
 
         #endregion
 
@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.609B";
+        string ver = "V0.610B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";

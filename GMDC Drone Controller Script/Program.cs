@@ -713,7 +713,7 @@ namespace IngameScript
                 timeDelayed = true;
             }
             dronePingTimerCount++;
-            if (dronePingTimerCount >= droneCommunicationsPingDelay)
+            if (dronePingTimerCount >= droneCommunicationsPingDelay && droneMessagesBuffer.Count <= 0)
             {
                 dronesPinged = false;
             }

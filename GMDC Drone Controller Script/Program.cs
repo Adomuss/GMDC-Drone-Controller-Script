@@ -54,7 +54,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.611B";
+        string ver = "V0.612B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -916,7 +916,7 @@ namespace IngameScript
         {
             if (Swarm.Count > 0 && canReset)
             {
-                droneResetStatusCount = CountIntegerValues("GPSListPosition", -1);
+                droneResetStatusCount = CountIntegerValues("GpsListPosition", -1);
                 droneDockedStatusCount = CountStatusValues("ControlStatus", "Docked");
             }
             if (Swarm.Count > 0)
@@ -1079,7 +1079,7 @@ namespace IngameScript
                     }
                     if (!gridBoreFinished[drone.GpsListPosition])
                     {
-                        int queued_count = CountIntegerValues("GPSListPosition", drone.GpsListPosition);
+                        int queued_count = CountIntegerValues("GpsListPosition", drone.GpsListPosition);
                         if (gridBoreOccupied[drone.GpsListPosition] && queued_count == 0)
                         {
                             gridBoreOccupied[drone.GpsListPosition] = false;
@@ -1176,7 +1176,7 @@ namespace IngameScript
                                 {
                                     if (Swarm.Count > 0)
                                     {
-                                        int queued_count = CountIntegerValues("GPSListPosition", k);
+                                        int queued_count = CountIntegerValues("GpsListPosition", k);
                                         if (!gridBoreOccupied[k] && queued_count > 0) //check if preassigned here
                                         {
                                             gridBoreOccupied[k] = true;
@@ -4670,7 +4670,7 @@ namespace IngameScript
 
             foreach (DroneData drone in Swarm.Values)
             {
-                if (propertyName == "GPSListPosition" && drone.GpsListPosition == val) truCnt++;
+                if (propertyName == "GpsListPosition" && drone.GpsListPosition == val) truCnt++;
                 if (propertyName == "ControlSequence" && drone.ControlSequence == val) truCnt++;
             }
 

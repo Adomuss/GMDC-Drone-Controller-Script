@@ -39,7 +39,7 @@ namespace IngameScript
         //default information
         string drone_tag = "SWRM_D"; //Mining drone group tag
         double drone_length = 2.6;
-        double drone_clear_offset = 6.6; //drill clear mode distance offset
+        double drone_clear_offset = 12.0; //drill clear mode distance offset
         string secondary = ""; //vessel/rig name (optional)
 
         //display surface indexes
@@ -379,7 +379,7 @@ namespace IngameScript
         Dictionary<string, DroneData> Swarm = new Dictionary<string, DroneData>();
         bool perimeterOnly = false;
         int perimiterInt = 0;
-        bool rotateHome = false;
+        bool rotateHome = true;
         float scale1;
         string datatemp = "";
         
@@ -397,6 +397,13 @@ namespace IngameScript
         string interface_display = "";
         string channel_tag_display = "";
         string secondary_tag_display = "";
+
+
+        string commandArg1 = "shipname";
+        string commandArg2 = "dronelength";
+        string commandArg3 = "clearoffset";
+        string commandArg4 = "rotatehome";
+        string commandArg5 = "dronesperscreen";
 
         #endregion
         public void Save()
@@ -568,14 +575,19 @@ namespace IngameScript
                 return;
             }
             AntennaSaveData(antennaActual);
-            sbtexttemp.AppendLine($"GMDC {ver} Running {icon} Rotation: {rotateHome}");
+            sbtexttemp.AppendLine($"GMDC {ver} Running {icon} ");
             sbtexttemp.AppendLine($"Channel: {channel_tag_display} ");
-            sbtexttemp.AppendLine($"Ship Tag: {secondary_tag_display} ");
-            sbtexttemp.AppendLine($"D1 Tag: {d1_tag} ");
-            sbtexttemp.AppendLine($"D2 Tag: {d2_tag} ");
-            sbtexttemp.AppendLine($"D3 Tag: {d3_tag} ");
-            sbtexttemp.AppendLine($"D4 Tag: {d4_tag} ");
-            
+            sbtexttemp.AppendLine($"Ship Name: {secondary_tag_display} ");
+            sbtexttemp.AppendLine($"D1 Tag ({myTextSurfaces_d1.Count}): {d1_tag} ");
+            sbtexttemp.AppendLine($"D2 Tag ({myTextSurfaces_d2.Count}: {d2_tag} ");
+            sbtexttemp.AppendLine($"D2 DrnPS: (#{drones_per_screen}) ");
+            sbtexttemp.AppendLine($"D3 Tag ({myTextSurfaces_d3.Count}): {d3_tag} ");
+            sbtexttemp.AppendLine($"D4 Tag ({myTextSurfaces_d4.Count}): {d4_tag} ");
+            sbtexttemp.AppendLine($"D4 Vis rotation: {rotateHome} ");
+            sbtexttemp.AppendLine($"Clear offset: {drone_clear_offset}m ");
+            sbtexttemp.AppendLine($"Drone length: {drone_length}m ");
+
+
             //sbtexttemp.AppendLine($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -4348,7 +4360,7 @@ namespace IngameScript
                 sbtexttemp.AppendLine("No arguments provided, using defaults.");
                 drone_tag = "SWRM_D";
                 drone_length = 2.6;
-                drone_clear_offset = 9.0; //drill clear mode distance offset
+                drone_clear_offset = 12.0; //drill clear mode distance offset
                 secondary = ""; //vessel/rig name (optional)
                 return;
             }
@@ -4370,42 +4382,115 @@ namespace IngameScript
             {
                 drone_tag = "SWRM_D"; // Default C if argument is missing or empty
             }
-            if (dronecontrolleronfigdata.Length >= 2 && !string.IsNullOrWhiteSpace(dronecontrolleronfigdata[1]))
+            if (dronecontrolleronfigdata.Length > 1)
             {
-                secondary = dronecontrolleronfigdata[1].ToString();
-            }
-            if (dronecontrolleronfigdata.Length >= 3)
-            {
-                if (!double.TryParse(dronecontrolleronfigdata[2].ToString().Trim(), out drone_length))
+                if (string.IsNullOrWhiteSpace(dronecontrolleronfigdata[0]))
                 {
-                    drone_length = 2.6; // Set to default on fail
+                    sbtexttemp.AppendLine("Drone tag is empty, using default: SWRM_D");
                 }
-            }
-            else
-            {
-                drone_length = 2.6; // Default if argument is missing
-            }
-            if (dronecontrolleronfigdata.Length >= 4)
-            {
-                if (!double.TryParse(dronecontrolleronfigdata[3].ToString().Trim(), out drone_clear_offset))
+                for (int i = 1; i < dronecontrolleronfigdata.Length; i++)
                 {
-                    drone_clear_offset = 9.0; // Set to default on fail
+                    if (dronecontrolleronfigdata[i] != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(dronecontrolleronfigdata[i]))
+                        {
+                            string[] argCommand = dronecontrolleronfigdata[i].Split('=');
+                            //string[] argCommand_End = input.Split(',');
+                            if (argCommand.Length > 0)
+                            {
+                                if (argCommand[0].Contains(commandArg1))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+                                            secondary = argCommand[1].Trim();
+                                        }
+                                        else
+                                        {
+                                            secondary = ""; // Default if argument is missing or empty
+                                        }
+                                    }
+                                }
+                                if (argCommand[0].Contains(commandArg2))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+
+                                            if(!double.TryParse(argCommand[1].Trim(), out drone_length))
+                                            {
+                                                drone_length = 2.6; // Set to default on fail
+                                            }
+                                            
+                                        }
+                                        else
+                                        {
+                                            drone_length = 2.6; // Default if argument is missing or empty
+                                        }
+                                    }
+                                }
+                                if (argCommand[0].Contains(commandArg3))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+                                            if (!double.TryParse(argCommand[1].Trim(), out drone_clear_offset))
+                                            {
+                                                drone_clear_offset = 12.0; // Set to default on fail
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            drone_clear_offset = 12.0; // Default if argument is missing or empty
+                                        }
+                                    }
+                                }
+                                if (argCommand[0].Contains(commandArg4))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+                                            if (!bool.TryParse(argCommand[1].Trim(), out rotateHome))
+                                            {
+                                                rotateHome = true; // Set to default on fail
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            rotateHome = true; // Default if argument is missing or empty
+                                        }
+                                    }
+                                }
+                                if (argCommand[0].Contains(commandArg5))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+                                            if (!int.TryParse(argCommand[1].Trim(), out drones_per_screen))
+                                            {
+                                                drones_per_screen = 8; // Set to default on fail
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            drones_per_screen = 8; // Default if argument is missing or empty
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
                 }
-            }
-            else
-            {
-                drone_clear_offset = 9.0; // Default if argument is missing
-            }
-            if (dronecontrolleronfigdata.Length >= 5)
-            {
-                if (!bool.TryParse(dronecontrolleronfigdata[4].ToString().Trim(), out rotateHome))
-                {
-                    rotateHome = false; // Set to default on fail
-                }
-            }
-            else
-            {
-                rotateHome = false; // Default if argument is missing
             }
         }
         public void SetupSystem()

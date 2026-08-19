@@ -1,17 +1,26 @@
-﻿using Sandbox.Game.Components;
+﻿using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
+using SpaceEngineers.Game.ModAPI.Ingame;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
-using System.Dynamic;
-using System.Reflection;
+using System.Collections.Immutable;
+using System.Data.Common;
+using System.Drawing.Imaging;
+using System.Linq;
+using System.Net;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.RegularExpressions;
+using VRage;
+using VRage.Collections;
+using VRage.Game;
+using VRage.Game.Components;
 using VRage.Game.GUI.TextPanel;
+using VRage.Game.ModAPI.Ingame;
 using VRage.Game.ModAPI.Ingame.Utilities;
-using VRage.Input;
-using VRage.Network;
+using VRage.Game.ObjectBuilders.Definitions;
 using VRageMath;
 
 namespace IngameScript
@@ -54,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.612B";
+        string ver = "V0.613B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -283,6 +292,7 @@ namespace IngameScript
         IMyTextSurface sM;
         IMyTextSurface sL;
         IMyTextSurface sV;
+        IMyCubeGrid meCubeGrid;
         RectangleF _viewport;
         StringBuilder sb = new StringBuilder();
         int totalDronesDamaged = 0;
@@ -337,6 +347,7 @@ namespace IngameScript
 
         private double totalRuntimeMs = 0.0;
         private int runCount = 0;
+
         //  private double averageRuntimeMs = 0.0;
 
         MyIni _ini = new MyIni();
@@ -371,6 +382,22 @@ namespace IngameScript
         bool rotateHome = false;
         float scale1;
         string datatemp = "";
+        
+        List<IMyMotorStator> rotors_all = new List<IMyMotorStator>();
+        List<IMyMotorAdvancedStator> rotorAdvancedStators_all = new List<IMyMotorAdvancedStator>();
+        List<IMyPistonBase> pistons_all = new List<IMyPistonBase>();
+        List<IMyTextSurface> myTextSurfaces_d1 = new List<IMyTextSurface>();
+        List<IMyTextSurface> myTextSurfaces_d2 = new List<IMyTextSurface>();
+        List<IMyTextSurface> myTextSurfaces_d3 = new List<IMyTextSurface>();
+        List<IMyTextSurface> myTextSurfaces_d4 = new List<IMyTextSurface>();
+        string d1_tag = "";
+        string d2_tag = "";
+        string d3_tag = "";
+        string d4_tag = "";
+        string interface_display = "";
+        string channel_tag_display = "";
+        string secondary_tag_display = "";
+
         #endregion
         public void Save()
         {
@@ -542,7 +569,13 @@ namespace IngameScript
             }
             AntennaSaveData(antennaActual);
             sbtexttemp.AppendLine($"GMDC {ver} Running {icon} Rotation: {rotateHome}");
-            sbtexttemp.AppendLine($"Channel: {drone_tag.Replace("[", "[[").Replace("]", "]]")} ");
+            sbtexttemp.AppendLine($"Channel: {channel_tag_display} ");
+            sbtexttemp.AppendLine($"Ship Tag: {secondary_tag_display} ");
+            sbtexttemp.AppendLine($"D1 Tag: {d1_tag} ");
+            sbtexttemp.AppendLine($"D2 Tag: {d2_tag} ");
+            sbtexttemp.AppendLine($"D3 Tag: {d3_tag} ");
+            sbtexttemp.AppendLine($"D4 Tag: {d4_tag} ");
+            
             //sbtexttemp.AppendLine($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
         }
 
@@ -649,7 +682,7 @@ namespace IngameScript
         private void RenderDisplays()
         {
             int startInstructions = Runtime.CurrentInstructionCount;
-            DroneRenderCall();
+            DroneRenderCall(true);
             ListRenderCall();
             SpriteRenderCall();
             //sbtexttemp.AppendLine($"RenderDisplays: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -827,9 +860,18 @@ namespace IngameScript
                 }
 
             }
-            if (display_tag_list.Count > 0 && display_tag_list[0] != null && listGeneratorFinished)
+            if (listGeneratorFinished)
             {
-                sL.WriteText(displayTextList.ToString());
+                if(myTextSurfaces_d3.Count  > 0)
+                {
+                    for(int i = 0; i < myTextSurfaces_d3.Count; i++)
+                    {
+                        if(myTextSurfaces_d3[i] != null)
+                        {
+                            myTextSurfaces_d3[i].WriteText(displayTextList.ToString());
+                        }
+                    }
+                }
                 listGeneratorFinished = false;
                 displayTextList.Clear();
                 listHeaderGenerated = false;
@@ -1904,7 +1946,7 @@ namespace IngameScript
         {
             if (pbInterfaceActual == null || interfacePBTag[0] == null)
             {
-                sbtexttemp.AppendLine($"Interface PB not found {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                sbtexttemp.AppendLine($"Interface PB not found {interface_display}");
             }
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
@@ -2313,7 +2355,7 @@ namespace IngameScript
                 }
                 else
                 {
-                    sbtexttemp.AppendLine($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                    sbtexttemp.AppendLine($"Interface programmable block not present {interface_display}");
                     return;
                 }
                 canInterfaceCommand = true;
@@ -2324,12 +2366,12 @@ namespace IngameScript
                     readInterfaceCommand(pbInterfaceActual);
                     interfacecommandOld = pbInterfaceActual.CustomData;
                 }
-                sbtexttemp.AppendLine($"Interface PB: {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                sbtexttemp.AppendLine($"Interface PB: {interface_display}");
                 sbtexttemp.AppendLine($"Display command: {interfaceArgument} P:{prospectAlignTargetValid} C:{customDataAlignTargetValid}");
             }
             else
             {
-                sbtexttemp.AppendLine($"Interface programmable block not present {interfaceTag.Replace("[", "[[").Replace("]", "]]")}");
+                sbtexttemp.AppendLine($"Interface programmable block not present {interface_display}");
                 return;
             }
             #endregion
@@ -2529,10 +2571,10 @@ namespace IngameScript
                 }
             }
         }
-        private void DroneRenderCall()
+        private void DroneRenderCall(bool sort = false)
         {
             int startInstructions = Runtime.CurrentInstructionCount;
-            if (display_tag_drone.Count == 0 || Swarm.Count == 0 || display_tag_drone[0] == null) return;
+            if (display_tag_drone.Count == 0 || Swarm.Count == 0 || myTextSurfaces_d2.Count == 0) return;
             checkDroneID();
 
             if (renew_header)
@@ -2542,27 +2584,47 @@ namespace IngameScript
             }
 
 
-            int dronesPerDisplay = drones_per_screen * display_tag_drone.Count;
-            if (dronesPerDisplay < droneID.Count)
+            int dronesMaxDisplay = drones_per_screen * myTextSurfaces_d2.Count;
+            if (dronesMaxDisplay < droneID.Count)
             {
-                sbtexttemp.AppendLine($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesPerDisplay} < {droneID.Count}");
+                sbtexttemp.AppendLine($"Insufficient displays '{dp_drn_tag.Replace("[", "[[").Replace("]", "]]")}': {dronesMaxDisplay} < {droneID.Count}");
                 return;
             }
-            
-            for (int i = 0; i < droneID.Count; i+=2)
-            {                
-                bool hasPair = i + 1 < droneID.Count;
-                DroneScreenBuilder(i, hasPair ? i + 1 : i, hasPair);
-
-                int displayIndex = i / drones_per_screen;
-                if (displayIndex < display_tag_drone.Count && display_tag_drone[displayIndex] != null &&
-                    (i % drones_per_screen == drones_per_screen - 2 || i >= droneID.Count - 2))
+            if (sort)
+            {
+                droneID.Sort(); //Optional Sorting
+            }
+            if ((drones_per_screen > 0 && drones_per_screen <= 4))
+            {
+                for (int i = 0; i < droneID.Count; i++)
                 {
-                    sD = ((IMyTextSurfaceProvider)display_tag_drone[displayIndex]).GetSurface(srfD);
-                    sD.WriteText(droneInformation);
-                    renew_header = true;
+                    bool hasPair = false;
+                    DroneScreenBuilder(i, hasPair ? i + 1 : i, hasPair);
+
+                    int displayIndex = i / drones_per_screen;
+                    if (displayIndex < myTextSurfaces_d2.Count && myTextSurfaces_d2[displayIndex] != null)
+                    {
+                        myTextSurfaces_d2[displayIndex].WriteText(droneInformation);
+                        renew_header = true;
+                    }
                 }
             }
+            else {
+                for (int i = 0; i < droneID.Count; i += 2)
+                {
+                    bool hasPair = i + 1 < droneID.Count;
+                    DroneScreenBuilder(i, hasPair ? i + 1 : i, hasPair);
+
+                    int displayIndex = i / drones_per_screen;
+                    if (displayIndex < myTextSurfaces_d2.Count && myTextSurfaces_d2[displayIndex] != null &&
+                        (i % drones_per_screen == drones_per_screen - 2 || i >= droneID.Count - 2))
+                    {
+                        myTextSurfaces_d2[displayIndex].WriteText(droneInformation);
+                        renew_header = true;
+                    }
+                }
+            }
+
             //sbtexttemp.AppendLine($"drone_render_call: {Runtime.CurrentInstructionCount - startInstructions}");
         }
         private struct DroneStats
@@ -3395,7 +3457,6 @@ namespace IngameScript
 
             DroneData drone1;
             DroneData drone2 = null;
-
             // EXCEPTION & NRE FIX: Safe Dictionary Lookups without allocating 'new DroneData()'
             if (!Swarm.TryGetValue(droneID[ivl], out drone1)) return;
 
@@ -3568,121 +3629,6 @@ namespace IngameScript
             }
             yield return true;
         }
-
-        IEnumerator<bool> GenGrdPositsC(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
-        {
-            // debugcount++;
-            // initgridcount++;
-
-            int gridcount_inner = 0;
-            int gridcount_outer = 0;
-            int gridcount = 0;
-            int core_numpoints_x = 0;
-            int core_numpoints_y = 0;
-
-            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
-            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
-            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
-            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
-
-            // Calculate total points for the outer layer accurately based on mode
-            if (perimeterOnly)
-            {
-                int innerX = numPointsX - 2;
-                int innerY = numPointsY - 2;
-                if (innerX < 0) innerX = 0;
-                if (innerY < 0) innerY = 0;
-
-                gridcount_outer = (numPointsX * numPointsY) - (innerX * innerY);
-            }
-            else
-            {
-                gridcount_outer = numPointsX * numPointsY;
-            }
-
-            // A single temporary list to pool ALL points together
-            List<Vector3D> allPositions = new List<Vector3D>();
-
-            // Phase 1: Gather Main Grid Positions
-            for (int i = 0; i < numPointsX; i++)
-            {
-                for (int j = 0; j < numPointsY; j++)
-                {
-                    if (perimeterOnly && !(i == 0 || i == numPointsX - 1 || j == 0 || j == numPointsY - 1))
-                    {
-                        continue;
-                    }
-
-                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
-                    allPositions.Add(position);
-                }
-                yield return false;
-            }
-
-            // Phase 2: Gather Coreout Grid Positions
-            if (coreout && !perimeterOnly)
-            {
-                core_numpoints_x = numPointsX - 1;
-                core_numpoints_y = numPointsY - 1;
-                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
-                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
-
-                if (core_numpoints_x < 1) core_numpoints_x = 1;
-                if (core_numpoints_y < 1) core_numpoints_y = 1;
-
-                gridcount_inner = core_numpoints_x * core_numpoints_y;
-
-                if (gridcount_inner >= 1)
-                {
-                    for (int i = 0; i < core_numpoints_x; i++)
-                    {
-                        for (int j = 0; j < core_numpoints_y; j++)
-                        {
-                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
-                            allPositions.Add(position);
-                        }
-                        yield return false;
-                    }
-                }
-            }
-
-            // Phase 3: Dynamically sort the entire combined pool from the center outward
-            allPositions.Sort((a, b) => Vector3D.DistanceSquared(a, centerPoint).CompareTo(Vector3D.DistanceSquared(b, centerPoint)));
-
-            // Yielding after the sort keeps the PB execution time healthy
-            yield return false;
-
-            // Phase 4: Transfer to global lists with execution safety
-            int batchCounter = 0;
-            foreach (var pos in allPositions)
-            {
-                gridBorePosition.Add(pos);
-                gridBoreOccupied.Add(false);
-                gridBoreFinished.Add(false);
-
-                batchCounter++;
-                // Yield every 50 points to prevent "Script Too Complex" errors on massive grids
-                if (batchCounter % 50 == 0)
-                {
-                    yield return false;
-                }
-            }
-
-            gridcount = gridcount_inner + gridcount_outer;
-            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
-
-            if (gridBorePosition.Count == gridcount)
-            {
-                gridInitialisationComplete = true;
-            }
-            else
-            {
-                gridInitialisationComplete = false;
-            }
-
-            yield return true;
-        }
-
         IEnumerator<bool> GenGrdPosits(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
         {
             // debugcount++;
@@ -3807,105 +3753,6 @@ namespace IngameScript
 
             yield return true;
         }
-
-        IEnumerator<bool> GenGrdPositsOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool perimeterOnly = false)
-        {
-            // debugcount++;
-            // initgridcount++;
-            // List<Vector3D> grdPositins = new List<Vector3D>();
-
-            int gridcount_inner = 0;
-            int gridcount_outer = 0;
-            int gridcount = 0;
-            int core_numpoints_x = 0;
-            int core_numpoints_y = 0;
-
-            Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
-            Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
-            Vector3D halfOffsetX = (numPointsX - 1) * 0.5 * gridSize * xAxis;
-            Vector3D halfOffsetY = (numPointsY - 1) * 0.5 * gridSize * yAxis;
-
-            // Calculate total points for the outer layer accurately based on mode
-            if (perimeterOnly)
-            {
-                int innerX = numPointsX - 2;
-                int innerY = numPointsY - 2;
-                if (innerX < 0) innerX = 0;
-                if (innerY < 0) innerY = 0;
-
-                // Perimeter count = Total Area minus the Inner Core Area
-                gridcount_outer = (numPointsX * numPointsY) - (innerX * innerY);
-            }
-            else
-            {
-                gridcount_outer = numPointsX * numPointsY;
-            }
-
-            for (int i = 0; i < numPointsX; i++)
-            {
-                for (int j = 0; j < numPointsY; j++)
-                {
-                    // If mapping perimeter only, skip any point that isn't on a boundary edge
-                    if (perimeterOnly && !(i == 0 || i == numPointsX - 1 || j == 0 || j == numPointsY - 1))
-                    {
-                        continue;
-                    }
-
-                    Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX + halfOffsetY;
-
-                    gridBorePosition.Add(position);
-                    gridBoreOccupied.Add(false);
-                    gridBoreFinished.Add(false);
-                }
-                yield return false;
-            }
-
-            // Only map the coreout sub-grid if we are not in perimeter-only mode
-            if (coreout && !perimeterOnly)
-            {
-                core_numpoints_x = numPointsX - 1;
-                core_numpoints_y = numPointsY - 1;
-                Vector3D halfOffsetX_core = (core_numpoints_x - 1) * 0.5 * gridSize * xAxis;
-                Vector3D halfOffsetY_core = (core_numpoints_y - 1) * 0.5 * gridSize * yAxis;
-                if (core_numpoints_x < 1)
-                {
-                    core_numpoints_x = 1;
-                }
-                if (core_numpoints_y < 1)
-                {
-                    core_numpoints_y = 1;
-                }
-                gridcount_inner = core_numpoints_x * core_numpoints_y;
-                if (gridcount_inner >= 1)
-                {
-                    for (int i = 0; i < core_numpoints_x; i++)
-                    {
-                        for (int j = 0; j < core_numpoints_y; j++)
-                        {
-                            Vector3D position = centerPoint + i * gridSize * xAxis - j * gridSize * yAxis - halfOffsetX_core + halfOffsetY_core;
-                            gridBorePosition.Add(position);
-                            gridBoreOccupied.Add(false);
-                            gridBoreFinished.Add(false);
-                        }
-                        yield return false;
-                    }
-                }
-            }
-
-            gridcount = gridcount_inner + gridcount_outer;
-            percent_grid = (double)gridBorePosition.Count / (double)gridcount;
-
-            // sbtexttemp.AppendLine($"{gridcount} {grid_bore_positions.Count} {gridcount}");
-            if (gridBorePosition.Count == gridcount)
-            {
-                gridInitialisationComplete = true;
-            }
-            else
-            {
-                gridInitialisationComplete = false;
-            }
-            yield return true;
-        }
         private float GetScaleToFit(string text, float targetWidth, float baseScale, float charWidthAtBase)
         {
             // Estimate total width: char count * width per char at scale 1.0
@@ -3919,7 +3766,6 @@ namespace IngameScript
 
             return baseScale;
         }
-
         IEnumerator<bool> BuildSprites(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout, bool rotateToHome = true)
         {
             // Define the usable width of your viewport
@@ -4282,321 +4128,6 @@ namespace IngameScript
                 yield return true;
             }
         }
-        IEnumerator<bool> BuildSpritesOld(Vector3D centerPoint, Vector3D planeNormal, double gridSize, int numPointsX, int numPointsY, bool coreout)
-        {
-            //sprites.Clear();
-            int sprite_total = 0;
-            int drone_total = 0;
-
-            var Viewport_scale = 0.4f;
-            var Viewport_size_y = _viewport.Height * Viewport_scale;
-            var Viewport_size_x = _viewport.Width * Viewport_scale;
-            var view_spacer_x = Viewport_size_x / numPointsX;
-            var view_spacer_y = Viewport_size_y / numPointsY;
-            var sizer = new Vector2(view_spacer_x, view_spacer_y);
-            var width_real = gridSize * numPointsX;
-            var height_real = gridSize * numPointsY;
-            var scale_factor_x = (float)(Viewport_size_x / width_real) * 1.5f;
-            var scale_factor_y = (float)(Viewport_size_y / height_real) * 1.5f;
-            //build sprite frame
-
-            if (gridBorePosition.Count > 0)
-            {
-                //m_gps_crds,planeNrml, grdsz, nPtsX, nPtsY, core_out
-                //planeNrml, grdsz, nPtsX, nPtsY, core_out
-                var text_position = new Vector2(256, 20) + _viewport.Position;
-                var spriteText = new MySprite()
-                {
-                    Type = SpriteType.TEXT,
-                    Data = $"--- {secondary_tag} Mining Grid Status ---",
-                    Position = text_position,
-                    RotationOrScale = 1.0f,
-                    Size = sizer,
-                    Color = Color.WhiteSmoke.Alpha(1.0f),
-                    Alignment = TextAlignment.CENTER,
-                    FontId = "White"
-                };
-                sprites.Add(spriteText);
-                text_position = new Vector2(256, 60) + _viewport.Position;
-                spriteText = new MySprite()
-                {
-                    Type = SpriteType.TEXT,
-                    Data = $"[{jobname}] - Total Bores: {totalMiningRuns} - Remaining:{boresRemaining} - Drones: {totalDronesMining} ({totalDronesActive})",
-                    Position = text_position,
-                    RotationOrScale = 0.7f,
-                    Size = sizer,
-                    Color = Color.WhiteSmoke.Alpha(1.0f),
-                    Alignment = TextAlignment.CENTER,
-                    FontId = "White"
-                };
-                sprites.Add(spriteText);
-
-                Vector3D xAxis = Vector3D.CalculatePerpendicularVector(planeNormal);
-                Vector3D yAxis = Vector3D.Cross(planeNormal, xAxis);
-
-                //homedirectionsprite calculation
-                // Define the fixed radius (adjust this value as needed, e.g., in pixels)
-                float screenRadius = Math.Min(_viewport.Size.X, _viewport.Size.Y) / 2 * 0.8f; // Example
-                if (remoteControlActual != null)
-                {
-                    Vector3D LocalRCHome = remoteControlActual.GetPosition();
-                    Vector3D relativePointHome = LocalRCHome - centerPoint;
-                    string ImageHome;
-                    ImageHome = "AH_BoreSight";
-                    var home_colour = new Color();
-                    var alpha_bytes_home = 1.0f;
-                    home_colour = Color.Purple;
-                    double xPlanarHome = Vector3D.Dot(relativePointHome, xAxis);
-                    double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
-                    var CentXHome = (float)xPlanarHome * scale_factor_x;
-                    var CentYHome = -(float)yPlanarHome * scale_factor_y;
-                    // Calculate the magnitude of the direction vector
-                    float mag = (float)Math.Sqrt(CentXHome * CentXHome + CentYHome * CentYHome);
-                    // Normalize the direction
-                    float normX = CentXHome / mag;
-                    float normY = CentYHome / mag;
-
-                    var positionHome = _viewport.Center + screenRadius * new Vector2(normX, normY);
-                    //float rotationHome = (float)Math.Atan2(yPlanarHome, xPlanarHome);
-                    float rotationHome = (float)Math.Atan2(CentYHome, CentXHome);
-                    var spriteHomeDirection = new MySprite()
-                    {
-                        Type = SpriteType.TEXTURE,
-                        Data = ImageHome,
-                        Position = positionHome,
-                        RotationOrScale = rotationHome,
-                        Size = sizer,
-                        Color = home_colour.Alpha(alpha_bytes_home),
-                        Alignment = TextAlignment.CENTER
-                    };
-                    if (mag != 0.0f)
-                    {
-                        sprites.Add(spriteHomeDirection);
-                        spriteCounter++;
-                    }
-                }
-                for (int i = 0; i < gridBorePosition.Count; i++)
-                {
-                    sprite_total++;
-                    Vector3D relativePoint = gridBorePosition[i] - centerPoint;
-                    double xPlanar = Vector3D.Dot(relativePoint, xAxis);
-                    double yPlanar = Vector3D.Dot(relativePoint, yAxis);
-                    var CentX = (float)xPlanar;
-                    var CentY = -(float)yPlanar;
-                    string Image;
-                    var bore_colour = new Color();
-                    var alpha_bytes = 1.0f;
-                    Image = gridBoreFinished[i] ? "CircleHollow" : "Circle";
-                    alpha_bytes = gridBoreOccupied[i] ? 1.0f : 0.5f;
-                    bore_colour = gridBoreOccupied[i] ? Color.LightSkyBlue : Color.DeepSkyBlue;
-
-                    var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
-                    //background sprite
-                    var sprite = new MySprite()
-                    {
-                        Type = SpriteType.TEXTURE,
-                        Data = Image,
-                        Position = position,
-                        //RotationOrScale = size_scale,
-                        Size = sizer,
-                        Color = bore_colour.Alpha(alpha_bytes),
-                        Alignment = TextAlignment.CENTER
-                    };
-                    //sbtexttemp.AppendLine($"{position}");
-                    sprites.Add(sprite);
-                    percent_list_vis = (((double)i + (double)1) / ((double)gridBorePosition.Count)) * 100;
-                    spriteCounter++;
-                    yield return false;
-                }
-
-                if (droneID.Count > 0)
-                {
-                    drone_total = 0;
-                    foreach(DroneData drone in Swarm.Values) 
-                    { 
-                        double drone_locale_x = 0.0;
-                        double drone_locale_y = 0.0;
-                        double drone_locale_z = 0.0;
-                        drone_total++;
-                        if (!double.TryParse(drone.LocationX, out drone_locale_x))
-                        {
-                            drone_locale_x = 0.0;
-                        }
-                        if (!double.TryParse(drone.LocationY, out drone_locale_y))
-                        {
-                            drone_locale_y = 0.0;
-                        }
-                        if (!double.TryParse(drone.LocationZ, out drone_locale_z))
-                        {
-                            drone_locale_z = 0.0;
-                        }
-                        
-                        Vector3D Drone_point = new Vector3D(drone_locale_x, drone_locale_y, drone_locale_z);
-
-                        Vector3D relativePoint = Drone_point - centerPoint;
-                        double xPlanar = Vector3D.Dot(relativePoint, xAxis);
-                        double yPlanar = Vector3D.Dot(relativePoint, yAxis);
-                        var CentX = (float)xPlanar;
-                        var CentY = -(float)yPlanar;
-                        string Image_drone = "";
-                        var bore_colour_drone = new Color();
-                        var alpha_val = 1.0f;
-
-                        if (drone.ControlStatus.Contains("Docked") || drone.ControlStatus.Contains("Undocked") || drone.ControlStatus.Contains("Docking") || drone.ControlStatus.Contains("Undocking"))
-                        {
-                            alpha_val = 0.25f;
-                        }
-                        else
-                        {
-                            alpha_val = 1.0f;
-                        }
-                        if (!drone.IsMining)
-                        {
-                            Image_drone = "Circle";
-                            bore_colour_drone = Color.Gray;
-                            
-                        }
-                        if (drone.IsMining)
-                        {
-                            Image_drone = "Circle";
-
-                            if (drone.ControlStatus.Contains("Min"))
-                            {
-                                bore_colour_drone = Color.Purple;
-                            }
-                            else if (drone.ControlStatus.Contains("Exit"))
-                            {
-                                bore_colour_drone = Color.Orange;
-                            }
-                            else if (drone.ControlStatus.Contains("RTB: Ready"))
-                            {
-                                bore_colour_drone = Color.Green;
-                            }
-                            else if (drone.ControlStatus.Contains("Undock"))
-                            {
-                                bore_colour_drone = Color.Yellow;
-                            }
-                            else
-                            {
-                                bore_colour_drone = Color.Navy;
-                            }
-                            alpha_val = 1.0f;
-                        }
-                        if (drone.DamageState == "DMG")
-                        {
-                            Image_drone = "Circle";
-                            bore_colour_drone = Color.Red;
-                        }
-                        
-                        var position = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
-                        //background sprite
-                        var sprite = new MySprite()
-                        {
-                            Type = SpriteType.TEXTURE,
-                            Data = Image_drone,
-                            Position = position,
-                            //RotationOrScale = size_scale,
-                            Size = sizer * 0.8f,
-                            Color = bore_colour_drone.Alpha(alpha_val),
-                            Alignment = TextAlignment.CENTER
-                        };
-                        sprites.Add(sprite);
-                        if (drone.CargoFull.Contains("True") || drone.RechargeRequest.Contains("True"))
-                        {
-                            
-                            if (drone.RechargeRequest.Contains("True") && drone.CargoFull.Contains("True"))
-                            {
-                                bore_colour_drone = Color.White;
-                            }
-                            else if (drone.RechargeRequest.Contains("True"))
-                            {
-                                bore_colour_drone = Color.YellowGreen;
-                            }
-                            else if (drone.CargoFull.Contains("True"))
-                            {
-                                bore_colour_drone = Color.RosyBrown;
-                            }
-                            Image_drone = "CircleHollow";
-                            var sprite_layer_h = new MySprite()
-                            {
-                                Type = SpriteType.TEXTURE,
-                                Data = Image_drone,
-                                Position = position,
-                                //RotationOrScale = size_scale,
-                                Size = sizer * 0.8f,
-                                Color = bore_colour_drone.Alpha(alpha_val),
-                                Alignment = TextAlignment.CENTER
-                            };
-                            sprites.Add(sprite_layer_h);
-                            spriteCounter++;
-                        }
-
-                        if (drone.ControlStatus.Contains("Recharg") || drone.ControlStatus.Contains("Unload") || drone.RechargeRequest.Contains("True"))
-                        {
-                            Image_drone = "IconEnergy";
-                            bore_colour_drone = Color.Yellow;
-                            var sprite_layer = new MySprite()
-                            {
-                                Type = SpriteType.TEXTURE,
-                                Data = Image_drone,
-                                Position = position,
-                                //RotationOrScale = size_scale,
-                                Size = sizer * 0.8f,
-                                Color = bore_colour_drone.Alpha(alpha_val),
-                                Alignment = TextAlignment.CENTER
-                            };
-                            sprites.Add(sprite_layer);
-                            spriteCounter++;
-                        }
-
-                        var position_text = new Vector2(CentX * scale_factor_x, CentY * scale_factor_y) + _viewport.Center;
-                        //background sprite
-                        bore_colour_drone = Color.WhiteSmoke;
-                        var sprite_name = new MySprite()
-                        {
-                            
-                            Type = SpriteType.TEXT,
-                            Data = $"{drone.Name}- ({drone.ChargeStorage}%)",
-                            Position = position,
-                            RotationOrScale = 0.3f,
-                            Size = sizer * 0.5f,
-                            Color = bore_colour_drone.Alpha(alpha_val),
-                            Alignment = TextAlignment.CENTER,
-                            FontId = "White"
-                        };
-                        sprites.Add(sprite_name);
-                        percent_list_drones = ((double)drone_total / (double)droneID.Count) * 100;
-                        spriteCounter++;
-                        yield return false;
-                    }
-                }
-                if (droneID.Count == 0)
-                {
-                    if (sprite_total == gridBorePosition.Count)
-                    {
-                        frame_generator_finished = true;
-                    }
-
-                    else
-                    {
-                        frame_generator_finished = false;
-                    }
-                }
-                if (droneID.Count > 0)
-                {
-                    if (sprite_total == gridBorePosition.Count && drone_total == droneID.Count)
-                    {
-                        frame_generator_finished = true;
-                        drone_total = 0;
-                    }
-                    else
-                    {
-                        frame_generator_finished = false;
-                    }
-                }
-                yield return true;
-            }
-        }
 
         public void DrawSprites(ref MySpriteDrawFrame frame)
         {
@@ -4650,20 +4181,6 @@ namespace IngameScript
             }
             return truCnt;
         }
-        int CountIntegerValuesList(List<int> list, int val)
-        {
-            int truCnt = 0;
-
-            foreach (int value in list)
-            {
-                if (value == val)
-                {
-                    truCnt++;
-                }
-            }
-            return truCnt;
-        }
-
         int CountIntegerValues(string propertyName, int val)
         {
             int truCnt = 0;
@@ -4676,19 +4193,6 @@ namespace IngameScript
 
             return truCnt;
         }
-        int CountStatusValuesList(List<string> list, string textval)
-        {
-            int trueCount = 0;
-
-            foreach (string value in list)
-            {
-                if (value.Contains(textval))
-                {
-                    trueCount++;
-                }
-            }
-            return trueCount;
-        }
         int CountStatusValues(string propertyName, string textval)
         {
             int trueCount = 0;
@@ -4699,9 +4203,6 @@ namespace IngameScript
             }
             return trueCount;
         }
-
-
-
         public void droneCommandBuilder(string cdata_1, string xpos, string ypos, string zpos, string cdata_5, string cmdo, string data_6, string idepth, string xpos2, string ypos2, string zpos2)
         {
             const string baseFormat = "GPS:{0}:{1}:{2}:{3}:{4}:{5}:{6}:{7}:";
@@ -4811,9 +4312,6 @@ namespace IngameScript
             block.CustomData = _ini.ToString();
             _ini.Clear();
         }
-
-
-
         void runicon(int state)
         {
             if (state == 0)
@@ -4842,7 +4340,6 @@ namespace IngameScript
             }
             runicon(stateshift);
         }
-
         public void ParseAndApplyArguments(string input)
         {
             // --- Step 1: Handle Empty Input (Using the simpler IsNullOrWhiteSpace check) ---
@@ -4933,6 +4430,73 @@ namespace IngameScript
             txDroneSyncChannel = "[" + drone_tag + "]" + " " + syncC;
             syncMessage = secondary;
             Echo("Clearning Lists");
+            rotors_all.Clear();
+            rotorAdvancedStators_all.Clear();
+            pistons_all.Clear();
+
+            bool blockfinder = false;
+            gts.GetBlocksOfType<IMyMotorStator>(rotors_all, b => b.TopGrid == Me.CubeGrid);
+
+            if (rotors_all.Count <= 0)
+            {
+                Echo("Rotor top grid not found, checking advanced rotors");
+            }
+
+            if (rotors_all.Count > 0)
+            {
+                if (rotors_all[0] != null)
+                {
+                    meCubeGrid = rotors_all[0].CubeGrid;
+                    Echo("Local cubegrid found - rotor");
+                    blockfinder = true;
+                }
+            }
+
+            gts.GetBlocksOfType<IMyMotorAdvancedStator>(rotorAdvancedStators_all, b => b.TopGrid == Me.CubeGrid);
+
+            if (rotorAdvancedStators_all.Count <= 0)
+            {
+                Echo("Rotor top grid not found, checking advanced rotors");
+            }
+            if (rotorAdvancedStators_all.Count > 0)
+            {
+                if (rotorAdvancedStators_all[0] != null)
+                {
+                    meCubeGrid = rotorAdvancedStators_all[0].CubeGrid;
+                    Echo("Local cubegrid found - advanced rotor/hinge");
+                    blockfinder = true;
+                }
+            }
+
+
+            gts.GetBlocksOfType<IMyPistonBase>(pistons_all, b => b.TopGrid == Me.CubeGrid);
+
+            if (pistons_all.Count <= 0)
+            {
+                Echo("Rotor top grid not found, checking pistons");
+            }
+            if (pistons_all.Count > 0)
+            {
+                if (pistons_all[0] != null)
+                {
+
+                    meCubeGrid = pistons_all[0].CubeGrid;
+                    Echo("Local cubegrid found - piston");
+                    blockfinder = true;
+                }
+            }
+
+
+            if (rotorAdvancedStators_all.Count == 0 && rotors_all.Count == 0 && pistons_all.Count == 0)
+            {
+                meCubeGrid = Me.CubeGrid;
+                Echo("Local cubegrid found - PB");
+                blockfinder = false;
+            }
+
+            rotors_all.Clear();
+            rotorAdvancedStators_all.Clear();
+            pistons_all.Clear();
 
             Echo("Stage 1");
 
@@ -4966,41 +4530,109 @@ namespace IngameScript
                 cl.Add("");
                 cl2.Add("");
             }
-            antennaAll = new List<IMyRadioAntenna>();
-            antennaTag = new List<IMyRadioAntenna>();
-            gts.GetBlocksOfType<IMyRadioAntenna>(antennaAll, b => b.CubeGrid == Me.CubeGrid);
-            for (int i = 0; i < antennaAll.Count; i++)
+            antennaAll.Clear();
+            antennaTag.Clear();
+            if (blockfinder)
             {
-                if (antennaAll[i].CustomName.Contains(antennaTagName) || antennaAll[i].CustomName.Contains(comms))
+                gts.GetBlocksOfType<IMyRadioAntenna>(antennaAll, b => b.CubeGrid == meCubeGrid);
+                if (antennaAll.Count > 0)
                 {
-                    string checker = antennaAll[i].CustomData;
-                    //drone_custom_data_check(checker, i);
-                    if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
+                    for (int i = 0; i < antennaAll.Count; i++)
                     {
-                        Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
-                        return;
 
+                        if (antennaAll[i].CustomName.Contains(antennaTagName) || antennaAll[i].CustomName.Contains(comms))
+                        {
+                            string checker = antennaAll[i].CustomData;
+                            //drone_custom_data_check(checker, i);
+                            if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
+                            {
+                                Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
+                                return;
+
+                            }
+                            antennaAll[i].CustomName = $"GMDC Antenna {secondary_tag} {antennaTagName}";
+                            antennaTag.Add(antennaAll[i]);
+                        }
                     }
-                    antennaAll[i].CustomName = $"GMDC Antenna {secondary_tag} {antennaTagName}";
-                    antennaTag.Add(antennaAll[i]);
+                }
+                antennaAll.Clear();
+            }
+            gts.GetBlocksOfType<IMyRadioAntenna>(antennaAll, b => b.CubeGrid == Me.CubeGrid);
+            if (antennaAll.Count > 0)
+            {
+                for (int i = 0; i < antennaAll.Count; i++)
+                {
+
+                    if (antennaAll[i].CustomName.Contains(antennaTagName) || antennaAll[i].CustomName.Contains(comms))
+                    {
+                        string checker = antennaAll[i].CustomData;
+                        //drone_custom_data_check(checker, i);
+                        if (string.IsNullOrEmpty(drone_tag) || string.IsNullOrWhiteSpace(drone_tag))
+                        {
+                            Echo($"Invalid name for drone_tag {drone_tag} please add drone tag to GMDC antenna custom data '<yourdronetaghere>:<Yourshiptaghere>:' e.g. 'SWRM_D:Atlas:'");
+                            return;
+
+                        }
+                        antennaAll[i].CustomName = $"GMDC Antenna {secondary_tag} {antennaTagName}";
+                        antennaTag.Add(antennaAll[i]);
+                    }
                 }
             }
             antennaAll.Clear();
+
             Me.CustomName = $"GMDC Programmable Block {secondary_tag} {antennaTagName}";
-            gts.GetBlocksOfType<IMyRemoteControl>(remoteControlAll, b => b.CubeGrid == Me.CubeGrid);
-            for (int i = 0; i < remoteControlAll.Count; i++)
+
+            remoteControlAll.Clear();
+            remoteControlTag.Clear();
+            if (blockfinder)
             {
-                if (remoteControlAll[i].CustomName.Contains(antennaTagName) || remoteControlAll[i].CustomName.Contains(comms))
+                gts.GetBlocksOfType<IMyRemoteControl>(remoteControlAll, b => b.CubeGrid == Me.CubeGrid);
+                if (remoteControlAll.Count > 0)
                 {
-                    remoteControlAll[i].CustomName = $"GMDC Remote Control {secondary_tag} {antennaTagName}";
-                    remoteControlTag.Add(remoteControlAll[i]);
+                    for (int i = 0; i < remoteControlAll.Count; i++)
+                    {
+                        if (remoteControlAll[i].CustomName.Contains(antennaTagName) || remoteControlAll[i].CustomName.Contains(comms))
+                        {
+                            remoteControlAll[i].CustomName = $"GMDC Remote Control {secondary_tag} {antennaTagName}";
+                            remoteControlTag.Add(remoteControlAll[i]);
+                        }
+                    }
                 }
+                remoteControlAll.Clear();
             }
+            gts.GetBlocksOfType<IMyRemoteControl>(remoteControlAll, b => b.CubeGrid == meCubeGrid);
+            if (remoteControlAll.Count > 0)
+            {
+                for (int i = 0; i < remoteControlAll.Count; i++)
+                {
+                    if (remoteControlAll[i].CustomName.Contains(antennaTagName) || remoteControlAll[i].CustomName.Contains(comms))
+                    {
+                        remoteControlAll[i].CustomName = $"GMDC Remote Control {secondary_tag} {antennaTagName}";
+                        remoteControlTag.Add(remoteControlAll[i]);
+                    }
+                }
+            }            
             remoteControlAll.Clear();
 
-            lightsAll = new List<IMyLightingBlock>();
-            lightsTag = new List<IMyLightingBlock>();
-            gts.GetBlocksOfType<IMyLightingBlock>(lightsAll, b => b.CubeGrid == Me.CubeGrid);
+            lightsAll.Clear();
+            lightsTag.Clear();
+            if(blockfinder)
+            {
+                gts.GetBlocksOfType<IMyLightingBlock>(lightsAll, b => b.CubeGrid == Me.CubeGrid);
+                if (lightsAll.Count > 0)
+                {
+                    for (int i = 0; i < lightsAll.Count; i++)
+                    {
+                        if (lightsAll[i].CustomName.Contains(lightsTagName) || lightsAll[i].CustomName.Contains(comms))
+                        {
+                            lightsAll[i].CustomName = $"GMDC Indicator Light {secondary_tag} {lightsTagName}";
+                            lightsTag.Add(lightsAll[i]);
+                        }
+                    }
+                }
+                lightsAll.Clear();
+            }
+            gts.GetBlocksOfType<IMyLightingBlock>(lightsAll, b => b.CubeGrid == meCubeGrid);
             for (int i = 0; i < lightsAll.Count; i++)
             {
                 if (lightsAll[i].CustomName.Contains(lightsTagName) || lightsAll[i].CustomName.Contains(comms))
@@ -5010,47 +4642,109 @@ namespace IngameScript
                 }
             }
             lightsAll.Clear();
-            display_all = new List<IMyTerminalBlock>();
-            display_tag_main = new List<IMyTerminalBlock>();
-            display_tag_list = new List<IMyTerminalBlock>();
-            display_tag_drone = new List<IMyTerminalBlock>();
-            display_tag_vis = new List<IMyTerminalBlock>();
-            gts.GetBlocksOfType<IMyTerminalBlock>(display_all, b => b.CubeGrid == Me.CubeGrid);
-            for (int i = 0; i < display_all.Count; i++)
+
+            display_all.Clear();
+            display_tag_main.Clear();
+            display_tag_list.Clear();
+            display_tag_drone.Clear();
+            display_tag_vis.Clear();
+            myTextSurfaces_d1.Clear();
+            myTextSurfaces_d2.Clear();
+            myTextSurfaces_d3.Clear();
+            myTextSurfaces_d4.Clear();
+            if (blockfinder)
+            {                
+                gts.GetBlocksOfType<IMyTerminalBlock>(display_all, b => b.CubeGrid == Me.CubeGrid);
+                if (display_all.Count > 0)
+                {
+                    for (int i = 0; i < display_all.Count; i++)
+                    {
+                        if (display_all[i].CustomName.Contains(dp_mn_tag))
+                        {
+                            display_tag_main.Add(display_all[i]);
+                            myTextSurfaces_d1.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfM));
+                        }
+                        if (display_all[i].CustomName.Contains(dp_drn_tag))
+                        {
+                            display_tag_drone.Add(display_all[i]);
+                            myTextSurfaces_d2.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfD));
+                        }
+                        if (display_all[i].CustomName.Contains(dp_lst_tag))
+                        {
+                            display_tag_list.Add(display_all[i]);
+                            myTextSurfaces_d3.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfL));
+                        }
+                        if (display_all[i].CustomName.Contains(dp_vis_tag))
+                        {
+                            display_tag_vis.Add(display_all[i]);
+                            myTextSurfaces_d4.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfV));
+                        }
+                    }                    
+                }
+                display_all.Clear();
+            }
+            gts.GetBlocksOfType<IMyTerminalBlock>(display_all, b => b.CubeGrid == meCubeGrid);
+            if (display_all.Count > 0)
             {
-                if (display_all[i].CustomName.Contains(dp_mn_tag))
+                for (int i = 0; i < display_all.Count; i++)
                 {
-                    display_tag_main.Add(display_all[i]);
-                }
-                if (display_all[i].CustomName.Contains(dp_drn_tag))
-                {
-                    display_tag_drone.Add(display_all[i]);
-                }
-                if (display_all[i].CustomName.Contains(dp_lst_tag))
-                {
-                    display_tag_list.Add(display_all[i]);
-                }
-                if (display_all[i].CustomName.Contains(dp_vis_tag))
-                {
-                    display_tag_vis.Add(display_all[i]);
+                    if (display_all[i].CustomName.Contains(dp_mn_tag))
+                    {
+                        display_tag_main.Add(display_all[i]);
+                        myTextSurfaces_d1.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfM));
+                    }
+                    if (display_all[i].CustomName.Contains(dp_drn_tag))
+                    {
+                        display_tag_drone.Add(display_all[i]);
+                        myTextSurfaces_d2.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfD));
+                    }
+                    if (display_all[i].CustomName.Contains(dp_lst_tag))
+                    {
+                        display_tag_list.Add(display_all[i]);
+                        myTextSurfaces_d3.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfL));
+                    }
+                    if (display_all[i].CustomName.Contains(dp_vis_tag))
+                    {
+                        display_tag_vis.Add(display_all[i]);
+                        myTextSurfaces_d4.Add(((IMyTextSurfaceProvider)display_all[i]).GetSurface(srfV));
+                    }
                 }
             }
             display_all.Clear();
-            programblockAll = new List<IMyProgrammableBlock>();
-            interfacePBTag = new List<IMyProgrammableBlock>();
-            gts.GetBlocksOfType<IMyProgrammableBlock>(programblockAll, b => b.CubeGrid == Me.CubeGrid);
-            for (int i = 0; i < programblockAll.Count; i++)
+
+            programblockAll.Clear();
+            interfacePBTag.Clear();
+            if (blockfinder)
             {
-                if (programblockAll[i].CustomName.Contains(interfaceTag) || programblockAll[i].CustomName.Contains(IntfS))
+                gts.GetBlocksOfType<IMyProgrammableBlock>(programblockAll, b => b.CubeGrid == Me.CubeGrid);
+                if (programblockAll.Count > 0)
                 {
-                    programblockAll[i].CustomName = $"GMDI Programmable Block {secondary_tag} {interfaceTag}";
-                    interfacePBTag.Add(programblockAll[i]);
+                    for (int i = 0; i < programblockAll.Count; i++)
+                    {
+                        if (programblockAll[i].CustomName.Contains(interfaceTag) || programblockAll[i].CustomName.Contains(IntfS))
+                        {
+                            programblockAll[i].CustomName = $"GMDI Programmable Block {secondary_tag} {interfaceTag}";
+                            interfacePBTag.Add(programblockAll[i]);
+                        }
+                    }
+                }
+                programblockAll.Clear();
+            }
+            gts.GetBlocksOfType<IMyProgrammableBlock>(programblockAll, b => b.CubeGrid == meCubeGrid);
+            if (programblockAll.Count > 0) {
+                for (int i = 0; i < programblockAll.Count; i++)
+                {
+                    if (programblockAll[i].CustomName.Contains(interfaceTag) || programblockAll[i].CustomName.Contains(IntfS))
+                    {
+                        programblockAll[i].CustomName = $"GMDI Programmable Block {secondary_tag} {interfaceTag}";
+                        interfacePBTag.Add(programblockAll[i]);
+                    }
                 }
             }
             programblockAll.Clear();
 
-            droneMessagesBuffer = new List<MyIGCMessage>();
-            prospectorMessagesBuffer = new List<MyIGCMessage>();
+            droneMessagesBuffer.Clear();
+            prospectorMessagesBuffer.Clear();
 
             if (Runtime.UpdateFrequency == UpdateFrequency.Update1)
             {
@@ -5065,18 +4759,20 @@ namespace IngameScript
                 game_factor = 100;
             }
 
-            if (display_tag_vis.Count > 0 && display_tag_vis[0] != null)
+            if (myTextSurfaces_d4.Count > 0)
             {
-
-                sV = ((IMyTextSurfaceProvider)display_tag_vis[0]).GetSurface(srfV);
-                if (sV.ContentType != ContentType.SCRIPT)
+                if (myTextSurfaces_d4[0] != null)
                 {
-                    sbtexttemp.AppendLine("Correcting visualiser display");
-                    sV.ContentType = ContentType.SCRIPT;
-                    sV.Script = "";
-                    Visport_OK = true;
-                    _viewport = new RectangleF((sV.TextureSize - sV.SurfaceSize) / 2f, sV.SurfaceSize);
-                }
+                    sV = myTextSurfaces_d4[0];
+                    if (sV.ContentType != ContentType.SCRIPT)
+                    {
+                        sbtexttemp.AppendLine("Correcting visualiser display");
+                        sV.ContentType = ContentType.SCRIPT;
+                        sV.Script = "";
+                        Visport_OK = true;
+                        _viewport = new RectangleF((sV.TextureSize - sV.SurfaceSize) / 2f, sV.SurfaceSize);
+                    }
+                }                     
             }
             if (sV == null)
             {
@@ -5094,9 +4790,79 @@ namespace IngameScript
                 Visport_OK = true;
             }
 
+            if (myTextSurfaces_d1.Count > 0)
+            {
+                for (int i = 0; i < myTextSurfaces_d1.Count; i++)
+                {
+                    if (myTextSurfaces_d1[i] != null)
+                    {
+                        if (myTextSurfaces_d1[i].ContentType != ContentType.TEXT_AND_IMAGE)
+                        {
+                            myTextSurfaces_d1[i].ContentType = ContentType.TEXT_AND_IMAGE;
+                            myTextSurfaces_d1[i].Alignment = TextAlignment.LEFT;
+                            myTextSurfaces_d1[i].FontSize = 0.50f;
+                            myTextSurfaces_d1[i].Font = "White";
+                        }
+                    }
+                }
+            }
+            if (myTextSurfaces_d2.Count > 0)
+            {
+                for (int i = 0; i < myTextSurfaces_d2.Count; i++)
+                {
+                    if (myTextSurfaces_d2[i] != null)
+                    {
+                        if (myTextSurfaces_d2[i].ContentType != ContentType.TEXT_AND_IMAGE)
+                        {
+                            myTextSurfaces_d2[i].ContentType = ContentType.TEXT_AND_IMAGE;
+                            myTextSurfaces_d2[i].Alignment = TextAlignment.LEFT;
+                            myTextSurfaces_d2[i].FontSize = 0.296f;
+                            myTextSurfaces_d2[i].Font = "Monospace";
+                        }
+                    }
+                }
+            }
+            if (myTextSurfaces_d3.Count > 0)
+            {
+                for (int i = 0; i < myTextSurfaces_d3.Count; i++)
+                {
+                    if (myTextSurfaces_d3[i] != null)
+                    {
+                        if (myTextSurfaces_d3[i].ContentType != ContentType.TEXT_AND_IMAGE)
+                        {
+                            myTextSurfaces_d3[i].ContentType = ContentType.TEXT_AND_IMAGE;
+                            myTextSurfaces_d3[i].Alignment = TextAlignment.LEFT;
+                            myTextSurfaces_d3[i].FontSize = 0.50f;
+                            myTextSurfaces_d3[i].Font = "White";
+                        }
+                    }
+                }
+            }
+            if (myTextSurfaces_d4.Count > 0)
+            {
+                for (int i = 0; i < myTextSurfaces_d4.Count; i++)
+                {
+                    if (myTextSurfaces_d4[i] != null)
+                    {
+                        if (myTextSurfaces_d4[i].ContentType != ContentType.SCRIPT)
+                        {
+                            myTextSurfaces_d4[i].ContentType = ContentType.SCRIPT;
+                            myTextSurfaces_d4[i].Script = "";
+                        }
+                    }
+                }
+            }
+
+            d1_tag = dp_mn_tag.Replace("[", "[[").Replace("]", "]]");
+            d2_tag = dp_drn_tag.Replace("[", "[[").Replace("]", "]]");
+            d3_tag = dp_lst_tag.Replace("[", "[[").Replace("]", "]]");
+            d4_tag = dp_vis_tag.Replace("[", "[[").Replace("]", "]]");
+            channel_tag_display = drone_tag.Replace("[", "[[").Replace("]", "]]");
+            secondary_tag_display = secondary_tag.Replace("[", "[[").Replace("]", "]]");  
+            interface_display = interfaceTag.Replace("[", "[[").Replace("]", "]]");
+
             #endregion
         }
-
         public void ComponentPresenceCheck()
         {
             #region presence_check
@@ -5127,7 +4893,7 @@ namespace IngameScript
 
             if (interfacePBTag.Count <= 0 || interfacePBTag[0] == null)
             {
-                Echo($"Interface PB with tag: '{interfaceTag.Replace("[", "[[").Replace("]", "]]")}' not found.");
+                Echo($"Interface PB with tag: '{interface_display}' not found.");
                 setupComplete = !setupComplete;
                 return;
             }
@@ -5139,12 +4905,6 @@ namespace IngameScript
             if (display_tag_main.Count > 0 && display_tag_main[0] != null)
             {
                 sM = ((IMyTextSurfaceProvider)display_tag_main[0]).GetSurface(srfM);
-                if (sM.ContentType != ContentType.TEXT_AND_IMAGE)
-                {
-                    sM.ContentType = ContentType.TEXT_AND_IMAGE;
-                    sM.FontSize = 0.50f;
-                    sM.Font = "White";
-                }
             }
             if (sM == null)
             {
@@ -5157,12 +4917,6 @@ namespace IngameScript
             if (display_tag_list.Count > 0 && display_tag_list[0] != null)
             {
                 sL = ((IMyTextSurfaceProvider)display_tag_list[0]).GetSurface(srfL);
-                if (sL.ContentType != ContentType.TEXT_AND_IMAGE)
-                {
-                    sL.ContentType = ContentType.TEXT_AND_IMAGE;
-                    sL.FontSize = 0.50f;
-                    sL.Font = "White";
-                }
             }
             if (sL == null)
             {
@@ -5177,13 +4931,6 @@ namespace IngameScript
             if (display_tag_drone.Count > 0 && display_tag_drone[0] != null)
             {
                 sD = ((IMyTextSurfaceProvider)display_tag_drone[0]).GetSurface(srfD);
-                if (sD.ContentType != ContentType.TEXT_AND_IMAGE)
-                {
-                    sD.ContentType = ContentType.TEXT_AND_IMAGE;
-                    sD.FontSize = 0.296f;
-                    sD.Font = "Monospace";
-
-                }
             }
             if (sM == null)
             {
@@ -5409,10 +5156,15 @@ namespace IngameScript
             {
                 displayTextMain.Append("Align Coordinates:\n").AppendLine(alignGPSCoordinates.ToString());
             }
-
-            if (display_tag_main.Count > 0 && sM != null)
+            if(myTextSurfaces_d1.Count > 0)
             {
-                sM.WriteText(displayTextMain);
+                for(int i = 0; i < myTextSurfaces_d1.Count; i++)
+                {
+                    if (myTextSurfaces_d1[i] != null)
+                    {
+                        myTextSurfaces_d1[i].WriteText(displayTextMain);
+                    }
+                }
             }
         }
 

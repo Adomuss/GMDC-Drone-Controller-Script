@@ -63,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.613B";
+        string ver = "V0.614B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -288,6 +288,7 @@ namespace IngameScript
         List<IMyTerminalBlock> display_tag_vis = new List<IMyTerminalBlock>();
         List<IMyProgrammableBlock> programblockAll = new List<IMyProgrammableBlock>();
         List<IMyProgrammableBlock> interfacePBTag = new List<IMyProgrammableBlock>();
+        List<IMyDoor> _allDoorsCache = new List<IMyDoor>();
         IMyTextSurface sD;
         IMyTextSurface sM;
         IMyTextSurface sL;
@@ -1347,7 +1348,8 @@ namespace IngameScript
                 }
                 if (drone.ControlSequence == 1 && drone.AssignedCoordinates && !drone.MustWait && !disableRunArgument || drone.ControlSequence == 2 && drone.ControlStatus == "Docked Idle" && drone.Docked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
                 {
-                    drone.ControlSequence = 2;
+                    bool canlaunch = true;
+
                     drone.IsMining = true;
                     if (drone.GpsListPosition > -1)
                     {
@@ -1357,11 +1359,51 @@ namespace IngameScript
                     cm = "7";
                     droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                     drone.TransmissionOutput = c.ToString();
-                    if (canTransmit && drone.TransmissionStatus)
+                    if(drone.AssignedGates.Count > 0)
                     {
-                        transmitToDrone(drone);
-                        drone.TransmissionStatus = false;
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+                                if (!drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (!drone.AssignedGates[g].Enabled)
+                                    {
+                                        drone.AssignedGates[g].Enabled = true;
+                                    }
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                    {
+                                        canlaunch = false;
+                                    }
+                                }
+                                else if(drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                    {
+                                        drone.AssignedGates[g].CloseDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                    {
+                                        canlaunch = false;
+                                    }
+                                }
+                            }
+                        }
                     }
+                    if (canlaunch)
+                    {
+                        drone.ControlSequence = 2;
+                        if (canTransmit && drone.TransmissionStatus)
+                        {
+                            transmitToDrone(drone);
+                            drone.TransmissionStatus = false;
+                        }
+                    }
+
                 }
 
                 if (drone.ControlSequence == 2 && drone.ControlStatus == "Undocked" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument || drone.ControlSequence == 2 && drone.ControlStatus == "Docking" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
@@ -1732,10 +1774,11 @@ namespace IngameScript
 
                 if (mustRecall_Command && !drone.RecallList && !mustUndockCommand)
                 {
-                    drone.RecallList = true;
+                    drone.RecallList = true;                    
                 }
                 if (drone.RecallList)
                 {
+                    bool canlaunch = true;
                     if (drone.RecallSequence == 0 && drone.ControlStatus == "Idle" || drone.RecallSequence == 0 && drone.ControlStatus == "Undocked" || drone.RecallSequence == 0 && drone.ControlStatus == "Nav" || drone.RecallSequence == 0 && drone.ControlStatus == "Undocking" || drone.RecallSequence == 0 && drone.ControlStatus == "Docking" || drone.RecallSequence == 0 && drone.ControlStatus == "Initiating mining" || drone.RecallSequence == 0 && drone.ControlStatus.Contains("RTB"))
                     {
                         drone.RecallSequence = 1;
@@ -1745,7 +1788,41 @@ namespace IngameScript
                         }
                         
                     }
-
+                    if (drone.AssignedGates.Count > 0)
+                    {
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+                                if (!drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (!drone.AssignedGates[g].Enabled)
+                                    {
+                                        drone.AssignedGates[g].Enabled = true;
+                                    }
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                    {
+                                        canlaunch = false;
+                                    }
+                                }
+                                else if (drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                    {
+                                        drone.AssignedGates[g].CloseDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                    {
+                                        canlaunch = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (drone.RecallSequence == 0 && drone.ControlStatus == "Nav End")
                     {
                         drone.RecallSequence = 3;
@@ -1793,6 +1870,7 @@ namespace IngameScript
 
                     if (drone.RecallSequence == 4 && drone.ControlStatus == "Idle")
                     {
+                        
                         drone.RecallSequence = 5;
                         drone.ControlSequence = 0;
                         gpsGridPositionValue = drone.GpsListPosition;
@@ -1828,27 +1906,95 @@ namespace IngameScript
                         drone.TransmissionOutput = c.ToString();
 
                     }
-                    if (canTransmit && drone.TransmissionStatus)
+                    if (canlaunch)
                     {
-                        
-                        transmitToDrone(drone);
-                        drone.TransmissionStatus = false;
+                        if (canTransmit && drone.TransmissionStatus)
+                        {
+
+                            transmitToDrone(drone);
+                            drone.TransmissionStatus = false;
+                        }
                     }
                 }
 
                 if (mustUndockCommand)
                 {
+                    bool canlaunch = true;
                     if (drone.ControlStatus == "Docked Idle")
                     {
+
                         gpsGridPositionValue = drone.GpsListPosition;
                         cd1 = gpsGridPositionValue.ToString();
                         cm = "7";
                         droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                         drone.TransmissionOutput = c.ToString();
-                        if (canTransmit && drone.TransmissionStatus)
+                        if (drone.AssignedGates.Count > 0)
                         {
-                            transmitToDrone(drone);
-                            drone.TransmissionStatus = false;
+                            for (int g = 0; g < drone.AssignedGates.Count; g++)
+                            {
+                                if (drone.AssignedGates[g] != null)
+                                {
+                                    if (drone.ControlStatus.Contains("Docked"))
+                                    {
+                                        if (!drone.AssignedGates[g].Enabled)
+                                        {
+                                            drone.AssignedGates[g].Enabled = true;
+                                        }
+                                        if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                        {
+                                            drone.AssignedGates[g].OpenDoor();
+                                        }
+                                        if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                        {
+                                            canlaunch = false;
+                                        }
+                                    }
+                                    else if (drone.Undocked == "True" && drone.ControlStatus.Contains("Undocked"))
+                                    {
+                                        if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                        {
+                                            drone.AssignedGates[g].CloseDoor();
+                                        }
+                                        if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                        {
+                                            canlaunch = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (canlaunch)
+                        {
+                            if (canTransmit && drone.TransmissionStatus)
+                            {
+                                transmitToDrone(drone);
+                                drone.TransmissionStatus = false;
+                            }
+                        }
+
+                    }
+                    else
+
+                    {
+                        if (drone.AssignedGates.Count > 0)
+                        {
+                            for (int g = 0; g < drone.AssignedGates.Count; g++)
+                            {
+                                if (drone.AssignedGates[g] != null)
+                                {
+                                    if (drone.Undocked == "True" && drone.ControlStatus.Contains("Undocked"))
+                                    {
+                                        if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                        {
+                                            drone.AssignedGates[g].CloseDoor();
+                                        }
+                                        if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                        {
+                                            canlaunch = false;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -3504,9 +3650,9 @@ namespace IngameScript
 
             // Row 2
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append(" Undocked: ").Append(drone1.Undocked);
+            droneInformation.Append(droneID[ivl]).Append(" Undocked: ").Append(drone1.Undocked).Append(" Gates: ").Append(drone1.AssignedGates.Count).Append(" ");
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Undocked: ").Append(drone2.Undocked);
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Undocked: ").Append(drone2.Undocked).Append(" Gates: ").Append(drone2.AssignedGates.Count).Append(" ");
             droneInformation.AppendLine();
 
             // Row 3 (Bore validation)
@@ -4492,6 +4638,7 @@ namespace IngameScript
 
                 }
             }
+            RefreshDroneGates();
         }
         public void SetupSystem()
         {
@@ -5101,7 +5248,8 @@ namespace IngameScript
                 newDrone.AutoPilotEnabled = rc_auto_pilot_enabled;
                 newDrone.Autodock = recievedDroneAutdock;
                 newDrone.DockingReady = recievedDroneDockingReady;
-                
+                newDrone.AssignedGates = new List<IMyDoor>();
+                ScanDoors(safeDroneName, newDrone.AssignedGates);
 
                 // 3. Add the fully built drone to the dictionary
                 droneID.Add(newDrone.Name);
@@ -5338,6 +5486,36 @@ namespace IngameScript
             sbtexttemp.AppendLine($"Raw input stored successfully in [{INI_SECTION}] {INI_KEY}.");
         }
 
+        public void ScanDoors(string droneid, List<IMyDoor>gateslist)
+        {
+            gateslist.Clear();
+            GridTerminalSystem.GetBlocksOfType<IMyDoor>(gateslist, b => b.CubeGrid == meCubeGrid && b.CustomName.Contains(droneid));
+        }
+
+
+        public void RefreshDroneGates()
+        {
+            _allDoorsCache.Clear();
+            GridTerminalSystem.GetBlocksOfType<IMyDoor>(_allDoorsCache, b => b.CubeGrid == meCubeGrid);
+
+            foreach (var drone in Swarm.Values)
+            {
+                drone.AssignedGates.Clear();
+
+                for (int i = 0; i < _allDoorsCache.Count; i++)
+                {
+                    var door = _allDoorsCache[i];
+                    if (
+                        door.CustomName.IndexOf(drone.Name, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        drone.AssignedGates.Add(door);
+                    }
+                }
+            }
+            _allDoorsCache.Clear();
+        }
+
+
         public class DroneData
         {
             // Identifiers & Status
@@ -5387,6 +5565,7 @@ namespace IngameScript
             public bool RecallList;
             public bool ResetFunction;
             public int AssignsCount;
+            public List<IMyDoor> AssignedGates = new List<IMyDoor>();
         }
 
     }

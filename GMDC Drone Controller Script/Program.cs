@@ -1330,7 +1330,7 @@ namespace IngameScript
                         } 
                         
                         */
-                        if (i < Swarm.Count)
+                        if (i < Swarm.Count && drone.GpsListPosition != -1)
                         {
                             drone.AssignedCoordinates = true;
                             sbtexttemp.AppendLine($"Drone coords assigned: {i} {drone.AssignedCoordinates}");

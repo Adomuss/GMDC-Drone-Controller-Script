@@ -16,5 +16,6 @@ PB Run Argument Structure
   NB1: "DroneGroup" MUST BE FIRST PARAMETER IN PB RUN ARGUMENT
   NB2: The drone controller script will only work with the GMDC Drone Control Group. If you have renamed the group, please rename it back to "DroneGroup" or change the first parameter in the PB Run Argument to match your group name.
   NB3: Arguments must be separated by commas and not spaces and command argument value must be in the format of "argument=value" with no spaces between the argument, equals sign and value.
+  NB4: If you have gates/doors/hangar doors in your ship, you can now choose to have GMDC automate your docking bay doors for your drones by assigning the drone name to the name of the gate e.g. [SWRM_D 1]. Recompile or run argument will refresh gate assignments.
 ]
 

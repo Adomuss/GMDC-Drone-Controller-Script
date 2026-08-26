@@ -63,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.619B";
+        string ver = "V0.620B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1018,16 +1018,16 @@ namespace IngameScript
                     drone.RecallSequence = 0;
                 }
                 displayTextMain.Clear();
-                #region Drone assignment reset functionality - removed under testing
-                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and drone has not got an assignment flag - why?
-                /*
+                #region Drone assignment reset functionality - Reinstatement phase 2
+                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and drone has not got an assignment flag - Reinstatement phase 2 for testing
+
                 if (drone.GpsListPosition > -1 && !drone.AssignedCoordinates)
                 {
                     drone.GpsListPosition = -1;
                 }
-                */
-                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and id docked and is mining and ready then force reset - why?
-                /*
+
+                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and id docked and is mining and ready then force reset - Reinstatement phase 2 for testing
+                
                 if (Swarm.Count > 0)
                 {
                     if (drone.GpsListPosition > -1 && drone.AssignedCoordinates && drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.IsMining && drone.IsReady)
@@ -1041,7 +1041,7 @@ namespace IngameScript
 
                     }
                 }
-                */
+                
                 #endregion
 
 

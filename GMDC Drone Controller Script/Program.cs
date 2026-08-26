@@ -63,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.618B";
+        string ver = "V0.619B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1217,47 +1217,15 @@ namespace IngameScript
                 {
                     drone.RecallList = true;
                 }
-                //Gate Closing here - removed
                 if (drone.GpsListPosition == -1 && drone.AssignedCoordinates && drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
                 {
-                    drone.AssignedCoordinates = false;
-                    #region Door Closing State Handling - removed
-                    /*
-                    //Manage Door Close Docking State here
-                    drone.canlaunch = true;
-
-                    if (drone.AssignedGates.Count > 0)
-                    {
-                        for (int g = 0; g < drone.AssignedGates.Count; g++)
-                        {
-                            if (drone.AssignedGates[g] != null)
-                            {
-
-                                if (!drone.AssignedGates[g].Enabled)
-                                {
-                                    drone.AssignedGates[g].Enabled = true;
-                                }
-                                if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
-                                {
-                                    drone.AssignedGates[g].CloseDoor();
-                                }
-                                if (drone.AssignedGates[g].Status != DoorStatus.Closed)
-                                {
-                                    drone.canlaunch = false;
-                                }
-                            }
-
-                        }
-                    }
-                    */
-                    #endregion
+                    drone.AssignedCoordinates = false;   
                 }
-                // attempting to reset droneGPSListPosition here if bore is finished - attempt here - removed for test
+                // attempting to reset droneGPSListPosition here if bore is finished - attempt here - reinstated for test
                 #region Handle incorrect drone assignment if bore is finished
                 if (drone.GpsListPosition > -1) 
                 {
-                    /* removed for test
-                     * 
+  
                     if (drone.ControlSequence == 0 && drone.IsReady && drone.TunnelFinished == "False" && drone.ControlStatus.Contains("Docked") && gridBoreFinished[drone.GpsListPosition] && drone.IsMining && drone.AssignedCoordinates && canRun)
                     {
                         drone.IsMining = false;
@@ -1275,10 +1243,8 @@ namespace IngameScript
                             drone.TransmissionStatus = false;
                         }
                     }
-                    */
-                    /* removed for test
-                    //Now checks if occupied before reset
-                    if (drone.ControlSequence > 0 && drone.Docked == "True" && drone.ControlStatus.Contains("Docked") && !drone.AssignedCoordinates && drone.GpsListPosition > -1 && gridBoreOccupied[drone.GpsListPosition] && canRun)
+
+                    if (drone.ControlSequence > 0 && drone.Docked == "True" && drone.ControlStatus.Contains("Docked") && !drone.AssignedCoordinates && drone.GpsListPosition > -1 && canRun)
                     {
                         drone.IsMining = false;
                         drone.ControlSequence = 0; //reset sequence if docked and not assigned
@@ -1294,7 +1260,6 @@ namespace IngameScript
                             drone.TransmissionStatus = false;
                         }
                     }
-                    */
                 }
                 #endregion
                 //Drone is available for deployment

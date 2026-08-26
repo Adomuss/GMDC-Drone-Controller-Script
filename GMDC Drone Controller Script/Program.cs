@@ -1875,7 +1875,6 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
-                //Suspected area
                 if (drone.ControlSequence >= 1 && drone.ControlSequence <= 4 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "False" && drone.AssignedCoordinates && !disableRunArgument)
                 {
                     drone.ControlSequence = 0;
@@ -1894,7 +1893,7 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
-                //EndofSplit functions
+                //End of Split functions
                 if (drone.ControlSequence == 8 && drone.IsReady && drone.IsMining && drone.Docked == "True" && (drone.TunnelFinished == "True") && drone.AssignedCoordinates && !disableRunArgument)
                 {
                     drone.ControlSequence = 9;
@@ -1985,8 +1984,37 @@ namespace IngameScript
                     displayTextMain.Append('\n');
                     displayTextMain.Append("Mining seq. complete");
                 }
+                //Gate opening here
                 if (drone.ControlSequence == 12 && drone.ControlStatus.Contains("RTB") && drone.Docked == "False" && drone.TunnelFinished == "True" && !disableRunArgument)
                 {
+                    //Open Gate before docking
+                    #region Gate open management
+                   // drone.canlaunch = true;
+
+                    if (drone.AssignedGates.Count > 0)
+                    {
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+
+                                if (!drone.AssignedGates[g].Enabled)
+                                {
+                                    drone.AssignedGates[g].Enabled = true;
+                                }
+                                if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                {
+                                    drone.AssignedGates[g].OpenDoor();
+                                }
+                                if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                {
+                              //      drone.canlaunch = false;
+                                }
+                            }
+
+                        }
+                    }
+                    #endregion
                     drone.AssignedCoordinates = false;
                     gpsGridPositionValue = -1;
                     cd1 = gpsGridPositionValue.ToString();
@@ -2045,8 +2073,46 @@ namespace IngameScript
                     }
                     drone.TransmissionStatus = false;
                 }
+                //Gate Closing here - End State
                 if (drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "True" && generalReset || drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "True" && generalReset && !disableRunArgument)
                 {
+                    #region Door Closing State Handling - removed
+                    if (drone.AssignedGates.Count > 0)
+                    {
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+                                if (!drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (!drone.AssignedGates[g].Enabled)
+                                    {
+                                        drone.AssignedGates[g].Enabled = true;
+                                    }
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                    {
+                                        drone.canlaunch = false;
+                                    }
+                                }
+                                else if (drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                    {
+                                        drone.AssignedGates[g].CloseDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                    {
+                                        drone.canlaunch = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    #endregion
                     drone.ControlSequence = 0;
                     totalMiningSequencesComplete = 0;
                     drone.AssignedCoordinates = false;
@@ -2064,36 +2130,45 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
-                //gate closing here - removed
+                //gate closing here - End State
                 if (drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "False" && generalReset && drone.ControlSequence == 0 && !disableRunArgument || drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "False" && generalReset && !disableRunArgument || drone.ControlSequence == 6 && drone.ControlStatus == "Docked Idle" && drone.Docked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
                 {
                     #region Door Closing State Handling - removed
-                    //Manage Door Close Docking State here
-                    //drone.canlaunch = true;
-                    /*
                     if (drone.AssignedGates.Count > 0)
                     {
                         for (int g = 0; g < drone.AssignedGates.Count; g++)
                         {
                             if (drone.AssignedGates[g] != null)
                             {
-
-                                if (!drone.AssignedGates[g].Enabled)
+                                if (!drone.ControlStatus.Contains("Docked"))
                                 {
-                                    drone.AssignedGates[g].Enabled = true;
+                                    if (!drone.AssignedGates[g].Enabled)
+                                    {
+                                        drone.AssignedGates[g].Enabled = true;
+                                    }
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                    {
+                                        drone.canlaunch = false;
+                                    }
                                 }
-                                if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                else if (drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
                                 {
-                                    drone.AssignedGates[g].CloseDoor();
-                                }
-                                if (drone.AssignedGates[g].Status != DoorStatus.Closed)
-                                {
-                                    //drone.canlaunch = false;
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                    {
+                                        drone.AssignedGates[g].CloseDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                    {
+                                       drone.canlaunch = false;
+                                    }
                                 }
                             }
-
                         }
-                    } */
+                    }
                     #endregion
                     drone.ControlSequence = 0;
                     totalMiningSequencesComplete = 0;
@@ -2112,6 +2187,7 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
+                //Gate Opening & Closing Here
                 #region Drone Recall Command Handling
                 if (mustRecall_Command && !drone.RecallList && !mustUndockCommand)
                 {
@@ -2261,6 +2337,7 @@ namespace IngameScript
                     drone.TransmissionStatus = false;
                 }
                 #endregion
+                //Gate Opening Here
                 #region Drone undock handling
                 if (mustUndockCommand)
                 {

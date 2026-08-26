@@ -1205,10 +1205,12 @@ namespace IngameScript
                     */
                     #endregion
                 }
-                // attempting to reset droneGPSListPosition here if bore is finished - attempt here
+                // attempting to reset droneGPSListPosition here if bore is finished - attempt here - removed for test
                 #region Handle incorrect drone assignment if bore is finished
                 if (drone.GpsListPosition > -1) 
                 {
+                    /* removed for test
+                     * 
                     if (drone.ControlSequence == 0 && drone.IsReady && drone.TunnelFinished == "False" && drone.ControlStatus.Contains("Docked") && gridBoreFinished[drone.GpsListPosition] && drone.IsMining && drone.AssignedCoordinates && canRun)
                     {
                         drone.IsMining = false;
@@ -1226,7 +1228,10 @@ namespace IngameScript
                             drone.TransmissionStatus = false;
                         }
                     }
-                    if (drone.ControlSequence > 0 && drone.Docked == "True" && drone.ControlStatus.Contains("Docked") && !drone.AssignedCoordinates && drone.GpsListPosition > -1 && canRun)
+                    */
+                    /* removed for test
+                    //Now checks if occupied before reset
+                    if (drone.ControlSequence > 0 && drone.Docked == "True" && drone.ControlStatus.Contains("Docked") && !drone.AssignedCoordinates && drone.GpsListPosition > -1 && gridBoreOccupied[drone.GpsListPosition] && canRun)
                     {
                         drone.IsMining = false;
                         drone.ControlSequence = 0; //reset sequence if docked and not assigned
@@ -1242,7 +1247,7 @@ namespace IngameScript
                             drone.TransmissionStatus = false;
                         }
                     }
-
+                    */
                 }
                 #endregion
                 //Drone is available for deployment
@@ -1383,29 +1388,30 @@ namespace IngameScript
                 }
                 #endregion
 
-                //Drone bore coordinate assignment
+                //Drone bore coordinate assignment - send to drone if assigned coordinates are -1 and assignemnt is real
                 #region Drone drilling coordinate package management
-                tx_chan = drone.Name;
-                cd1 = gpsGridPositionValue.ToString();
-                cm = "0";
-                xp = Math.Round(drone.GpsCoordinates.X, 2).ToString();
-                yp = Math.Round(drone.GpsCoordinates.Y, 2).ToString();
-                zp = Math.Round(drone.GpsCoordinates.Z, 2).ToString();
-                cd5 = customData5;
-                cd6 = (drillLength + safe_dstvl).ToString();
-                igd = (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset).ToString();
-                if (prospectAlignTargetValid || customDataAlignTargetValid)
-                {
-                    xp2 = Math.Round(((drone.GpsCoordinates.X - miningGPSCoordinates.X) + alignGPSCoordinates.X), 2).ToString();
-                    yp2 = Math.Round(((drone.GpsCoordinates.Y - miningGPSCoordinates.Y) + alignGPSCoordinates.Y), 2).ToString();
-                    zp2 = Math.Round(((drone.GpsCoordinates.Z - miningGPSCoordinates.Z) + alignGPSCoordinates.Z), 2).ToString();
-                }
-                else
-                {
-                    xp2 = "";
-                    yp2 = "";
-                    zp2 = "";
-                }
+
+                    tx_chan = drone.Name;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "0";
+                    xp = Math.Round(drone.GpsCoordinates.X, 2).ToString();
+                    yp = Math.Round(drone.GpsCoordinates.Y, 2).ToString();
+                    zp = Math.Round(drone.GpsCoordinates.Z, 2).ToString();
+                    cd5 = customData5;
+                    cd6 = (drillLength + safe_dstvl).ToString();
+                    igd = (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset).ToString();
+                    if (prospectAlignTargetValid || customDataAlignTargetValid)
+                    {
+                        xp2 = Math.Round(((drone.GpsCoordinates.X - miningGPSCoordinates.X) + alignGPSCoordinates.X), 2).ToString();
+                        yp2 = Math.Round(((drone.GpsCoordinates.Y - miningGPSCoordinates.Y) + alignGPSCoordinates.Y), 2).ToString();
+                        zp2 = Math.Round(((drone.GpsCoordinates.Z - miningGPSCoordinates.Z) + alignGPSCoordinates.Z), 2).ToString();
+                    }
+                    else
+                    {
+                        xp2 = "";
+                        yp2 = "";
+                        zp2 = "";
+                    }                                     
                 #endregion
 
                 //State Machine Management happens here
@@ -1451,6 +1457,10 @@ namespace IngameScript
                     {
                         cm = "7";
                     }
+                    else
+                    {
+                        cm = "0";
+                    }
                     droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
                     drone.TransmissionOutput = c.ToString();
                     if (drone.canlaunch)
@@ -1459,12 +1469,25 @@ namespace IngameScript
                         if (canTransmit && drone.TransmissionStatus)
                         {
                             transmitToDrone(drone);
-                            
+                            drone.TransmissionStatus = false;
                         }
                     }
-                    drone.TransmissionStatus = false;
+                    else
+                    {
+                        drone.ControlSequence = 1;
+                        if (canTransmit && drone.TransmissionStatus)
+                        {
+                            transmitToDrone(drone);
+                            drone.TransmissionStatus = false;
+                        }
+                    }
+                    
 
                 }
+   
+                //check incorrect assignments here - find reassignemnt of drone state
+
+
                 //Manage Undocked drone state - end of undocking, dockingw
                 if (drone.ControlSequence == 2 && drone.ControlStatus == "Undocked" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument || drone.ControlSequence == 2 && drone.ControlStatus == "Docking" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
                 {
@@ -1794,6 +1817,7 @@ namespace IngameScript
                         gridBoreOccupied[drone.GpsListPosition] = false;
                     }
                 }
+                //Gate Opening Here - Maybe
                 if (drone.ControlSequence >= 8 && (drone.ControlStatus.Contains("Dock") || drone.ControlStatus.Contains("Exit") || drone.ControlStatus.Contains("RTB")) && drone.IsMining && drone.AssignedCoordinates && drone.IsMining && drone.TunnelFinished == "True")
                 {
                     if (drone.GpsListPosition > -1)
@@ -1818,7 +1842,8 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
-                if (drone.ControlSequence == 8 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "False" && drone.AssignedCoordinates && !disableRunArgument || drone.ControlSequence == 8 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "True" && drone.AssignedCoordinates && !disableRunArgument || drone.ControlSequence >= 1 && drone.ControlSequence <= 4 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "False" && drone.AssignedCoordinates && !disableRunArgument)
+                //Split Functions here
+                if (drone.ControlSequence == 8 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "False" && drone.AssignedCoordinates && !disableRunArgument)
                 {
                     drone.ControlSequence = 0;
                     drone.AssignedCoordinates = false;
@@ -1834,6 +1859,42 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
+                if (drone.ControlSequence == 8 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "True" && drone.AssignedCoordinates && !disableRunArgument)
+                {
+                    drone.ControlSequence = 0;
+                    drone.AssignedCoordinates = false;
+                    drone.IsMining = false;
+                    gpsGridPositionValue = -1;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "0";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone.TransmissionOutput = c.ToString();
+                    if (canTransmit && drone.TransmissionStatus)
+                    {
+                        transmitToDrone(drone);
+                        drone.TransmissionStatus = false;
+                    }
+                }
+                //Suspected area
+                if (drone.ControlSequence >= 1 && drone.ControlSequence <= 4 && !drone.IsReady && drone.Docked == "True" && drone.TunnelFinished == "False" && drone.AssignedCoordinates && !disableRunArgument)
+                {
+                    drone.ControlSequence = 0;
+                    drone.AssignedCoordinates = false;
+                    drone.IsMining = false;
+                    //drone.GpsListPosition = -1; //Added force drone reset if not ready
+                    gpsGridPositionValue = -1;
+                    cd1 = drone.GpsListPosition.ToString();
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "0";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone.TransmissionOutput = c.ToString();
+                    if (canTransmit && drone.TransmissionStatus)
+                    {
+                        transmitToDrone(drone);
+                        drone.TransmissionStatus = false;
+                    }
+                }
+                //EndofSplit functions
                 if (drone.ControlSequence == 8 && drone.IsReady && drone.IsMining && drone.Docked == "True" && (drone.TunnelFinished == "True") && drone.AssignedCoordinates && !disableRunArgument)
                 {
                     drone.ControlSequence = 9;
@@ -2003,13 +2064,13 @@ namespace IngameScript
                         drone.TransmissionStatus = false;
                     }
                 }
-                //gate closing here
+                //gate closing here - removed
                 if (drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "False" && generalReset && drone.ControlSequence == 0 && !disableRunArgument || drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "False" && generalReset && !disableRunArgument || drone.ControlSequence == 6 && drone.ControlStatus == "Docked Idle" && drone.Docked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
                 {
-                    #region Door Closing State Handling
+                    #region Door Closing State Handling - removed
                     //Manage Door Close Docking State here
                     //drone.canlaunch = true;
-
+                    /*
                     if (drone.AssignedGates.Count > 0)
                     {
                         for (int g = 0; g < drone.AssignedGates.Count; g++)
@@ -2032,7 +2093,7 @@ namespace IngameScript
                             }
 
                         }
-                    }
+                    } */
                     #endregion
                     drone.ControlSequence = 0;
                     totalMiningSequencesComplete = 0;

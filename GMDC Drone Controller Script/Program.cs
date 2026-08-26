@@ -1062,10 +1062,15 @@ namespace IngameScript
                     IGC.SendBroadcastMessage(droneTXRecallChannel, commandOperate, TransmissionDistance.TransmissionDistanceMax);
                 }
 
-                //Gate Open & Close Here
+                
                 if (drone.ControlStatus.Contains("Docked") && drone.GpsListPosition == -1 && drone.IsMining && (drone.ControlSequence == 0 || drone.ControlSequence == 8))
                 {
                     drone.IsMining = false;
+                }
+                //General Gate Management - Gate Open & Close Here
+                #region General Gate Operations
+                if (drone.ControlStatus.Contains("Docked") && drone.GpsListPosition == -1 && !drone.IsMining && (drone.ControlSequence == 0 || drone.ControlSequence == 8))
+                {
                     #region Door Closing State Handling
                     if (drone.AssignedGates.Count > 0)
                     {
@@ -1107,6 +1112,7 @@ namespace IngameScript
                     }
                     #endregion
                 }
+                #endregion
                 if ((totalDronesMining) >= boresRemaining && !drone.IsMining && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && !drone.IsMining)
                 {
                     if (!dronesLaunchedStatus || dronesUndocking)

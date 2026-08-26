@@ -986,9 +986,11 @@ namespace IngameScript
         private void ProcessDroneState()
         {
             DroneData drone = null;
+
             #region drone_state_machine_management
             if (!string.IsNullOrEmpty(incomingName) && droneMessageConfirmed)
             {
+                cm = "0"; //Reset command on message entry
                 if (Swarm.ContainsKey(incomingName))
                 {
                     drone = Swarm[incomingName];

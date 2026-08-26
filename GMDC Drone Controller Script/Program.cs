@@ -63,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.617B";
+        string ver = "V0.618B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1062,10 +1062,50 @@ namespace IngameScript
                     IGC.SendBroadcastMessage(droneTXRecallChannel, commandOperate, TransmissionDistance.TransmissionDistanceMax);
                 }
 
-
+                //Gate Open & Close Here
                 if (drone.ControlStatus.Contains("Docked") && drone.GpsListPosition == -1 && drone.IsMining && (drone.ControlSequence == 0 || drone.ControlSequence == 8))
                 {
                     drone.IsMining = false;
+                    #region Door Closing State Handling
+                    if (drone.AssignedGates.Count > 0)
+                    {
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+                                if (!drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (!drone.AssignedGates[g].Enabled)
+                                    {
+                                        drone.AssignedGates[g].Enabled = true;
+                                    }
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                    {
+                                        //  drone.canlaunch = false;
+                                    }
+                                }
+                                else if (drone.Docked == "True" && drone.ControlStatus.Contains("Docked"))
+                                {
+                                    if (drone.AssignedGates[g].Status == DoorStatus.Open || drone.AssignedGates[g].Status == DoorStatus.Opening)
+                                    {
+                                        if (!canIdle)
+                                        {
+                                            drone.AssignedGates[g].CloseDoor();
+                                        }
+                                    }
+                                    if (drone.AssignedGates[g].Status != DoorStatus.Closed)
+                                    {
+                                        //   drone.canlaunch = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    #endregion
                 }
                 if ((totalDronesMining) >= boresRemaining && !drone.IsMining && gridBoresCompleted <= totalMiningRuns || boresRemaining == 0 && !drone.IsMining)
                 {
@@ -2089,7 +2129,7 @@ namespace IngameScript
                 //Gate Closing here - End State - no canlaunch
                 if (drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "True" && generalReset || drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.TunnelFinished == "True" && generalReset && !disableRunArgument)
                 {
-                    #region Door Closing State Handling - removed
+                    #region Door Closing State Handling
                     if (drone.AssignedGates.Count > 0)
                     {
                         for (int g = 0; g < drone.AssignedGates.Count; g++)

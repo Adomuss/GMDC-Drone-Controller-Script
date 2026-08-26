@@ -63,7 +63,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.620B";
+        string ver = "V0.621B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -687,6 +687,7 @@ namespace IngameScript
                 ProcessRecallCommand();
                 ProcessDroneState();
                 update_display();
+                
             }
             DroneResetStatusCounter();
             LightStatusManagement();
@@ -972,12 +973,13 @@ namespace IngameScript
         {
             if (Swarm.Count > 0 && canReset)
             {
+                // Update the counts
                 droneResetStatusCount = CountIntegerValues("GpsListPosition", -1);
-                droneDockedStatusCount = CountStatusValues("ControlStatus", "Docked");
-            }
-            if (Swarm.Count > 0)
-            {
-                if (droneResetStatusCount == Swarm.Count && droneDockedStatusCount == Swarm.Count && canReset)
+
+                droneDockedStatusCount = t_drn_dck;//droneDockedStatusCount = CountStatusValues("ControlStatus", "Docked");
+
+                // Check if all drones meet the criteria
+                if (droneResetStatusCount == Swarm.Count && droneDockedStatusCount == Swarm.Count)
                 {
                     readyFlag = true;
                 }
@@ -3068,7 +3070,7 @@ namespace IngameScript
                     i_recall = false;
                     i_run = false;
                     i_res = false;
-                    i_init = false;
+                    i_init = false;                    
                 }
             }
             #endregion
@@ -3270,7 +3272,7 @@ namespace IngameScript
             foreach (DroneData drone in Swarm.Values)
             {
                 string status = drone.ControlStatus;
-                string damage = drone.DamageState;
+                string damage = drone.DamageState;                
                 stats.Docking += status.Contains("Docking") ? 1 : 0;
                 stats.Docked += status.Contains("Docked") ? 1 : 0;
                 stats.Undocking += status.Contains("Undocking") ? 1 : 0;
@@ -3286,7 +3288,7 @@ namespace IngameScript
                 stats.IdleD += status.Equals("Docked Idle") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
-                stats.Ok += damage == "OK" ? 1 : 0;
+                stats.Ok += damage == "OK" ? 1 : 0;               
             }
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle_undocked = stats.Idle;
@@ -4813,8 +4815,15 @@ namespace IngameScript
 
             foreach (DroneData drone in Swarm.Values)
             {
-                if (propertyName == "GpsListPosition" && drone.GpsListPosition == val) truCnt++;
-                if (propertyName == "ControlSequence" && drone.ControlSequence == val) truCnt++;
+                if (propertyName == "GpsListPosition" && drone.GpsListPosition == val)
+                {
+                    truCnt++;
+                }
+                else if (propertyName == "ControlSequence" && drone.ControlSequence == val)
+                {
+                    truCnt++;
+                }
+                // Add more 'else if' blocks here if you want to check other int properties like RecallSequence
             }
 
             return truCnt;
@@ -5845,7 +5854,7 @@ namespace IngameScript
             displayTextMain.Append("Ignore depth: ").Append(safe_dstvl + drone_length - drone_clear_offset + ignoreDepth)
                 .Append("m (Drill Start: ").Append((drillLength + safe_dstvl) - (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset)).AppendLine("m)\n");
 
-            displayTextMain.Append("Command: ").Append(commandAsk).Append(" Reset: ").Append(generalReset).AppendLine();
+            displayTextMain.Append("Command: ").Append(commandAsk).Append(" Reset: ").Append(generalReset).Append(" (").Append(droneResetStatusCount).Append(") ").Append(" (").Append(droneDockedStatusCount).Append(") ").Append(" (").Append(readyFlag).Append(") ").AppendLine();
 
             displayTextMain.Append("Status: ").Append(screenStatus).AppendLine("\n");
 

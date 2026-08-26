@@ -1984,7 +1984,7 @@ namespace IngameScript
                     displayTextMain.Append('\n');
                     displayTextMain.Append("Mining seq. complete");
                 }
-                //Gate opening here
+                //Gate Opening here
                 if (drone.ControlSequence == 12 && drone.ControlStatus.Contains("RTB") && drone.Docked == "False" && drone.TunnelFinished == "True" && !disableRunArgument)
                 {
                     //Open Gate before docking

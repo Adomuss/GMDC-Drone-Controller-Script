@@ -5854,7 +5854,7 @@ namespace IngameScript
             displayTextMain.Append("Ignore depth: ").Append(safe_dstvl + drone_length - drone_clear_offset + ignoreDepth)
                 .Append("m (Drill Start: ").Append((drillLength + safe_dstvl) - (ignoreDepth + safe_dstvl + drone_length - drone_clear_offset)).AppendLine("m)\n");
 
-            displayTextMain.Append("Command: ").Append(commandAsk).Append(" Reset: ").Append(generalReset).Append(" (").Append(droneResetStatusCount).Append(") ").Append(" (").Append(droneDockedStatusCount).Append(") ").Append(" (").Append(readyFlag).Append(") ").AppendLine();
+            displayTextMain.Append("Command: ").Append(commandAsk).Append(" Reset: ").Append(generalReset).AppendLine();
 
             displayTextMain.Append("Status: ").Append(screenStatus).AppendLine("\n");
 

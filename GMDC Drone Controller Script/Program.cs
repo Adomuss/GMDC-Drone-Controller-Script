@@ -3083,18 +3083,6 @@ namespace IngameScript
                 mustFreeze_Command = false;
                 commandAsk = "Run";
             }
-            if (string.IsNullOrWhiteSpace(argument)) 
-            {
-                    canTransmit = false;
-                    mustUndockCommand = false;
-                    canRun = false;
-                    canReset = false;
-                    mustRecall_Command = false;
-                    canInit = false;
-                    mustFreeze_Command = false;
-                    canIdle = true;
-                    commandAsk = "Stop";                
-            }
             if (argument.Contains("reset") || i_res)
             {
                 canReset = true;
@@ -3104,7 +3092,7 @@ namespace IngameScript
                 mustRecall_Command = false;
                 canInit = false;
                 mustFreeze_Command = false;
-                canIdle = false;
+                canIdle = true;
                 commandAsk = "Reset";
                 currentGPSIndex = 0;
             }
@@ -3117,6 +3105,8 @@ namespace IngameScript
                 mustRecall_Command = false;
                 canInit = false;
                 mustFreeze_Command = false;
+                canIdle = true;
+                canInit = false;
                 commandAsk = "Stop";
             }
             if (argument.Contains("recall") || i_recall)
@@ -3128,6 +3118,7 @@ namespace IngameScript
                 canRun = false;
                 mustFreeze_Command = false;
                 canIdle = false;
+                canInit = false;
                 commandAsk = "Recall";
                 currentGPSIndex = 0;
             }
@@ -3155,6 +3146,7 @@ namespace IngameScript
                 canTransmit = true;
                 canRun = false;
                 canIdle = false;
+                canInit = false;
                 mustFreeze_Command = false;
                 commandAsk = "Eject";
                 currentGPSIndex = 0;

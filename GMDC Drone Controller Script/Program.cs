@@ -4143,7 +4143,7 @@ namespace IngameScript
 
             // Row 4
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append(" Mining: ").Append(drone1.IsMining).Append(" Cl: ").Append(drone1.canlaunch);
+            droneInformation.Append(droneID[ivl]).Append(" Mining: ").Append(drone1.IsMining).Append(" HGR: ").Append(drone1.canlaunch);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
             if (slu) droneInformation.Append(droneID[ivl2]).Append(" Mining: ").Append(drone2.IsMining).Append(" Cl: ").Append(drone2.canlaunch);
             droneInformation.AppendLine();

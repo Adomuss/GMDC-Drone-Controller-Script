@@ -985,14 +985,16 @@ namespace IngameScript
 
         private void ProcessDroneState()
         {
-            DroneData drone = null;
+            DroneData drone = null; //initalise drone holder for dictionary
 
             #region drone_state_machine_management
+            //Check for recieved drone message
             if (!string.IsNullOrEmpty(incomingName) && droneMessageConfirmed)
             {
+                //Identify name of drone from message
                 if (Swarm.ContainsKey(incomingName))
                 {
-                    drone = Swarm[incomingName];
+                    drone = Swarm[incomingName]; //load drone info
                 }
                 int i = receivedDroneNameIndex;
 
@@ -1015,11 +1017,15 @@ namespace IngameScript
                     drone.RecallSequence = 0;
                 }
                 displayTextMain.Clear();
-
+                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and drone has not got an assignment flag - why?
+                /*
                 if (drone.GpsListPosition > -1 && !drone.AssignedCoordinates)
                 {
                     drone.GpsListPosition = -1;
                 }
+                */
+                //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and id docked and is mining and ready then force reset - why?
+                /*
                 if (Swarm.Count > 0)
                 {
                     if (drone.GpsListPosition > -1 && drone.AssignedCoordinates && drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.IsMining && drone.IsReady)
@@ -1033,11 +1039,15 @@ namespace IngameScript
 
                     }
                 }
-                //if undocked request local recall sequence flag to ON
+                */
+
+
+                //if undocked request local recall sequence flag to ON - happens if undocked and not assigned, happens if not assigned and not undocked or docked and assignment == -1
                 if (drone.GpsListPosition == -1 && !drone.AssignedCoordinates && drone.Undocked == "True" && drone.Docked == "False" && !drone.RecallList && !mustUndockCommand || drone.GpsListPosition == -1 && !drone.AssignedCoordinates && drone.Undocked == "False" && drone.Docked == "False" && !drone.RecallList && !mustUndockCommand)
                 {
                     drone.RecallList = true;
                 }
+                //send drone recall / operating output to channel
                 if (drone.RecallList)
                 {
                     droneTXRecallChannel = drone.Name + " " + commandRecall;
@@ -1392,9 +1402,10 @@ namespace IngameScript
                         if (canTransmit && drone.TransmissionStatus)
                         {
                             transmitToDrone(drone);
-                            drone.TransmissionStatus = false;
+                            
                         }
                     }
+                    drone.TransmissionStatus = false;
 
                 }
 
@@ -1904,9 +1915,10 @@ namespace IngameScript
                         {
 
                             transmitToDrone(drone);
-                            drone.TransmissionStatus = false;
+                            
                         }
                     }
+                    drone.TransmissionStatus = false;
                 }
 
                 if (mustUndockCommand)
@@ -1963,10 +1975,10 @@ namespace IngameScript
                             if (canTransmit && drone.TransmissionStatus)
                             {
                                 transmitToDrone(drone);
-                                drone.TransmissionStatus = false;
+                                
                             }
                         }
-
+                        drone.TransmissionStatus = false;
                     }
                     else
                     {

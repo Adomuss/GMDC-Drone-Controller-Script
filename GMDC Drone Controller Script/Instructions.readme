@@ -1,7 +1,7 @@
 ﻿R e a d m e
 -----------
 
-GMDC Drone controller V0.622B
+GMDC Drone controller V0.623B
 
 PB Run Argument Structure
 [
@@ -11,6 +11,7 @@ PB Run Argument Structure
   Command argument - "clearoffset", // Clear offset distance in meters
   Command argument - "rotatehome", // Rotate home position for visualiser (true/false)
   Command argument - "dronesperscreen" // Number of drones per screen
+  Command argument - "undockdelay" //delay in ticks (default = 12 - appx 2.16s)
 
   eg.   PB Run Argument: SWRM_D,shipname=MyShip,dronelength=2.6,clearoffset=12.0,rotatehome=true,dronesperscreen=8
   NB1: "DroneGroup" MUST BE FIRST PARAMETER IN PB RUN ARGUMENT

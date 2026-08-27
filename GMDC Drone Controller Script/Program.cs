@@ -48,9 +48,8 @@ namespace IngameScript
         int srfD = 0;
         int srfV = 0;
         int drones_per_screen = 8;
-        int droneUndockDelayTime = 6;
-        int undock_delay_limit = 12;
-
+        int droneUndockDelayTime = 12;
+        int undock_delay_limit = 24;
         //Drone Comms
         int droneCommunicationsProcessingDelay = 0;
         int droneCommunicationsPingDelay = 30;
@@ -58,12 +57,14 @@ namespace IngameScript
         #endregion
 
         #region static_variables
+
+
         //visualiser settings
         int spriteCountLimit = 500;
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.622B";
+        string ver = "V0.623B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -406,6 +407,7 @@ namespace IngameScript
         string commandArg3 = "clearoffset";
         string commandArg4 = "rotatehome";
         string commandArg5 = "dronesperscreen";
+        string commandArg6 = "undockdelay";
 
         #endregion
         public void Save()
@@ -507,8 +509,9 @@ namespace IngameScript
                 // --- Argument takes precedence for setup and override ---
                 runargument = argument;
                 ParseAndApplyArguments(argument);
+
                 Save();
-                i_init = true;
+                i_init = true;                
                 // Force a full setup if arguments changed
                 setupComplete = false;
             }
@@ -588,6 +591,7 @@ namespace IngameScript
             sbtexttemp.AppendLine($"D4 Vis rotation: {rotateHome} ");
             sbtexttemp.AppendLine($"Clear offset: {drone_clear_offset}m ");
             sbtexttemp.AppendLine($"Drone length: {drone_length}m ");
+            sbtexttemp.AppendLine($"Undock delay: ({Math.Round((((double)droneUndockDelayTime * game_tick_length) / 1000.0) * (double)game_factor,1)}s) / ({Math.Round((((double)undock_delay_limit * game_tick_length) / 1000.0) * (double)game_factor,1)}s) ");
 
 
             //sbtexttemp.AppendLine($"InitializeSystem: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -772,6 +776,7 @@ namespace IngameScript
             if (undockTimer > droneUndockDelayTime)
             {
                 dronesUndocking = false;
+                
             }
         }
 
@@ -1023,9 +1028,12 @@ namespace IngameScript
                 #region Drone assignment reset functionality - Reinstatement phase 2
                 //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and drone has not got an assignment flag - Reinstatement phase 2 for testing
 
-                if (drone.GpsListPosition > -1 && !drone.AssignedCoordinates)
+                if (Swarm.Count > 0)
                 {
-                    drone.GpsListPosition = -1;
+                    if (drone.GpsListPosition > -1 && !drone.AssignedCoordinates)
+                    {
+                        drone.GpsListPosition = -1;
+                    }
                 }
 
                 //Reset assigned coordinates if assigned coordinates are greater than -1 (assigned) and id docked and is mining and ready then force reset - Reinstatement phase 2 for testing
@@ -1034,18 +1042,20 @@ namespace IngameScript
                 {
                     if (drone.GpsListPosition > -1 && drone.AssignedCoordinates && drone.ControlStatus.Contains("Docked") && drone.Docked == "True" && drone.IsMining && drone.IsReady)
                     {
-                        if (gridBoreFinished[drone.GpsListPosition])
+                        if (gridBoreFinished.Count > 0)
                         {
-                            drone.GpsListPosition = -1;
-                            drone.IsMining = false;
-                            drone.AssignedCoordinates = false;
+                            if (gridBoreFinished[drone.GpsListPosition])
+                            {
+                                drone.GpsListPosition = -1;
+                                drone.IsMining = false;
+                                drone.AssignedCoordinates = false;
+                            }
                         }
 
                     }
                 }
-                
-                #endregion
 
+                #endregion
 
                 //if undocked request local recall sequence flag to ON - happens if undocked and not assigned, happens if not assigned and not undocked or docked and assignment == -1
                 if ((drone.GpsListPosition == -1 && !drone.AssignedCoordinates && drone.Undocked == "True" && drone.Docked == "False" && !drone.RecallList && !mustUndockCommand) || (drone.GpsListPosition == -1 && !drone.AssignedCoordinates && drone.Undocked == "False" && drone.Docked == "False" && !drone.RecallList && !mustUndockCommand))
@@ -1203,9 +1213,7 @@ namespace IngameScript
                         }
                     }
                 }
-
                 updateDisplay(drone);
-
                 gpsGridPositionValue = drone.GpsListPosition;
                 if (drone.ControlStatus == "Docked Idle")
                 {
@@ -1272,7 +1280,6 @@ namespace IngameScript
                     #region Mining Bore Assignment to drone
                     if (gridBoresCompleted < totalMiningRuns && miningGridValid && !drone.AssignedCoordinates && !drone.MustWait)
                     {
-
                         if (gridBoreFinished.Count > 0)
                         {
                             if (skipBoresNumber > gridBoreFinished.Count)
@@ -1363,49 +1370,50 @@ namespace IngameScript
                     sbtexttemp.AppendLine("data staging");
                     //Manage drone wait state (must wait for undock+)
                     #region Drone wait management
-                    if (drone.GpsListPosition > -1)
-                    {
-                        if (gridBoreOccupied[drone.GpsListPosition] && !drone.IsMining)
+                 //   if(gridBoreOccupied.Count > 0 && gridBoreFinished.Count > 0) {
+                        if (drone.GpsListPosition > -1)
                         {
-                            drone.MustWait = true;
-                        }
-                        else if (((totalDronesMining) < boresRemaining && gridBoresCompleted < totalMiningRuns )|| (!gridBoreOccupied[drone.GpsListPosition] && !gridBoreFinished[drone.GpsListPosition] && !drone.IsMining))
-                        {
-                            drone.MustWait = false;
-                        }
+                            if (gridBoreOccupied[drone.GpsListPosition] && !drone.IsMining)
+                            {
+                                drone.MustWait = true;
+                            }
+                            else if (((totalDronesMining) < boresRemaining && gridBoresCompleted < totalMiningRuns) || (!gridBoreOccupied[drone.GpsListPosition] && !gridBoreFinished[drone.GpsListPosition] && !drone.IsMining))
+                            {
+                                drone.MustWait = false;
+                            }
                         if (gridBoresCompleted != totalMiningRuns && !drone.MustWait)
-                        {
-                            drone.ControlSequence = 1;
-                            drone.IsMining = true;
-                            gridBoreOccupied[drone.GpsListPosition] = true;
-                        }
-                        else
-                        {
-                            drone.ControlSequence = 0;
-                            drone.IsMining = false;
-                        }
+                            {
+                                drone.ControlSequence = 1;
+                                drone.IsMining = true;
+                                gridBoreOccupied[drone.GpsListPosition] = true;
+                            }
+                            else
+                            {
+                                drone.ControlSequence = 0;
+                                drone.IsMining = false;
+                            }
                         #endregion
                         //Final check to determine if current selected bore is unfinished - if finished then send drone back to re-assignment
                         #region Bore completion check managament - send to re-assigment if bore is completed
                         if (gridBoreFinished[drone.GpsListPosition])
-                        {
-                            //suspect coordinates here 2
-                            sbtexttemp.AppendLine($"Drone position finished {i}");
-                            drone.ControlSequence = 0;
-                            drone.IsMining = false;
-                            drone.AssignedCoordinates = false;
-                            drone.GpsListPosition = -1;
-                            gpsGridPositionValue = -1;
-                        }
+                            {
+                                //suspect coordinates here 2
+                                sbtexttemp.AppendLine($"Drone position finished {i}");
+                                drone.ControlSequence = 0;
+                                drone.IsMining = false;
+                                drone.AssignedCoordinates = false;
+                                drone.GpsListPosition = -1;
+                                gpsGridPositionValue = -1;
+                            }
+                      //  }
                         #endregion
                     }
                 }
                 #endregion
-
                 //Drone bore coordinate assignment - send to drone if assigned coordinates are -1 and assignemnt is real
                 #region Drone drilling coordinate package management
 
-                    tx_chan = drone.Name;
+                tx_chan = drone.Name;
                     cd1 = gpsGridPositionValue.ToString();
                     cm = "0";
                     xp = Math.Round(drone.GpsCoordinates.X, 2).ToString();
@@ -1425,9 +1433,8 @@ namespace IngameScript
                         xp2 = "";
                         yp2 = "";
                         zp2 = "";
-                    }                                     
+                    }
                 #endregion
-
                 //State Machine Management happens here
                 //Gate Opening here
                 if ((drone.ControlSequence == 1 && drone.AssignedCoordinates && !drone.MustWait && !disableRunArgument )|| (drone.ControlSequence == 2 && drone.ControlStatus == "Docked Idle" && drone.Docked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument))
@@ -1498,10 +1505,9 @@ namespace IngameScript
                     
 
                 }
-   
+
                 //check incorrect assignments here - find reassignemnt of drone state
-
-
+                #region General State Machine
                 //Manage Undocked drone state - end of undocking, dockingw
                 if ((drone.ControlSequence == 2 && drone.ControlStatus == "Undocked" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument) || (drone.ControlSequence == 2 && drone.ControlStatus == "Docking" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument))
                 {
@@ -2450,6 +2456,7 @@ namespace IngameScript
             }
             #endregion
 
+            #endregion
             #endregion
         }
 
@@ -4045,6 +4052,59 @@ namespace IngameScript
             }
             _customDataStore.Clear();
         }
+        void ResetJobData(IMyTerminalBlock input)
+        {
+            var str = "";
+            bool _isMissing = false;
+            _customDataStore.Clear();
+            if (_customDataStore.TryParse(input.CustomData.ToString()))
+            {
+                if (_customDataStore.ContainsKey(gmdccategory, jobinfo))
+                {
+                    str = _customDataStore.Get(gmdccategory, jobinfo).ToString().Trim();
+                    jobdata = str;
+
+                }
+                else
+                {
+                    //write custom data here to input
+                    _customDataStore.Set(gmdccategory, jobinfo, jobdata);
+
+                    _isMissing = true;
+                }
+                //manage flag for loading data from interface
+                if (_customDataStore.ContainsKey("GMDCJobData", "loadsave"))
+                {
+                    str = _customDataStore.Get("GMDCJobData", "loadsave").ToString().Trim();
+                    if (!bool.TryParse(str, out loadsave))
+                    {
+                        loadsave = false;
+                    }
+                        //write custom data here to input
+                        _customDataStore.Set("GMDCJobData", "loadsave", "true");
+                        _isMissing = true;                    
+                }
+
+                //manage jobname
+                if (_customDataStore.ContainsKey("GMDCJobData", "jobname"))
+                {
+                    str = _customDataStore.Get("GMDCJobData", "jobname").ToString().Trim();
+                    jobname = str;
+                }
+                else
+                {
+                    //write custom data here to input
+                    _customDataStore.Set("GMDCJobData", "jobname", "");
+                    _isMissing = true;
+                }
+            }
+            if (_isMissing)
+            {
+                input.CustomData = _customDataStore.ToString();
+                _isMissing = false;
+            }
+            _customDataStore.Clear();
+        }
         public void DroneScreenBuilder(int ivl, int ivl2, bool slu)
         {
             if (droneID.Count <= 0) return;
@@ -5074,6 +5134,27 @@ namespace IngameScript
                                         }
                                     }
                                 }
+                                if (argCommand[0].Contains(commandArg6))
+                                {
+                                    if (argCommand.Length > 1)
+                                    {
+                                        if (argCommand[1] != null && !string.IsNullOrWhiteSpace(argCommand[1]))
+                                        {
+                                            if (!int.TryParse(argCommand[1].Trim(), out undock_delay_limit))
+                                            {
+                                                undock_delay_limit = 12; // Set to default on fail
+                                            }
+                                            
+                                            droneUndockDelayTime = undock_delay_limit /2;
+
+                                        }
+                                        else
+                                        {
+                                            undock_delay_limit = 12; // Default if argument is missing or empty
+                                            droneUndockDelayTime = undock_delay_limit / 2;
+                                        }
+                                    }
+                                }
 
                             }
                         }
@@ -5082,6 +5163,7 @@ namespace IngameScript
                 }
             }
             RefreshDroneGates();
+            ResetJobData(Me);
         }
         public void SetupSystem()
         {

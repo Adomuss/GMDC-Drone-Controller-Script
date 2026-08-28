@@ -11,9 +11,9 @@ PB Run Argument Structure
   Command argument - "clearoffset", // Clear offset distance in meters
   Command argument - "rotatehome", // Rotate home position for visualiser (true/false)
   Command argument - "dronesperscreen" // Number of drones per screen
-  Command argument - "undockdelay" //delay in ticks (default = 12 - appx 2.16s)
+  Command argument - "undockdelay" //delay in ticks (default = 12 - appx 1.16s)
 
-  eg.   PB Run Argument: SWRM_D,shipname=MyShip,dronelength=2.6,clearoffset=12.0,rotatehome=true,dronesperscreen=8
+  eg.   PB Run Argument: SWRM_D,shipname=MyShip,dronelength=2.6,clearoffset=12.0,rotatehome=true,dronesperscreen=8,undockdelay=24
   NB1: "DroneGroup" MUST BE FIRST PARAMETER IN PB RUN ARGUMENT
   NB2: The drone controller script will only work with the GMDC Drone Control Group. If you have renamed the group, please rename it back to "DroneGroup" or change the first parameter in the PB Run Argument to match your group name.
   NB3: Arguments must be separated by commas and not spaces and command argument value must be in the format of "argument=value" with no spaces between the argument, equals sign and value.

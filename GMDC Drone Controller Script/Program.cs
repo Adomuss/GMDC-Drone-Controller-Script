@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.624B";
+        string ver = "V0.625B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -104,9 +104,11 @@ namespace IngameScript
         string rc_dn_rchg_req;
         string recievedDroneAutdock;
         string recievedDroneDockingReady;
+        int recievedDroneCommandRequest;
         string rc_auto_pilot_enabled;
         int recieved_drone_list_position;
         double rc_d_cn = 0.0;
+        string rc_comreq;
         string rc_locx;
         string rc_locy;
         string rc_locz;
@@ -3409,6 +3411,10 @@ namespace IngameScript
                     {
                         recievedDroneDockingReady = messageData[21];
                     }
+                    if(messageData.Length > 21)
+                    {
+                        rc_comreq = messageData[22];
+                    }
                 }
                 else
                 {
@@ -3432,6 +3438,7 @@ namespace IngameScript
                     rc_dn_gps_lst = "";
                     rc_dn_cargo_full = "";
                     rc_dn_rchg_req = "";
+                    rc_comreq = "";
 
                 }
                 if (rc_dn_gps_lst == "")
@@ -3452,6 +3459,10 @@ namespace IngameScript
                 if (!double.TryParse(rc_dn_chg, out rc_d_cn))
                 {
                     rc_d_cn = 0.0;
+                }
+                if (!int.TryParse(rc_comreq, out recievedDroneCommandRequest))
+                {
+                    recievedDroneCommandRequest = 0;
                 }
             }
         }
@@ -4204,9 +4215,9 @@ namespace IngameScript
 
             // Row 9
             s = droneInformation.Length;
-            droneInformation.Append("Drone control seq: ").Append(drone1.ControlSequence).Append(" Recall seq: ").Append(drone1.RecallSequence).Append(" ").Append(drone1.RecallList);
+            droneInformation.Append("Drn ct.seq: ").Append(drone1.ControlSequence).Append(" Recall seq: ").Append(drone1.RecallSequence).Append(" ").Append(drone1.RecallList).Append(" Cm.seq: ").Append(drone1.commandRequest);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Drone control seq: ").Append(drone2.ControlSequence).Append(" Recall seq: ").Append(drone2.RecallSequence).Append(" ").Append(drone2.RecallList);
+            if (slu) droneInformation.Append("Drn ct.seq: ").Append(drone2.ControlSequence).Append(" Recall seq: ").Append(drone2.RecallSequence).Append(" ").Append(drone2.RecallList).Append(" Cm.seq: ").Append(drone1.commandRequest);
             droneInformation.AppendLine();
 
             // Row 10
@@ -5774,6 +5785,7 @@ namespace IngameScript
                 newDrone.AutoPilotEnabled = rc_auto_pilot_enabled;
                 newDrone.Autodock = recievedDroneAutdock;
                 newDrone.DockingReady = recievedDroneDockingReady;
+                newDrone.commandRequest = recievedDroneCommandRequest;
                 newDrone.AssignedGates = new List<IMyDoor>();
                 ScanDoors(safeDroneName, newDrone.AssignedGates);
 
@@ -5808,6 +5820,7 @@ namespace IngameScript
                 drone.AutoPilotEnabled = rc_auto_pilot_enabled;
                 drone.Autodock = recievedDroneAutdock;
                 drone.DockingReady = recievedDroneDockingReady;
+                drone.commandRequest = recievedDroneCommandRequest;
                 if (drone.Dcs <= bclm)
                 {
                     drone.Dst = false;
@@ -6092,6 +6105,7 @@ namespace IngameScript
             public bool ResetFunction;
             public int AssignsCount;
             public bool canlaunch;
+            public int commandRequest;
             public List<IMyDoor> AssignedGates = new List<IMyDoor>();
         }
 

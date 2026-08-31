@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.623B";
+        string ver = "V0.624B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -1589,7 +1589,7 @@ namespace IngameScript
                     drone.TransmissionStatus = false;
                 }
                 //Gate Opening here
-                if ((drone.ControlSequence == 13 && drone.ControlStatus == "Idle" && drone.Docked == "False" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument) ||(drone.ControlSequence == 5 && drone.ControlStatus == "Docking" && drone.Docked == "False" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument && drone.Dcs <= bclu))
+                if (((drone.ControlSequence == 13 || drone.ControlSequence == 8) && (drone.ControlStatus == "Idle" || drone.ControlStatus.Contains("RTB"))  && drone.Docked == "False" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument) ||(drone.ControlSequence == 5 && drone.ControlStatus == "Docking" && drone.Docked == "False" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument && drone.Dcs <= bclu))
                 {
                     //Open Gate before docking
                     #region Gate open management

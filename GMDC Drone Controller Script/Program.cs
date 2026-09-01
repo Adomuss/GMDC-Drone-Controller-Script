@@ -1772,6 +1772,51 @@ namespace IngameScript
                     }
                     drone.TransmissionStatus = false;
                 }
+                //Manage when drone is undocked after recovery
+                if (drone.ControlSequence == 4 && drone.ControlStatus == "Undocked" && drone.Undocked == "True" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
+                {
+                    #region Door Closing State Handling
+                    //Manage Door Close Docking State here
+                    //drone.canlaunch = true;
+
+                    if (drone.AssignedGates.Count > 0)
+                    {
+                        for (int g = 0; g < drone.AssignedGates.Count; g++)
+                        {
+                            if (drone.AssignedGates[g] != null)
+                            {
+
+                                if (!drone.AssignedGates[g].Enabled)
+                                {
+                                    drone.AssignedGates[g].Enabled = true;
+                                }
+                                if (drone.AssignedGates[g].Status == DoorStatus.Closed || drone.AssignedGates[g].Status == DoorStatus.Closing)
+                                {
+                                    if (!canIdle)
+                                    {
+                                        drone.AssignedGates[g].OpenDoor();
+                                    }
+                                }
+                                if (drone.AssignedGates[g].Status != DoorStatus.Open)
+                                {
+                                    //drone.canlaunch = false;
+                                }
+                            }
+
+                        }
+                    }
+                    #endregion
+                    drone.ControlSequence = 2;
+                    cd1 = gpsGridPositionValue.ToString();
+                    cm = "7";
+                    droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                    drone.TransmissionOutput = c.ToString();
+                    if (canTransmit && drone.TransmissionStatus)
+                    {
+                        transmitToDrone(drone);
+                    }
+                    drone.TransmissionStatus = false;
+                }
                 if (drone.ControlSequence == 4 && drone.ControlStatus == "Docked Idle" && drone.AssignedCoordinates && drone.IsMining && !disableRunArgument)
                 {
                     drone.ControlSequence = 1;

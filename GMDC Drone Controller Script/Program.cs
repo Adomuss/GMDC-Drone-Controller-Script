@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.626B";
+        string ver = "V0.627B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -395,6 +395,7 @@ namespace IngameScript
         List<IMyTextSurface> myTextSurfaces_d2 = new List<IMyTextSurface>();
         List<IMyTextSurface> myTextSurfaces_d3 = new List<IMyTextSurface>();
         List<IMyTextSurface> myTextSurfaces_d4 = new List<IMyTextSurface>();
+        StringBuilder blocktag = new StringBuilder();
         string d1_tag = "";
         string d2_tag = "";
         string d3_tag = "";
@@ -6120,6 +6121,22 @@ namespace IngameScript
         {
             gateslist.Clear();
             GridTerminalSystem.GetBlocksOfType<IMyDoor>(gateslist, b => b.CubeGrid == meCubeGrid && b.CustomName.Contains(droneid));
+            if (gateslist.Count > 0)
+            {
+                for (int i = 0; i < gateslist.Count; i++)
+                {
+                    if (gateslist[i] != null)
+                    {
+                        if (!gateslist[i].CustomName.Contains("GMDC"))
+                        {
+                            blocktag.Clear();
+                            blocktag.Append(gateslist[i].CustomName).Append($" [GMDC] {i}");
+                            gateslist[i].CustomName = blocktag.ToString();
+                            blocktag.Clear();
+                        }
+                    }
+                }
+            }
         }
 
 

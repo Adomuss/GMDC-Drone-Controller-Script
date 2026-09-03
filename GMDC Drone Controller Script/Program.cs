@@ -3545,12 +3545,12 @@ namespace IngameScript
                         }
                         else
                         {
-                            recievedDroneVersion = "";
+                            recievedDroneVersion = "N/A";
                         }
                     }
                     else
                     {
-                        recievedDroneVersion = "";
+                        recievedDroneVersion = "N/A";
                     }
                     //   Echo("M3:1:3");
                     //   Echo($"M3:1:3:{recievedDroneVersion}");

@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.628B";
+        string ver = "V0.629B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -106,7 +106,7 @@ namespace IngameScript
         string recievedDroneDockingReady;
         int recievedDroneCommandRequest;
         string recievedDroneVersion;
-        bool recievedDroneAIfault;
+        string recievedDroneAIfault;
         string rc_auto_pilot_enabled;
         int recieved_drone_list_position;
         double rc_d_cn = 0.0;
@@ -117,8 +117,6 @@ namespace IngameScript
         string rc_dn_chg;
         string rc_dn_gas;
         string rc_dn_str;
-        string rc_dn_ver;
-        string rc_dn_AIfault;
 
         int currentGPSIndex = 0;
         int realGPSIndex = 0;
@@ -536,19 +534,19 @@ namespace IngameScript
                 ClearAllNonEmptyLists();
                 return;
             }
-            // Echo("M1");
+          //   Echo("M1");
             ProcessInputs(argument);
-            //   Echo("M2");
+           //    Echo("M2");
             ManageCommunications();
-            //   Echo("M3");
+          //     Echo("M3");
             UpdateMiningGrid();
-            //    Echo("M4");
+           //     Echo("M4");
             HandleDroneOperations();
-            //   Echo("M5");
+          //     Echo("M5");
             RenderDisplays();
-            //   Echo("M6");
+          //     Echo("M6");
             UpdateStatus();
-            //   Echo("M7");
+           //  Echo("M7");
             Echo(sbtexttemp.ToString());
             sbtexttemp.Clear();
             sbtexttemp.AppendLine($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
@@ -2865,8 +2863,11 @@ namespace IngameScript
                 {
                     //pull first message in the list if valid
                     droneDataInput = droneMessagesBuffer[0].Data.ToString();
+                 //   Echo("M3:1");
                     ProcessDroneMessageData(droneDataInput);
+                //    Echo("M3:2");
                     ProcessReceivedDroneMessageToDroneLists();
+               //     Echo("M3:3");
                 }
                 if (droneMessagesBuffer.Count <= 0)
                 {
@@ -3361,8 +3362,8 @@ namespace IngameScript
                 stats.IdleD += status.Equals("Docked Idle") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
-                stats.Ok += damage == "OK" ? 1 : 0;    
-                stats.AIfault += drone.AIfault ? 1 : 0;
+                stats.Ok += damage == "OK" ? 1 : 0;
+                stats.AIfault = drone.AIfault == "True" ? 1 : 0;
             }
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle_undocked = stats.Idle;
@@ -3491,37 +3492,74 @@ namespace IngameScript
                     rc_dn_chg = messageData[14];
                     rc_dn_gas = messageData[15];
                     rc_dn_str = messageData[16];
-                    if (messageData.Length > 16)
+                    if (messageData.Length > 17)
                     {
                         rc_dn_gps_lst = messageData[17];
                     }
-                    if (messageData.Length > 17)
+                    if (messageData.Length > 18)
                     {
                         rc_dn_cargo_full = messageData[18];
                     }
-                    if (messageData.Length > 18)
+                    if (messageData.Length > 19)
                     {
                         rc_dn_rchg_req = messageData[19];
                     }
-                    if (messageData.Length > 19)
+                    if (messageData.Length > 20)
                     {
                         recievedDroneAutdock = messageData[20];
                     }
-                    if (messageData.Length > 20)
+                    //  Echo("M3:1:0");
+                    if (messageData.Length > 21)
                     {
                         recievedDroneDockingReady = messageData[21];
                     }
-                    if(messageData.Length > 21)
+                    else
                     {
-                        rc_comreq = messageData[22];
+                        recievedDroneDockingReady = "False";
                     }
+                    //    Echo("M3:1:1");
+                    //   Echo($"M3:1:1:{recievedDroneDockingReady}");
                     if (messageData.Length > 22)
                     {
-                        rc_dn_ver = messageData[23];
+                        if (messageData[22] != null)
+                        {
+                            rc_comreq = messageData[22];
+                        }
+                        else
+                        {
+                            rc_comreq = "";
+                        }
+
                     }
+                    else
+                    {
+                        rc_comreq = "";
+                    }
+                    //   Echo("M3:1:2");
+                    //   Echo($"M3:1:2:{rc_comreq}");
                     if (messageData.Length > 23)
                     {
-                        rc_dn_AIfault = messageData[24];
+                        if (messageData[23] != null)
+                        {
+                            recievedDroneVersion = messageData[23];
+                        }
+                        else
+                        {
+                            recievedDroneVersion = "";
+                        }
+                    }
+                    else
+                    {
+                        recievedDroneVersion = "";
+                    }
+                    //   Echo("M3:1:3");
+                    //   Echo($"M3:1:3:{recievedDroneVersion}");
+                    if (messageData.Length > 24)
+                    {
+                        if (messageData[24] != null)
+                        {
+                            recievedDroneAIfault = messageData[24];
+                        }
                     }
                 }
                 else
@@ -3547,8 +3585,8 @@ namespace IngameScript
                     rc_dn_cargo_full = "";
                     rc_dn_rchg_req = "";
                     rc_comreq = "";
-                    rc_dn_ver = "";
-                    rc_dn_AIfault = "";
+                    recievedDroneVersion = "";
+                    recievedDroneAIfault = "";
 
                 }
                 if (rc_dn_gps_lst == "")
@@ -3570,17 +3608,16 @@ namespace IngameScript
                 {
                     rc_d_cn = 0.0;
                 }
+
                 if (!int.TryParse(rc_comreq, out recievedDroneCommandRequest))
                 {
                     recievedDroneCommandRequest = 0;
                 }
-                recievedDroneVersion = rc_dn_ver;
-                if (!bool.TryParse(rc_dn_AIfault, out recievedDroneAIfault))
-                {
-                    recievedDroneAIfault = false;
-                }
+
             }
+            // Echo("M3:1:6");
         }
+        
         void GetRemoteControlData(string input, IMyTerminalBlock block)
         {
             if (block == null || remoteControlTag[0] == null)
@@ -4250,24 +4287,53 @@ namespace IngameScript
 
             bool d1BoreValid = drone1.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone1.GpsListPosition < gridBoreFinished.Count;
             bool d2BoreValid = slu && drone2.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone2.GpsListPosition < gridBoreFinished.Count;
+            string d1state = "";
+            string d2state = "";
+
+            if ((drone1.Dst) || (drone1.DamageState == "DMG"))
+                {
+                    d1state = "FLT";
+                }
+                else
+                {
+                    d1state = "NOM";
+                }          
+
+            if (slu) {
+                if ((drone2.Dst) || (drone2.DamageState == "DMG"))
+                {
+                    d2state = "FLT";
+                }
+                else
+                {
+                    d2state = "NOM";
+                }
+            }
 
             droneInformation.AppendLine();
 
             // We use 's' to track the starting length of the builder for dynamic space padding
             int s;
 
+            // Row -1 
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Version: ").Append(drone1.droneVer).Append(" - ").Append(d1state).Append(" ").Append(drone1.DamageState);
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Version: ").Append(drone2.droneVer).Append(" - ").Append(d2state).Append(" ").Append(drone2.DamageState);
+            droneInformation.AppendLine();
+
             // Row 0
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append(" Status: ").Append(drone1.DamageState).Append(" ").Append(drone1.ControlStatus);
+            droneInformation.Append(droneID[ivl]).Append("Status: ").Append(" ").Append(drone1.ControlStatus);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Status: ").Append(drone2.DamageState).Append(" ").Append(drone2.ControlStatus);
+            if (slu) droneInformation.Append(droneID[ivl2]).Append("Status: ").Append(" ").Append(drone2.ControlStatus);
             droneInformation.AppendLine();
 
             // Row 1
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append(" Docked: ").Append(drone1.Docked).Append(" Rdy: ").Append(drone1.IsReady).Append(" AF: ").Append(drone1.AIfault);
+            droneInformation.Append(droneID[ivl]).Append(" Docked: ").Append(drone1.Docked).Append(" Rdy: ").Append(drone1.IsReady);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Docked: ").Append(drone2.Docked).Append(" Rdy: ").Append(drone2.IsReady).Append(" AF: ").Append(drone1.AIfault);
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Docked: ").Append(drone2.Docked).Append(" Rdy: ").Append(drone2.IsReady);
             droneInformation.AppendLine();
 
             // Row 2
@@ -4309,9 +4375,9 @@ namespace IngameScript
 
             // Row 6
             s = droneInformation.Length;
-            droneInformation.Append("Ver: ").Append(drone1.droneVer).Append(" Charge: ").Append(drone1.ChargeStorage).Append("% Tank: ").Append(drone1.GasStorage).Append("% Cargo: ").Append(drone1.OreStorage).Append("%");
+            droneInformation.Append("Charge: ").Append(drone1.ChargeStorage).Append("% Tank: ").Append(drone1.GasStorage).Append("% Cargo: ").Append(drone1.OreStorage).Append("%");
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Ver: ").Append(drone2.droneVer).Append(" Charge: ").Append(drone2.ChargeStorage).Append("% Tank: ").Append(drone2.GasStorage).Append("% Cargo: ").Append(drone2.OreStorage).Append("%");
+            if (slu) droneInformation.Append("Charge: ").Append(drone2.ChargeStorage).Append("% Tank: ").Append(drone2.GasStorage).Append("% Cargo: ").Append(drone2.OreStorage).Append("%");
             droneInformation.AppendLine();
 
             // Row 7
@@ -4323,23 +4389,23 @@ namespace IngameScript
 
             // Row 8
             s = droneInformation.Length;
-            droneInformation.Append("Current depth: ").Append(drone1.BoreDepthCurrent).Append("m");
+            droneInformation.Append("Current depth: ").Append(drone1.BoreDepthCurrent).Append("m").Append(" - AI Flt: ").Append(drone1.AIfault);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Current depth: ").Append(drone2.BoreDepthCurrent).Append("m");
+            if (slu) droneInformation.Append("Current depth: ").Append(drone2.BoreDepthCurrent).Append("m").Append(" - AI Flt: ").Append(drone2.AIfault);
             droneInformation.AppendLine();
 
             // Row 9
             s = droneInformation.Length;
-            droneInformation.Append("Drn ct.seq: ").Append(drone1.ControlSequence).Append(" Recall seq: ").Append(drone1.RecallSequence).Append(" ").Append(drone1.RecallList).Append(" Cm.seq: ").Append(drone1.commandRequest);
+            droneInformation.Append("Drone seq: ").Append(drone1.ControlSequence).Append(" Recall seq: ").Append(drone1.RecallSequence).Append(" ").Append(drone1.RecallList).Append(" CReq: ").Append(drone1.commandRequest);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Drn ct.seq: ").Append(drone2.ControlSequence).Append(" Recall seq: ").Append(drone2.RecallSequence).Append(" ").Append(drone2.RecallList).Append(" Cm.seq: ").Append(drone1.commandRequest);
+            if (slu) droneInformation.Append("Drone seq: ").Append(drone2.ControlSequence).Append(" Recall seq: ").Append(drone2.RecallSequence).Append(" ").Append(drone2.RecallList).Append(" CReq: ").Append(drone2.commandRequest);
             droneInformation.AppendLine();
 
             // Row 10
             s = droneInformation.Length;
-            droneInformation.Append("Location: ").Append(drone1.GpsListPosition).Append(" Asnd: ").Append(drone1.AssignedCoordinates).Append(" Unit OK: ").Append(drone1.Dst);
+            droneInformation.Append("Location: ").Append(drone1.GpsListPosition).Append(" Assigned: ").Append(drone1.AssignedCoordinates);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Location: ").Append(drone2.GpsListPosition).Append(" Asnd: ").Append(drone2.AssignedCoordinates).Append(" Unit OK: ").Append(drone2.Dst);
+            if (slu) droneInformation.Append("Location: ").Append(drone2.GpsListPosition).Append(" Assigned: ").Append(drone2.AssignedCoordinates);
             droneInformation.AppendLine();
 
             // Row 11
@@ -4348,6 +4414,8 @@ namespace IngameScript
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
             if (slu) droneInformation.Append("X: ").Append(drone2.LocationX).Append(" Y: ").Append(drone2.LocationY).Append(" Z: ").Append(drone2.LocationZ);
             droneInformation.AppendLine();
+
+
         }
 
         IEnumerator<bool> GenListDisplay()
@@ -5700,7 +5768,7 @@ namespace IngameScript
                         {
                             myTextSurfaces_d2[i].ContentType = ContentType.TEXT_AND_IMAGE;
                             myTextSurfaces_d2[i].Alignment = TextAlignment.LEFT;
-                            myTextSurfaces_d2[i].FontSize = 0.296f;
+                            myTextSurfaces_d2[i].FontSize = 0.290f;
                             myTextSurfaces_d2[i].Font = "Monospace";
                         }
                     }
@@ -5732,6 +5800,7 @@ namespace IngameScript
                         {
                             myTextSurfaces_d4[i].ContentType = ContentType.SCRIPT;
                             myTextSurfaces_d4[i].Script = "";
+
                         }
                     }
                 }
@@ -5902,7 +5971,7 @@ namespace IngameScript
                 newDrone.DockingReady = recievedDroneDockingReady;
                 newDrone.commandRequest = recievedDroneCommandRequest;
                 newDrone.droneVer = recievedDroneVersion;
-                newDrone.AIfault = false;
+                newDrone.AIfault = recievedDroneAIfault;
                 newDrone.AssignedGates = new List<IMyDoor>();
                 ScanDoors(safeDroneName, newDrone.AssignedGates);
 
@@ -5939,12 +6008,12 @@ namespace IngameScript
                 drone.DockingReady = recievedDroneDockingReady;
                 drone.commandRequest = recievedDroneCommandRequest;
                 drone.droneVer = recievedDroneVersion;
-                drone.AIfault = false;
-                if (drone.Dcs <= bclm)
+                drone.AIfault = recievedDroneAIfault;
+                if (drone.Dcs <= bclm || drone.AIfault == "True")
                 {
                     drone.Dst = false;
                 }
-                if (drone.Dcs > bclm)
+                if (drone.Dcs > bclm && drone.AIfault != "True")
                 {
                     drone.Dst = true;
                 }
@@ -6225,6 +6294,8 @@ namespace IngameScript
             public string OreStorage;
             public string CargoFull;
             public string RechargeRequest;
+            public string droneVer;
+            public string AIfault;
 
             // State Machine Flags
             public bool AssignedCoordinates;
@@ -6241,8 +6312,8 @@ namespace IngameScript
             public int AssignsCount;
             public bool canlaunch;
             public int commandRequest;
-            public string droneVer;
-            public bool AIfault; 
+            
+            
             public List<IMyDoor> AssignedGates = new List<IMyDoor>();
         }
 

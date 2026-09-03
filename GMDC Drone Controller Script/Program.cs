@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.627B";
+        string ver = "V0.628B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -105,6 +105,8 @@ namespace IngameScript
         string recievedDroneAutdock;
         string recievedDroneDockingReady;
         int recievedDroneCommandRequest;
+        string recievedDroneVersion;
+        bool recievedDroneAIfault;
         string rc_auto_pilot_enabled;
         int recieved_drone_list_position;
         double rc_d_cn = 0.0;
@@ -115,6 +117,9 @@ namespace IngameScript
         string rc_dn_chg;
         string rc_dn_gas;
         string rc_dn_str;
+        string rc_dn_ver;
+        string rc_dn_AIfault;
+
         int currentGPSIndex = 0;
         int realGPSIndex = 0;
         string rxChannelDrone = "";
@@ -302,6 +307,7 @@ namespace IngameScript
         StringBuilder sb = new StringBuilder();
         int totalDronesDamaged = 0;
         int totalDronesUnknown = 0;
+        int totalAIfault = 0;
         //  int t_dn_ok = 0;
         string g1;
         string g2;
@@ -955,7 +961,7 @@ namespace IngameScript
                     lightIndicatorActual.BlinkIntervalSeconds = 0.7f;
                 }
                 lightIndicatorActual.SetValue("Color", Cyellow);
-                if (totalDronesDamaged > 0)
+                if ((totalDronesDamaged > 0) || (totalAIfault > 0))
                 {
                     lightIndicatorActual.BlinkIntervalSeconds = 0.7f;
                     lightIndicatorActual.SetValue("Color", Coren);
@@ -3324,7 +3330,7 @@ namespace IngameScript
         }
         private struct DroneStats
         {
-            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav, IdleD;
+            public int Docking, Docked, Undocking, Undocked, Damage, Unknown, Ok, Exit, Idle, Recharge, Unload, Mining, RTBA, RTBB, Nav, IdleD, AIfault;
         }
 
         private void UpdateDroneCounts()
@@ -3355,7 +3361,8 @@ namespace IngameScript
                 stats.IdleD += status.Equals("Docked Idle") ? 1 : 0;
                 stats.Damage += damage == "DMG" ? 1 : 0;
                 stats.Unknown += damage == "UNK" ? 1 : 0;
-                stats.Ok += damage == "OK" ? 1 : 0;               
+                stats.Ok += damage == "OK" ? 1 : 0;    
+                stats.AIfault += drone.AIfault ? 1 : 0;
             }
             t_drn_dckg = stats.Docking; t_drn_dck = stats.Docked; t_drn_udckg = stats.Undocking;
             t_drn_udck = stats.Undocked; t_drn_exit = stats.Exit; t_drn_idle_undocked = stats.Idle;
@@ -3363,6 +3370,7 @@ namespace IngameScript
             t_drn_nav = stats.Nav; t_drn_idle_docked = stats.IdleD;
             totalDronesDamaged = stats.Damage; totalDronesUnknown = stats.Unknown; // t_dn_ok = stats.Ok;
             totalDronesMining = totalDronesActive - t_drn_dckg;
+            totalAIfault = stats.AIfault;
             if (totalDronesMining < 0)
             {
                 totalDronesMining = 0;
@@ -3507,6 +3515,14 @@ namespace IngameScript
                     {
                         rc_comreq = messageData[22];
                     }
+                    if (messageData.Length > 22)
+                    {
+                        rc_dn_ver = messageData[23];
+                    }
+                    if (messageData.Length > 23)
+                    {
+                        rc_dn_AIfault = messageData[24];
+                    }
                 }
                 else
                 {
@@ -3531,6 +3547,8 @@ namespace IngameScript
                     rc_dn_cargo_full = "";
                     rc_dn_rchg_req = "";
                     rc_comreq = "";
+                    rc_dn_ver = "";
+                    rc_dn_AIfault = "";
 
                 }
                 if (rc_dn_gps_lst == "")
@@ -3555,6 +3573,11 @@ namespace IngameScript
                 if (!int.TryParse(rc_comreq, out recievedDroneCommandRequest))
                 {
                     recievedDroneCommandRequest = 0;
+                }
+                recievedDroneVersion = rc_dn_ver;
+                if (!bool.TryParse(rc_dn_AIfault, out recievedDroneAIfault))
+                {
+                    recievedDroneAIfault = false;
                 }
             }
         }
@@ -4242,9 +4265,9 @@ namespace IngameScript
 
             // Row 1
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append(" Docked: ").Append(drone1.Docked).Append(" Rdy: ").Append(drone1.IsReady);
+            droneInformation.Append(droneID[ivl]).Append(" Docked: ").Append(drone1.Docked).Append(" Rdy: ").Append(drone1.IsReady).Append(" AF: ").Append(drone1.AIfault);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Docked: ").Append(drone2.Docked).Append(" Rdy: ").Append(drone2.IsReady);
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Docked: ").Append(drone2.Docked).Append(" Rdy: ").Append(drone2.IsReady).Append(" AF: ").Append(drone1.AIfault);
             droneInformation.AppendLine();
 
             // Row 2
@@ -4286,9 +4309,9 @@ namespace IngameScript
 
             // Row 6
             s = droneInformation.Length;
-            droneInformation.Append("Charge: ").Append(drone1.ChargeStorage).Append("% Tank: ").Append(drone1.GasStorage).Append("% Cargo: ").Append(drone1.OreStorage).Append("%");
+            droneInformation.Append("Ver: ").Append(drone1.droneVer).Append(" Charge: ").Append(drone1.ChargeStorage).Append("% Tank: ").Append(drone1.GasStorage).Append("% Cargo: ").Append(drone1.OreStorage).Append("%");
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append("Charge: ").Append(drone2.ChargeStorage).Append("% Tank: ").Append(drone2.GasStorage).Append("% Cargo: ").Append(drone2.OreStorage).Append("%");
+            if (slu) droneInformation.Append("Ver: ").Append(drone2.droneVer).Append(" Charge: ").Append(drone2.ChargeStorage).Append("% Tank: ").Append(drone2.GasStorage).Append("% Cargo: ").Append(drone2.OreStorage).Append("%");
             droneInformation.AppendLine();
 
             // Row 7
@@ -5878,6 +5901,8 @@ namespace IngameScript
                 newDrone.Autodock = recievedDroneAutdock;
                 newDrone.DockingReady = recievedDroneDockingReady;
                 newDrone.commandRequest = recievedDroneCommandRequest;
+                newDrone.droneVer = recievedDroneVersion;
+                newDrone.AIfault = false;
                 newDrone.AssignedGates = new List<IMyDoor>();
                 ScanDoors(safeDroneName, newDrone.AssignedGates);
 
@@ -5913,6 +5938,8 @@ namespace IngameScript
                 drone.Autodock = recievedDroneAutdock;
                 drone.DockingReady = recievedDroneDockingReady;
                 drone.commandRequest = recievedDroneCommandRequest;
+                drone.droneVer = recievedDroneVersion;
+                drone.AIfault = false;
                 if (drone.Dcs <= bclm)
                 {
                     drone.Dst = false;
@@ -5995,7 +6022,7 @@ namespace IngameScript
             displayTextMain.Append("Undocking: ").Append(t_drn_udckg).Append(" Undocked: ").Append(t_drn_udck)
                 .Append(" - Idle: ").Append(t_drn_idle_undocked).Append(" Nav: ").Append(t_drn_nav)
                 .Append(" Mining: ").Append(t_drn_mine).Append(" Exit: ").Append(t_drn_exit).AppendLine();
-
+            displayTextMain.Append("Drone AI Faults: ").Append(totalAIfault).AppendLine();
             displayTextMain.AppendLine();
 
             displayTextMain.Append("Surface distance: ").Append(safe_dstvl).AppendLine("m");
@@ -6214,6 +6241,8 @@ namespace IngameScript
             public int AssignsCount;
             public bool canlaunch;
             public int commandRequest;
+            public string droneVer;
+            public bool AIfault; 
             public List<IMyDoor> AssignedGates = new List<IMyDoor>();
         }
 

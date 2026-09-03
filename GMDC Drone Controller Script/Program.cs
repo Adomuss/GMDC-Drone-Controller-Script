@@ -3473,25 +3473,60 @@ namespace IngameScript
             //Define GPS coordinates from 
             if (messageData.Length > 5)
             {
-                receivedDroneName = messageData[0];
+
+                    receivedDroneName = messageData[0];
+                
                 if (receivedDroneName.Contains(drone_tag))
                 {
-                    receivedDroneDamageStatus = messageData[1];
-                    receivedDroneTunnelFinished = messageData[2];
-                    receivedDroneStatus = messageData[3];
-                    receivedDroneDocked = messageData[4];
-                    receivedDroneUndocked = messageData[5];
-                    recived_drone_autopilot = messageData[6];
-                    rc_auto_pilot_enabled = messageData[7];
-                    rc_locx = messageData[8];
-                    rc_locy = messageData[9];
-                    rc_locz = messageData[10];
-                    rc_dn_drl_dpth = messageData[11];
-                    rc_dn_drl_crnt = messageData[12];
-                    rc_dn_drl_strt = messageData[13];
-                    rc_dn_chg = messageData[14];
-                    rc_dn_gas = messageData[15];
-                    rc_dn_str = messageData[16];
+                        receivedDroneDamageStatus = messageData[1];                    
+                        receivedDroneTunnelFinished = messageData[2];                    
+                        receivedDroneStatus = messageData[3];
+                        receivedDroneDocked = messageData[4];
+                        receivedDroneUndocked = messageData[5];
+                    if (messageData.Length > 6)
+                    {
+                        recived_drone_autopilot = messageData[6];
+                    }
+                    if (messageData.Length > 7)
+                    {
+                        rc_auto_pilot_enabled = messageData[7];
+                    }
+                    if (messageData.Length > 8)
+                    {
+                        rc_locx = messageData[8];
+                    }
+                    if (messageData.Length > 9)
+                    {
+                        rc_locy = messageData[9];
+                    }
+                    if (messageData.Length > 10)
+                    {
+                        rc_locz = messageData[10];
+                    }
+                    if (messageData.Length > 11)
+                    {
+                        rc_dn_drl_dpth = messageData[11];
+                    }
+                    if (messageData.Length > 12)
+                    {
+                        rc_dn_drl_crnt = messageData[12];
+                    }
+                    if (messageData.Length > 13)
+                    {
+                        rc_dn_drl_strt = messageData[13];
+                    }
+                    if (messageData.Length > 14)
+                    {
+                        rc_dn_chg = messageData[14];
+                    }
+                    if (messageData.Length > 15)
+                    {
+                        rc_dn_gas = messageData[15];
+                    }
+                    if (messageData.Length > 16)
+                    {
+                        rc_dn_str = messageData[16];
+                    }
                     if (messageData.Length > 17)
                     {
                         rc_dn_gps_lst = messageData[17];
@@ -4880,7 +4915,7 @@ namespace IngameScript
                         double xPlanar = Vector3D.Dot(relativePoint, xAxis);
                         double yPlanar = Vector3D.Dot(relativePoint, yAxis);
 
-                        double cx = xPlanar;
+                        double cx = -xPlanar;
                         double cy = -yPlanar;
 
                         if (doRotation)

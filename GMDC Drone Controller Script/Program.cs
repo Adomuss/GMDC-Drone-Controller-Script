@@ -4274,6 +4274,185 @@ namespace IngameScript
 
             DroneData drone1;
             DroneData drone2 = null;
+
+            if (!Swarm.TryGetValue(droneID[ivl], out drone1)) return;
+
+            if (slu)
+            {
+                if (!Swarm.TryGetValue(droneID[ivl2], out drone2))
+                {
+                    slu = false; // Fallback safely to single-column if the 2nd drone is missing
+                }
+            }
+
+            bool d1BoreValid = drone1.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone1.GpsListPosition < gridBoreFinished.Count;
+            bool d2BoreValid = slu && drone2.GpsListPosition != -1 && gridBoreFinished.Count > 0 && drone2.GpsListPosition < gridBoreFinished.Count;
+            string d1state = "";
+            string d2state = "";
+
+            if ((drone1.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone1.DamageState == "DMG"))
+            {
+                d1state = "FLT";
+            }
+            else if ((mustRecall_Command && drone1.Dst) || (drone1.RecallList))
+            {
+                d1state = "RCL";
+            }
+            else if ((mustUndockCommand && drone1.Dst && drone1.DamageState != "DMG"))
+            {
+                d1state = "EGR";
+            }
+            else if ((canReset && drone1.Dst && drone1.DamageState != "DMG"))
+            {
+                d1state = "RST";
+            }
+            else
+            {
+                d1state = "NOM";
+            }
+
+            if (slu)
+            {
+                if ((drone2.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone2.DamageState == "DMG"))
+                {
+                    d2state = "FLT";
+                }
+                else if ((mustRecall_Command && drone2.Dst) || (drone2.RecallList))
+                {
+                    d2state = "RCL";
+                }
+                else if ((mustUndockCommand && drone2.Dst && drone2.DamageState != "DMG"))
+                {
+                    d2state = "EGR";
+                }
+                else if ((canReset && drone2.Dst && drone2.DamageState != "DMG"))
+                {
+                    d2state = "RST";
+                }
+                else
+                {
+                    d2state = "NOM";
+                }
+            }
+
+            droneInformation.AppendLine();
+
+            int s;
+
+            // Row -1 
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Version: ").Append(drone1.droneVer).Append(" - ").Append(d1state).Append(" ").Append(drone1.DamageState);
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Version: ").Append(drone2.droneVer).Append(" - ").Append(d2state).Append(" ").Append(drone2.DamageState);
+            droneInformation.AppendLine();
+
+            // Row 0
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Status: ").Append(drone1.ControlStatus);
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Status: ").Append(drone2.ControlStatus);
+            droneInformation.AppendLine();
+
+            // Row 1
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Docked: ").Append(YN(drone1.Docked)).Append(" Rdy: ").Append(YN(drone1.IsReady));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Docked: ").Append(YN(drone2.Docked)).Append(" Rdy: ").Append(YN(drone2.IsReady));
+            droneInformation.AppendLine();
+
+            // Row 2
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Undocked: ").Append(YN(drone1.Undocked)).Append(" Gates: ").Append(drone1.AssignedGates.Count).Append(" ");
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Undocked: ").Append(YN(drone2.Undocked)).Append(" Gates: ").Append(drone2.AssignedGates.Count).Append(" ");
+            droneInformation.AppendLine();
+
+            // Row 3 (Bore validation)
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Finished: ").Append(YN(drone1.TunnelFinished)).Append(" Bore: ");
+            if (d1BoreValid) droneInformation.Append(gridBoreFinished[drone1.GpsListPosition]);
+            else droneInformation.Append("N/A");
+
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+
+            if (slu)
+            {
+                droneInformation.Append(droneID[ivl2]).Append(" Finished: ").Append(YN(drone2.TunnelFinished)).Append(" Bore: ");
+                if (d2BoreValid) droneInformation.Append(gridBoreFinished[drone2.GpsListPosition]);
+                else droneInformation.Append("N/A");
+            }
+            droneInformation.AppendLine();
+
+            // Row 4
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Mining: ").Append(YN(drone1.IsMining)).Append(" HGR: ").Append(YN(drone1.canlaunch));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Mining: ").Append(YN(drone2.IsMining)).Append("  HGR: ").Append(YN(drone2.canlaunch));
+            droneInformation.AppendLine();
+
+            // Row 5
+            s = droneInformation.Length;
+            droneInformation.Append(droneID[ivl]).Append(" Waiting: ").Append(YN(drone1.MustWait)).Append(" Reset: ").Append(YN(drone1.ResetFunction));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Waiting: ").Append(YN(drone2.MustWait)).Append(" Reset: ").Append(YN(drone2.ResetFunction));
+            droneInformation.AppendLine();
+
+            // Row 6
+            s = droneInformation.Length;
+            droneInformation.Append("Charge: ").Append(drone1.ChargeStorage).Append("% Tank: ").Append(drone1.GasStorage).Append("% Cargo: ").Append(drone1.OreStorage).Append("%");
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("Charge: ").Append(drone2.ChargeStorage).Append("% Tank: ").Append(drone2.GasStorage).Append("% Cargo: ").Append(drone2.OreStorage).Append("%");
+            droneInformation.AppendLine();
+
+            // Row 7
+            s = droneInformation.Length;
+            droneInformation.Append("Drill depth: ").Append(drone1.BoreDepth).Append("m Start: ").Append(drone1.MineDepthStartStatus).Append("m");
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("Drill depth: ").Append(drone2.BoreDepth).Append("m Start: ").Append(drone2.MineDepthStartStatus).Append("m");
+            droneInformation.AppendLine();
+
+            // Row 8
+            s = droneInformation.Length;
+            droneInformation.Append("Current depth: ").Append(drone1.BoreDepthCurrent).Append("m").Append(" - AI Flt: ").Append(YN(drone1.AIfault));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("Current depth: ").Append(drone2.BoreDepthCurrent).Append("m").Append(" - AI Flt: ").Append(YN(drone2.AIfault));
+            droneInformation.AppendLine();
+
+            // Row 9
+            s = droneInformation.Length;
+            droneInformation.Append("Drone seq: ").Append(drone1.ControlSequence).Append(" Recall seq: ").Append(drone1.RecallSequence).Append(" ").Append(YN(drone1.RecallList)).Append(" CReq: ").Append((drone1.commandRequest));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("Drone seq: ").Append(drone2.ControlSequence).Append(" Recall seq: ").Append(drone2.RecallSequence).Append(" ").Append(YN(drone2.RecallList)).Append(" CReq: ").Append((drone2.commandRequest));
+            droneInformation.AppendLine();
+
+            // Row 10
+            s = droneInformation.Length;
+            droneInformation.Append("Location: ").Append(drone1.GpsListPosition).Append(" Assigned: ").Append(YN(drone1.AssignedCoordinates));
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("Location: ").Append(drone2.GpsListPosition).Append(" Assigned: ").Append(YN(drone2.AssignedCoordinates));
+            droneInformation.AppendLine();
+
+            // Row 11
+            s = droneInformation.Length;
+            droneInformation.Append("X: ").Append(drone1.LocationX).Append(" Y: ").Append(drone1.LocationY).Append(" Z: ").Append(drone1.LocationZ);
+            droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
+            if (slu) droneInformation.Append("X: ").Append(drone2.LocationX).Append(" Y: ").Append(drone2.LocationY).Append(" Z: ").Append(drone2.LocationZ);
+            droneInformation.AppendLine();
+        }
+        private string YN(bool val) => val ? "Yes" : "No";
+
+        private string YN(string val)
+        {
+            if (val == "True" || val == "true") return "Yes";
+            if (val == "False" || val == "false") return "No";
+            return val; // Returns original string if it is not "True"/"False"
+        }
+        public void DroneScreenBuilder_Old(int ivl, int ivl2, bool slu)
+        {
+            if (droneID.Count <= 0) return;
+
+            DroneData drone1;
+            DroneData drone2 = null;
             // EXCEPTION & NRE FIX: Safe Dictionary Lookups without allocating 'new DroneData()'
             if (!Swarm.TryGetValue(droneID[ivl], out drone1)) return;
 

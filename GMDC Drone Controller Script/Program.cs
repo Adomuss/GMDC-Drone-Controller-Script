@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.630B";
+        string ver = "V0.631B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -4689,7 +4689,7 @@ namespace IngameScript
                     double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
 
                     // Screen Y is inverted
-                    double cxHome = xPlanarHome;
+                    double cxHome = -xPlanarHome;
                     double cyHome = -yPlanarHome;
 
                     double magHome = Math.Sqrt(cxHome * cxHome + cyHome * cyHome);
@@ -4727,7 +4727,7 @@ namespace IngameScript
                     double xPlanarHome = Vector3D.Dot(relativePointHome, xAxis);
                     double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
 
-                    double cxHome = xPlanarHome;
+                    double cxHome = -xPlanarHome;
                     double cyHome = -yPlanarHome;
 
                     if (doRotation)
@@ -4817,7 +4817,7 @@ namespace IngameScript
                     double xPlanar = Vector3D.Dot(relativePoint, xAxis);
                     double yPlanar = Vector3D.Dot(relativePoint, yAxis);
 
-                    double cx = xPlanar;
+                    double cx = -xPlanar;
                     double cy = -yPlanar;
 
                     // Apply mathematical rotation to the coordinates

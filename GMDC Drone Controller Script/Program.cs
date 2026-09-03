@@ -4290,7 +4290,7 @@ namespace IngameScript
             string d1state = "";
             string d2state = "";
 
-            if ((drone1.Dst && !mustRecall_Command) || (drone1.DamageState == "DMG"))
+            if ((drone1.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone1.DamageState == "DMG"))
                 {
                     d1state = "FLT";
                 }
@@ -4298,19 +4298,35 @@ namespace IngameScript
             {
                 d1state = "RCL";
             }
+            else if ((mustUndockCommand && drone1.Dst && drone1.DamageState != "DMG"))
+            {
+                d1state = "EGR";
+            }
+            else if ((canReset && drone1.Dst && drone1.DamageState != "DMG"))
+            {
+                d1state = "RST";
+            }
             else
             {
                 d1state = "NOM";
             }          
 
             if (slu) {
-                if ((drone2.Dst && !mustRecall_Command) || (drone2.DamageState == "DMG"))
+                if ((drone2.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone2.DamageState == "DMG"))
                 {
                     d2state = "FLT";
                 }
                 else if ((mustRecall_Command && drone2.Dst) || (drone2.RecallList))
                 {
                     d2state = "RCL";
+                }
+                else if ((mustUndockCommand && drone2.Dst && drone2.DamageState != "DMG"))
+                {
+                    d2state = "EGR";
+                }
+                else if ((canReset && drone2.Dst && drone2.DamageState != "DMG"))
+                {
+                    d2state = "RST";
                 }
                 else
                 {

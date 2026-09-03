@@ -4290,19 +4290,27 @@ namespace IngameScript
             string d1state = "";
             string d2state = "";
 
-            if ((drone1.Dst) || (drone1.DamageState == "DMG"))
+            if ((drone1.Dst && !mustRecall_Command) || (drone1.DamageState == "DMG"))
                 {
                     d1state = "FLT";
                 }
-                else
-                {
-                    d1state = "NOM";
-                }          
+            else if ((mustRecall_Command && drone1.Dst) || (drone1.RecallList))
+            {
+                d1state = "RCL";
+            }
+            else
+            {
+                d1state = "NOM";
+            }          
 
             if (slu) {
-                if ((drone2.Dst) || (drone2.DamageState == "DMG"))
+                if ((drone2.Dst && !mustRecall_Command) || (drone2.DamageState == "DMG"))
                 {
                     d2state = "FLT";
+                }
+                else if ((mustRecall_Command && drone2.Dst) || (drone2.RecallList))
+                {
+                    d2state = "RCL";
                 }
                 else
                 {
@@ -4324,9 +4332,9 @@ namespace IngameScript
 
             // Row 0
             s = droneInformation.Length;
-            droneInformation.Append(droneID[ivl]).Append("Status: ").Append(" ").Append(drone1.ControlStatus);
+            droneInformation.Append(droneID[ivl]).Append(" Status: ").Append(drone1.ControlStatus);
             droneInformation.Append(' ', Math.Max(clbs - (droneInformation.Length - s), 0));
-            if (slu) droneInformation.Append(droneID[ivl2]).Append("Status: ").Append(" ").Append(drone2.ControlStatus);
+            if (slu) droneInformation.Append(droneID[ivl2]).Append(" Status: ").Append(drone2.ControlStatus);
             droneInformation.AppendLine();
 
             // Row 1

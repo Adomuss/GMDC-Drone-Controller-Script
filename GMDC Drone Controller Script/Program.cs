@@ -4725,7 +4725,7 @@ namespace IngameScript
 
                     // Screen Y is inverted
                     double cxHome = -xPlanarHome;
-                    double cyHome = -yPlanarHome;
+                    double cyHome = yPlanarHome;
 
                     double magHome = Math.Sqrt(cxHome * cxHome + cyHome * cyHome);
 
@@ -4763,7 +4763,7 @@ namespace IngameScript
                     double yPlanarHome = Vector3D.Dot(relativePointHome, yAxis);
 
                     double cxHome = -xPlanarHome;
-                    double cyHome = -yPlanarHome;
+                    double cyHome = yPlanarHome;
 
                     if (doRotation)
                     {
@@ -4853,7 +4853,7 @@ namespace IngameScript
                     double yPlanar = Vector3D.Dot(relativePoint, yAxis);
 
                     double cx = -xPlanar;
-                    double cy = -yPlanar;
+                    double cy = yPlanar;
 
                     // Apply mathematical rotation to the coordinates
                     if (doRotation)
@@ -4916,7 +4916,7 @@ namespace IngameScript
                         double yPlanar = Vector3D.Dot(relativePoint, yAxis);
 
                         double cx = -xPlanar;
-                        double cy = -yPlanar;
+                        double cy = yPlanar;
 
                         if (doRotation)
                         {

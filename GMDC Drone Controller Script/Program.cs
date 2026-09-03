@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.629B";
+        string ver = "V0.630B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -4290,7 +4290,7 @@ namespace IngameScript
             string d1state = "";
             string d2state = "";
 
-            if ((drone1.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone1.DamageState == "DMG"))
+            if ((drone1.DamageState == "DMG") || (drone1.AIfault == "True"))
             {
                 d1state = "FLT";
             }
@@ -4302,7 +4302,7 @@ namespace IngameScript
             {
                 d1state = "EGR";
             }
-            else if ((canReset && drone1.Dst && drone1.DamageState != "DMG"))
+            else if (canReset && drone1.Dst && drone1.DamageState != "DMG" && drone1.AIfault != "True")
             {
                 d1state = "RST";
             }
@@ -4313,7 +4313,7 @@ namespace IngameScript
 
             if (slu)
             {
-                if ((drone2.Dst && !mustRecall_Command && !mustUndockCommand && !canReset) || (drone2.DamageState == "DMG"))
+                if ((drone2.DamageState == "DMG") || (drone1.AIfault == "True"))
                 {
                     d2state = "FLT";
                 }
@@ -4325,7 +4325,7 @@ namespace IngameScript
                 {
                     d2state = "EGR";
                 }
-                else if ((canReset && drone2.Dst && drone2.DamageState != "DMG"))
+                else if (canReset && drone2.Dst && drone2.DamageState != "DMG" && drone1.AIfault != "True")
                 {
                     d2state = "RST";
                 }

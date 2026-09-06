@@ -64,7 +64,7 @@ namespace IngameScript
         int spritecount_limit_insert = 250;
         //statics
         int game_factor = 10;
-        string ver = "V0.631B";
+        string ver = "V0.632B";
         string comms = "Comms";
         string MainS = "Main";
         string DroneS = "Drone";
@@ -895,7 +895,7 @@ namespace IngameScript
                     {
                         if (myTextSurfaces_d3[i] != null)
                         {
-                            myTextSurfaces_d3[i].WriteText(displayTextList.ToString());
+                            myTextSurfaces_d3[i].WriteText(displayTextList);
                         }
                     }
                 }

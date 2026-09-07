@@ -546,8 +546,14 @@ namespace IngameScript
             RenderDisplays();
           //     Echo("M6");
             UpdateStatus();
-           //  Echo("M7");
-            Echo(sbtexttemp.ToString());
+            //  Echo("M7");
+            if (_frameCounter % 10 == 0)
+            {
+                Echo($"Runtime: {Math.Round(totalRuntimeMs, 3)}ms");
+                Echo($"Average Runtime: {Math.Round(totalRuntimeMs / runCount, 3)}ms");
+
+                Echo(sbtexttemp.ToString());
+            }
             sbtexttemp.Clear();
             sbtexttemp.AppendLine($"Main Total: {Runtime.CurrentInstructionCount - startInstructions}");
 

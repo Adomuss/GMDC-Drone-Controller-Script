@@ -2384,7 +2384,7 @@ namespace IngameScript
                         drone.TransmissionOutput = c.ToString();
 
                     }
-                    else if ((drone.RecallSequence == 3 && drone.ControlStatus == "Nav" && drone.GpsListPosition == -1) || (drone.RecallSequence == 3 && drone.ControlStatus == "Idle" && drone.GpsListPosition >= -1))
+                    else if ((drone.RecallSequence == 3 && drone.ControlStatus == "Nav" && drone.GpsListPosition == -1) || (drone.RecallSequence == 3 && drone.ControlStatus == "Idle" && drone.GpsListPosition >= -1)|| (drone.RecallSequence == 3 && drone.ControlStatus == "RTB" && drone.GpsListPosition >= -1))
                     {
                         drone.RecallSequence = 4;
                         gpsGridPositionValue = drone.GpsListPosition;
@@ -2418,7 +2418,7 @@ namespace IngameScript
                         drone.TransmissionOutput = c.ToString();
 
                     }
-                    else if ((drone.RecallSequence == 5 && drone.ControlStatus.Contains("Docked") )|| (drone.RecallSequence == 0 && drone.ControlStatus.Contains("Docked")))
+                    else if ((drone.RecallSequence == 5 && drone.ControlStatus.Contains("Docked")) || (drone.RecallSequence == 0 && drone.ControlStatus.Contains("Docked")))
                     {
                         drone.RecallSequence = 0;
                         drone.AssignedCoordinates = false;

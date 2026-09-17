@@ -2211,7 +2211,7 @@ namespace IngameScript
             }
             #region job_grid_processing
             //if mining grid data empty resolve issues to avoid exception
-            if (numPointsY == 0 && !gridCreated || numPointsX == 0 && !gridCreated || gridSize == 0 && !gridCreated)
+            if ((numPointsY == 0 && !gridCreated) || (numPointsX == 0 && !gridCreated) || (gridSize == 0 && !gridCreated))
             {
                 gridBorePosition.Clear();
                 gridBoreOccupied.Clear();
@@ -2297,7 +2297,7 @@ namespace IngameScript
                     gridInitialisationComplete = true;
                 }
                 //coroutine management grid creation
-                if (gridCoroutine == null && !gridInitialisationComplete && bores_regen || gridCoroutine != null && !gridCoroutine.MoveNext() && !gridInitialisationComplete && bores_regen)
+                if ((gridCoroutine == null && !gridInitialisationComplete && bores_regen) || (gridCoroutine != null && !gridCoroutine.MoveNext() && !gridInitialisationComplete && bores_regen))
                 {
                     gridCoroutine = GenGrdPosits(centerPoint, planeNrml, gridSize, numPointsX, numPointsY, coreOutGrid, perimeterOnly);
                 }
@@ -2372,7 +2372,7 @@ namespace IngameScript
 
                 totalMiningRuns = gridBorePosition.Count;
 
-                if (numPointsY == 0 || numPointsY == 0 || gridSize == 0 || numPointsY == 0 && numPointsY == 0 && gridSize == 0)
+                if ((numPointsY == 0 )||( numPointsY == 0)|| (gridSize == 0) || (numPointsY == 0 && numPointsY == 0 && gridSize == 0))
                 {
                     miningGridValid = false;
                 }

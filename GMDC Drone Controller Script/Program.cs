@@ -1871,11 +1871,17 @@ namespace IngameScript
                     drone.RecallList = true;
                 }
                 #endregion
+                #region Drone Recall Command Handling
+                if (mustRecall_Command && !drone.RecallList && !mustUndockCommand)
+                {
+                    drone.RecallList = true;
+                }
+                #endregion
                 #region Drone recall state machine
                 if (drone.RecallList)
                 {
                     drone.canlaunch = true;
-                    if ((drone.RecallSequence == 0 && drone.ControlStatus == "Idle" )|| (drone.RecallSequence == 0 && drone.ControlStatus == "Undocked" )|| (drone.RecallSequence == 0 && drone.ControlStatus == "Nav" )|| (drone.RecallSequence == 0 && drone.ControlStatus == "Undocking" )|| (drone.RecallSequence == 0 && drone.ControlStatus == "Docking") || (drone.RecallSequence == 0 && drone.ControlStatus == "Initiating mining" )|| (drone.RecallSequence == 0 && drone.ControlStatus.Contains("RTB")))
+                    if ((drone.RecallSequence == 0 && drone.ControlStatus == "Idle") || (drone.RecallSequence == 0 && drone.ControlStatus == "Undocked") || (drone.RecallSequence == 0 && drone.ControlStatus == "Nav") || (drone.RecallSequence == 0 && drone.ControlStatus == "Undocking") || (drone.RecallSequence == 0 && drone.ControlStatus == "Docking") || (drone.RecallSequence == 0 && drone.ControlStatus == "Initiating mining") || (drone.RecallSequence == 0 && drone.ControlStatus.Contains("RTB")))
                     {
                         drone.RecallSequence = 1;
                         if (drone.ControlSequence > 0)
@@ -1928,27 +1934,39 @@ namespace IngameScript
                         drone.RecallSequence = 2;
                         drone.ControlSequence = 0;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
                     }
                     if (drone.RecallSequence == 2 && drone.ControlStatus == "Idle")
                     {
                         drone.RecallSequence = 3;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "1";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
                     if (drone.RecallSequence == 3 && drone.ControlStatus == "Nav End")
                     {
                         drone.RecallSequence = 4;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
-                    if ((drone.RecallSequence == 3 && drone.ControlStatus == "Nav" && drone.GpsListPosition == -1) || (drone.RecallSequence == 3 && drone.ControlStatus == "Idle" && drone.GpsListPosition >= -1)|| (drone.RecallSequence == 3 && drone.ControlStatus == "RTB" && drone.GpsListPosition >= -1))
+                    if ((drone.RecallSequence == 3 && drone.ControlStatus == "Nav" && drone.GpsListPosition == -1) || (drone.RecallSequence == 3 && drone.ControlStatus == "Idle" && drone.GpsListPosition >= -1) || (drone.RecallSequence == 3 && drone.ControlStatus == "RTB" && drone.GpsListPosition >= -1))
                     {
                         drone.RecallSequence = 4;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
 
@@ -1958,7 +1976,10 @@ namespace IngameScript
                         drone.RecallSequence = 5;
                         drone.ControlSequence = 0;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "6";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
                     if (drone.RecallSequence == 5 && drone.ControlStatus == "Idle")
@@ -1966,7 +1987,10 @@ namespace IngameScript
                         drone.RecallSequence = 5;
                         drone.ControlSequence = 0;
                         gpsGridPositionValue = drone.GpsListPosition;
+                        cd1 = gpsGridPositionValue.ToString();
                         cm = "6";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
                     if ((drone.RecallSequence == 5 && drone.ControlStatus.Contains("Docked")) || (drone.RecallSequence == 0 && drone.ControlStatus.Contains("Docked")))
@@ -1978,12 +2002,20 @@ namespace IngameScript
                         drone.IsMining = false;
                         gpsGridPositionValue = -1;
                         drone.ResetFunction = true;
-                        cm = "0";                        
+                        cd1 = gpsGridPositionValue.ToString();
+                        cm = "0";
+                        droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
+                        drone.TransmissionOutput = c.ToString();
 
                     }
                     if (drone.canlaunch)
                     {
-                        SendDroneCommandRecall(drone);
+                        if (canTransmit && drone.TransmissionStatus)
+                        {
+
+                            transmitToDrone(drone);
+
+                        }
                     }
                     drone.TransmissionStatus = false;
                 }
@@ -5881,9 +5913,12 @@ namespace IngameScript
             cd1 = gpsGridPositionValue.ToString();
             droneCommandBuilder(cd1, xp, yp, zp, cd5, cm, cd6, igd, xp2, yp2, zp2);
             drone.TransmissionOutput = c.ToString();
-            if (canTransmit && drone.TransmissionStatus)
+            if (drone.canlaunch)
             {
-                transmitToDrone(drone);
+                if (canTransmit && drone.TransmissionStatus)
+                {
+                    transmitToDrone(drone);
+                }
             }
             // Ensures status is always reset, saving duplicate assignments in the main logic
             drone.TransmissionStatus = false;
